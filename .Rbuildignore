@@ -1,0 +1,13 @@
+^Makefile$
+^CONDUCT.md$
+^TODO.md$
+^\.travis\.yml$
+^docs$
+^update_web\.sh$
+^README\.Rmd$
+^README\.html$
+\.pyc$
+__pycache__
+^demo$
+^development\.md$
+vignettes_src
