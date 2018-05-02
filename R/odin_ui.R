@@ -11,7 +11,6 @@ odin_app <- function(model, default_time) {
 
 
 odin_server <- function(input, output, session) {
-  browser()
   output$result_plot <- shiny::renderPlot({
     x <- stats::rnorm(100)
     y <- stats::rnorm(100)
