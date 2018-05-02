@@ -4,7 +4,12 @@
 \alias{odin_app}
 \title{Odin Shiny Application}
 \usage{
-odin_app()
+odin_app(model, default_time)
+}
+\arguments{
+\item{model}{An odin model}
+
+\item{default_time}{Default time}
 }
 \description{
 Odin shiny app
