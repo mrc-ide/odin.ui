@@ -7,7 +7,8 @@ Authors@R: person("Rich", "FitzJohn", role = c("aut", "cre"),
 License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:
-  shiny
+    odin,
+    shiny
 RoxygenNote: 6.0.1
 Suggests:
     testthat
