@@ -6,6 +6,6 @@ cache: packages
 
 r_github_packages:
   - r-lib/covr
-  - mrc-ide/odin
+  - mrc-ide/odin@development
 after_success:
   - Rscript -e 'covr::codecov(quiet = FALSE)'
