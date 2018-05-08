@@ -3,6 +3,7 @@
 ##' @param model An odin model
 ##' @param default_time Default time
 ##' @export
+##' @importFrom odin odin
 odin_app <- function(model, default_time) {
   shiny::shinyApp(
     ui = odin_ui(),
