@@ -78,6 +78,20 @@ odin_ui_sidebar <- function(model, default_time) {
 }
 
 
+odin_ui_sidebar_section <- function(title, ...) {
+  ## TODO: this needs some css styling
+  ## https://stackoverflow.com/questions/29030260/inline-checkbox-next-to-a-h3-header
+  id <- sprintf("hide_%s", gsub(" ", "_", tolower(title)))
+  list(
+    shiny::div(class = "odin_sidebar_section_head",
+               shiny::h2(title),
+               shiny::checkboxInput(id, "hide")),
+    shiny::conditionalPanel(
+      condition = sprintf("input.%s != true", id),
+      ...))
+}
+
+
 odin_ui_parameters <- function(model) {
   x <- stats::coef(model)
 
@@ -91,9 +105,9 @@ odin_ui_parameters <- function(model) {
   ## TODO: can we have a real list structure here?
   if (nrow(x) > 0L) {
     name_map <- set_names(paste0("pars_", x$name), x$name)
-    tags <- c(list(shiny::h2("Parameters")),
-              unname(Map(shiny::numericInput,
-                         name_map, x$name, x$default_value)))
+    tags <- odin_ui_sidebar_section(
+      "Parameters",
+      unname(Map(shiny::numericInput, name_map, x$name, x$default_value)))
   } else {
     name_map <- character()
     tags <- list()
@@ -126,9 +140,11 @@ odin_ui_time <- function(default_time) {
     time_start <- NULL
   }
 
-  tags <- list(shiny::h2("Time"), time_start, time_end)
-  list(tags = drop_null(tags),
-       has_start_time = has_start_time)
+  tags <- odin_ui_sidebar_section(
+    "Time",
+    drop_null(list(time_start, time_end)))
+
+  list(tags = tags, has_start_time = has_start_time)
 }
 
 
@@ -142,8 +158,9 @@ odin_ui_output <- function(model) {
   name_map <- set_names(paste0("plot_", vars$name_target), vars$name_target)
   cols <- set_names(cols(length(name_map)), vars$name_target)
 
-  tags <- c(list(shiny::h2("Output")),
-            Map(shiny::checkboxInput, name_map, vars$name_target, value = TRUE))
+  tags <- odin_ui_sidebar_section(
+    "Output",
+    Map(shiny::checkboxInput, name_map, vars$name_target, value = TRUE))
 
   list(tags = tags, name_map = name_map, cols = cols)
 }
