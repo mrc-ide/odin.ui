@@ -15,20 +15,28 @@ odin_server <- function(model, default_time) {
   sidebar <- odin_ui_sidebar(model, default_time)
 
   function(input, output, session) {
+    model_output <- shiny::reactiveValues(data = NULL)
+
     output$odin_sidebar <- shiny::renderUI({
       times <- input$reset_button
+      model_output$data <- NULL
       shiny::div(id = paste("odin_sidebar_", times),
                  sidebar$tags)
     })
 
+    shiny::observeEvent(
+      input$go_button, {
+        p <- get_pars(input, sidebar$parameter_name_map)
+        t <- get_time(input, sidebar$has_start_time)
+        model_output$data <- run_model(model, p, t)
+      })
+
     output$result_plot <- shiny::renderPlot({
-      if (input$go_button == 0L) {
+      if (is.null(model_output$data)) {
         return()
       }
-      shiny::isolate(
-        run_model_and_plot(model,
-                           get_pars(input, sidebar$parameter_name_map),
-                           get_time(input, sidebar$has_start_time)))
+
+      plot_model_output(model_output$data)
     })
   }
 }
@@ -125,9 +133,12 @@ odin_ui_time <- function(default_time) {
 ## Per line colour
 ##
 ## Axes labels
-run_model_and_plot <- function(model, pars, time) {
-  mod <- model(user = pars)
-  y <- mod$run(time)
+run_model <- function(model, pars, time) {
+  mod <- model(user = pars)$run(time)
+}
+
+
+plot_model_output <- function(y) {
   op <- graphics::par(mar = c(4.6, 4.6, .1, .1))
   on.exit(graphics::par(op))
   graphics::matplot(y[, 1, drop = TRUE], y[, -1, drop = FALSE],
