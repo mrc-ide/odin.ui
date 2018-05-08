@@ -35,8 +35,8 @@ odin_server <- function(model, default_time) {
       if (is.null(model_output$data)) {
         return()
       }
-
-      plot_model_output(model_output$data)
+      include <- get_output(input, sidebar$output_name_map)
+      plot_model_output(model_output$data, include, sidebar$output_cols)
     })
   }
 }
@@ -68,10 +68,13 @@ odin_ui <- function() {
 odin_ui_sidebar <- function(model, default_time) {
   pars <- odin_ui_parameters(model)
   time <- odin_ui_time(default_time)
-  els <- c(pars$tags, time$tags)
+  output <- odin_ui_output(model)
+  els <- c(pars$tags, time$tags, output$tags)
   list(tags = els,
        parameter_name_map = pars$name_map,
-       has_start_time = time$has_start_time)
+       has_start_time = time$has_start_time,
+       output_name_map = output$name_map,
+       output_cols = output$cols)
 }
 
 
@@ -129,6 +132,23 @@ odin_ui_time <- function(default_time) {
 }
 
 
+odin_ui_output <- function(model) {
+  x <- attr(model, "graph_data")()
+  vars <- x$nodes[x$nodes$type %in% c("variable", "output"), ]
+  if (!all(vars$rank == 0L)) {
+    stop("Currently all output must be scalar")
+  }
+
+  name_map <- set_names(paste0("plot_", vars$name_target), vars$name_target)
+  cols <- set_names(cols(length(name_map)), vars$name_target)
+
+  tags <- c(list(shiny::h2("Output")),
+            Map(shiny::checkboxInput, name_map, vars$name_target, value = TRUE))
+
+  list(tags = tags, name_map = name_map, cols = cols)
+}
+
+
 ## This is going to be subject to lots of change!  We'll want to split
 ## apart the generation from the plotting for sure.
 ##
@@ -143,12 +163,14 @@ run_model <- function(model, pars, time) {
 }
 
 
-plot_model_output <- function(y) {
+plot_model_output <- function(xy, include, cols) {
   op <- graphics::par(mar = c(4.6, 4.6, .1, .1))
   on.exit(graphics::par(op))
-  graphics::matplot(y[, 1, drop = TRUE], y[, -1, drop = FALSE],
-                    type = "l", lty = 1, xlab = "Time", ylab = "Variable",
-                    las = 1)
+
+  x <- xy[, 1, drop = TRUE]
+  y <- xy[, names(include)[include], drop = FALSE]
+  graphics::matplot(x, y, type = "l", lty = 1, las = 1, col = cols[include],
+                    xlab = "Time", ylab = "Variable")
 }
 
 
@@ -160,4 +182,9 @@ get_pars <- function(x, map) {
 
 get_time <- function(x, has_start_time) {
   seq(if (has_start_time) x$time_start else 0.0, x$time_end, length.out = 101)
+}
+
+
+get_output <- function(x, map) {
+  vlapply(map, function(el) x[[el]])
 }
