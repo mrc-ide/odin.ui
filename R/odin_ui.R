@@ -17,11 +17,16 @@ odin_server <- function(model, default_time) {
   sidebar <- odin_ui_sidebar(model, default_time)
 
   function(input, output, session) {
-    output$model_parameters <- shiny::renderUI(sidebar)
+    output$model_parameters <- shiny::renderUI(sidebar$tags)
+
     output$result_plot <- shiny::renderPlot({
-      x <- stats::rnorm(100)
-      y <- stats::rnorm(100)
-      graphics::plot(x, y, asp = 1)
+      if (input$go_button == 0L) {
+        return()
+      }
+      shiny::isolate(
+        run_model_and_plot(model,
+                           get_pars(input, sidebar$pars),
+                           get_time(input)))
     })
   }
 }
@@ -32,7 +37,9 @@ odin_ui <- function() {
     shiny::titlePanel("odin ui"),
 
     shiny::sidebarLayout(
-      shiny::uiOutput("model_parameters"),
+      shiny::sidebarPanel(
+        shiny::uiOutput("model_parameters"),
+        shiny::actionButton("go_button", "Run model")),
       shiny::mainPanel(
         shiny::plotOutput("result_plot")
       )
@@ -42,9 +49,11 @@ odin_ui <- function() {
 
 
 odin_ui_sidebar <- function(model, default_time) {
-  els <- c(odin_ui_parameters(model),
+  pars <- odin_ui_parameters(model)
+  els <- c(pars$tags,
            odin_ui_time(default_time))
-  shiny::sidebarPanel(els)
+  list(tags = els,
+       pars = pars$nms)
 }
 
 
@@ -60,24 +69,59 @@ odin_ui_parameters <- function(model) {
 
   ## TODO: can we have a real list structure here?
   if (nrow(x) > 0L) {
-    pars <- c(list(shiny::h2("Parameters")),
+    nms <- set_names(paste0("pars_", x$name), x$name)
+    tags <- c(list(shiny::h2("Parameters")),
               unname(Map(shiny::numericInput,
-                         paste0("pars_", x$name), x$name, x$default_value)))
+                         nms, x$name, x$default_value)))
   } else {
-    pars <- NULL
+    nms <- character()
+    tags <- list()
   }
 
-  pars
+  list(tags = tags, nms = nms)
 }
 
 
 odin_ui_time <- function(default_time) {
   if (length(default_time) == 1L) {
     default_time <- c(0, default_time)
-  } else {
-    ## assume default_time is a 1 or 2 element numeric
+  } else if (length(default_time) != 2L) {
+    stop("default_time must be length 1 or 2")
   }
   list(shiny::h2("Time"),
        shiny::numericInput("time_start", "start", default_time[[1L]]),
-       shiny::numericInput("time_end", "start", default_time[[2L]]))
+       shiny::numericInput("time_end", "end", default_time[[2L]]))
+}
+
+
+## This is going to be subject to lots of change!  We'll want to split
+## apart the generation from the plotting for sure.
+##
+## time detail (critical points, number of points to plot)
+##
+## Multiple plots of output - with different output variables being
+## put onto different plots stacked above each other.
+##
+## Per line colour
+##
+## Axes labels
+run_model_and_plot <- function(model, pars, time) {
+  mod <- model(user = pars)
+  y <- mod$run(time)
+  op <- graphics::par(mar = c(4.6, 4.6, .1, .1))
+  on.exit(graphics::par(op))
+  graphics::matplot(y[, 1, drop = TRUE], y[, -1, drop = FALSE],
+                    type = "l", lty = 1, xlab = "Time", ylab = "Variable",
+                    las = 1)
+}
+
+
+get_pars <- function(x, map) {
+  ret <- lapply(map, function(el) x[[el]])
+  ret[lengths(ret) != 0L]
+}
+
+
+get_time <- function(x) {
+  seq(x$time_start, x$time_end, length.out = 101)
 }
