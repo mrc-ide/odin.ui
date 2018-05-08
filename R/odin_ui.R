@@ -36,6 +36,9 @@ odin_server <- function(model, default_time) {
         return()
       }
       include <- get_output(input, sidebar$output_name_map)
+      if (!any(include)) {
+        return()
+      }
       plot_model_output(model_output$data, include, sidebar$output_cols)
     })
   }
