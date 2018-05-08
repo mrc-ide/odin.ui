@@ -25,7 +25,7 @@ odin_server <- function(model, default_time) {
       }
       shiny::isolate(
         run_model_and_plot(model,
-                           get_pars(input, sidebar$pars),
+                           get_pars(input, sidebar$parameter_name_map),
                            get_time(input)))
     })
   }
@@ -53,35 +53,38 @@ odin_ui_sidebar <- function(model, default_time) {
   els <- c(pars$tags,
            odin_ui_time(default_time))
   list(tags = els,
-       pars = pars$nms)
+       parameter_name_map = pars$name_map)
 }
 
 
 odin_ui_parameters <- function(model) {
   x <- stats::coef(model)
 
-  if (!all(x$model$rank)) {
-    stop("Only scalar inputs are currently supported")
+  if (!all(x$rank == 0L)) {
+    stop("Only scalar parameters are currently supported")
   }
-  if (!all(x$model$has_default)) {
-    stop("All inputs must have defaults")
+  if (!all(x$has_default)) {
+    stop("All parameters must have defaults")
   }
 
   ## TODO: can we have a real list structure here?
   if (nrow(x) > 0L) {
-    nms <- set_names(paste0("pars_", x$name), x$name)
+    name_map <- set_names(paste0("pars_", x$name), x$name)
     tags <- c(list(shiny::h2("Parameters")),
               unname(Map(shiny::numericInput,
-                         nms, x$name, x$default_value)))
+                         name_map, x$name, x$default_value)))
   } else {
-    nms <- character()
+    name_map <- character()
     tags <- list()
   }
 
-  list(tags = tags, nms = nms)
+  list(tags = tags, name_map = name_map)
 }
 
 
+## TODO:
+## * critical time
+## * does the model have a concept of start time?
 odin_ui_time <- function(default_time) {
   if (length(default_time) == 1L) {
     default_time <- c(0, default_time)
