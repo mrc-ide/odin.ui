@@ -26,7 +26,7 @@ odin_server <- function(model, default_time) {
       shiny::isolate(
         run_model_and_plot(model,
                            get_pars(input, sidebar$parameter_name_map),
-                           get_time(input)))
+                           get_time(input, sidebar$has_start_time)))
     })
   }
 }
@@ -50,10 +50,11 @@ odin_ui <- function() {
 
 odin_ui_sidebar <- function(model, default_time) {
   pars <- odin_ui_parameters(model)
-  els <- c(pars$tags,
-           odin_ui_time(default_time))
+  time <- odin_ui_time(default_time)
+  els <- c(pars$tags, time$tags)
   list(tags = els,
-       parameter_name_map = pars$name_map)
+       parameter_name_map = pars$name_map,
+       has_start_time = time$has_start_time)
 }
 
 
@@ -84,23 +85,35 @@ odin_ui_parameters <- function(model) {
 
 ## TODO:
 ## * critical time
-## * does the model have a concept of start time?
+## * disable time selector entirely
+## * max time?
+## * solution tolerance
+## * number of output points
 odin_ui_time <- function(default_time) {
   if (length(default_time) == 1L) {
     default_time <- c(0, default_time)
-  } else if (length(default_time) != 2L) {
-    stop("default_time must be length 1 or 2")
+    has_start_time <- FALSE
+  } else if (length(default_time) == 2L) {
+    has_start_time <- TRUE
+  } else {
+    stop("'default_time' must be length 1 or 2")
   }
-  list(shiny::h2("Time"),
-       shiny::numericInput("time_start", "start", default_time[[1L]]),
-       shiny::numericInput("time_end", "end", default_time[[2L]]))
+
+  time_end <- shiny::numericInput("time_end", "end", default_time[[2L]])
+  if (has_start_time) {
+    time_start <- shiny::numericInput("time_start", "start", default_time[[2L]])
+  } else {
+    time_start <- NULL
+  }
+
+  tags <- list(shiny::h2("Time"), time_start, time_end)
+  list(tags = drop_null(tags),
+       has_start_time = has_start_time)
 }
 
 
 ## This is going to be subject to lots of change!  We'll want to split
 ## apart the generation from the plotting for sure.
-##
-## time detail (critical points, number of points to plot)
 ##
 ## Multiple plots of output - with different output variables being
 ## put onto different plots stacked above each other.
@@ -125,6 +138,6 @@ get_pars <- function(x, map) {
 }
 
 
-get_time <- function(x) {
-  seq(x$time_start, x$time_end, length.out = 101)
+get_time <- function(x, has_start_time) {
+  seq(if (has_start_time) x$time_start else 0.0, x$time_end, length.out = 101)
 }

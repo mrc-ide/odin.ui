@@ -41,3 +41,28 @@ test_that("parameters must have defaults", {
   expect_error(odin_ui_parameters(gen),
                "All parameters must have defaults")
 })
+
+
+test_that("time can be length 1", {
+  res <- odin_ui_time(10)
+  expect_false(res$has_start_time)
+  expect_equal(length(res$tags), 2L)
+  expect_equal(res$tags[[2]]$children[[2]]$attribs$id, "time_end")
+})
+
+
+test_that("time can be length 2", {
+  res <- odin_ui_time(c(0, 10))
+  expect_true(res$has_start_time)
+  expect_equal(length(res$tags), 3L)
+  expect_equal(res$tags[[2]]$children[[2]]$attribs$id, "time_start")
+  expect_equal(res$tags[[3]]$children[[2]]$attribs$id, "time_end")
+})
+
+
+test_that("time must be length 1-2", {
+  expect_error(odin_ui_time(numeric()),
+               "'default_time' must be length 1 or 2", fixed = TRUE)
+  expect_error(odin_ui_time(1:3),
+               "'default_time' must be length 1 or 2", fixed = TRUE)
+})
