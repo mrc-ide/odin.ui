@@ -50,8 +50,13 @@ odin_ui <- function() {
       shiny::sidebarPanel(
         shiny::uiOutput("odin_sidebar"),
         shiny::hr(),
-        shiny::actionButton("go_button", "Run model"),
-        shiny::actionButton("reset_button", "Reset")),
+        ## https://github.com/rstudio/shiny/issues/1675#issuecomment-298398997
+        shiny::actionButton("go_button", "Run model",
+                            shiny::icon("play"),
+                            class = "btn-primary"),
+        shiny::actionButton("reset_button", "Reset",
+                            shiny::icon("refresh"),
+                            class = "btn-danger")),
       shiny::mainPanel(
         shiny::plotOutput("result_plot")
       )
