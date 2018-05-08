@@ -127,9 +127,7 @@ odin_ui_parameters <- function(model) {
 ## TODO:
 ## * critical time
 ## * disable time selector entirely
-## * max time?
 ## * solution tolerance
-## * number of output points
 odin_ui_time <- function(default_time) {
   if (length(default_time) == 1L) {
     default_time <- c(0, default_time)
@@ -140,6 +138,8 @@ odin_ui_time <- function(default_time) {
     stop("'default_time' must be length 1 or 2")
   }
 
+  time_detail <- shiny::numericInput("time_detail", "number of output points",
+                                     1000, min = 10)
   time_end <- shiny::numericInput("time_end", "end", default_time[[2L]])
   if (has_start_time) {
     time_start <- shiny::numericInput("time_start", "start", default_time[[2L]])
@@ -149,7 +149,7 @@ odin_ui_time <- function(default_time) {
 
   tags <- odin_ui_sidebar_section(
     "Time",
-    drop_null(list(time_start, time_end)))
+    drop_null(list(time_start, time_end, time_detail)))
 
   list(tags = tags, has_start_time = has_start_time)
 }
@@ -205,7 +205,8 @@ get_pars <- function(x, map) {
 
 
 get_time <- function(x, has_start_time) {
-  seq(if (has_start_time) x$time_start else 0.0, x$time_end, length.out = 101)
+  time_start <- if (has_start_time) x$time_start else 0.0
+  seq(time_start, x$time_end, length.out = round(x$time_detail))
 }
 
 
