@@ -43,7 +43,11 @@ odin_server <- function(model, default_time) {
 
 
 odin_ui <- function() {
+  path_css <- system.file("styles.css", package = "odin.ui", mustWork = TRUE)
+
   shiny::shinyUI(shiny::fluidPage(
+    shiny::includeCSS(path_css),
+
     shiny::titlePanel("odin ui"),
 
     shiny::sidebarLayout(
