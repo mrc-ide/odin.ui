@@ -15,7 +15,11 @@ odin_server <- function(model, default_time) {
   sidebar <- odin_ui_sidebar(model, default_time)
 
   function(input, output, session) {
-    output$model_parameters <- shiny::renderUI(sidebar$tags)
+    output$odin_sidebar <- shiny::renderUI({
+      times <- input$reset_button
+      shiny::div(id = paste("odin_sidebar_", times),
+                 sidebar$tags)
+    })
 
     output$result_plot <- shiny::renderPlot({
       if (input$go_button == 0L) {
@@ -36,8 +40,10 @@ odin_ui <- function() {
 
     shiny::sidebarLayout(
       shiny::sidebarPanel(
-        shiny::uiOutput("model_parameters"),
-        shiny::actionButton("go_button", "Run model")),
+        shiny::uiOutput("odin_sidebar"),
+        shiny::hr(),
+        shiny::actionButton("go_button", "Run model"),
+        shiny::actionButton("reset_button", "Reset")),
       shiny::mainPanel(
         shiny::plotOutput("result_plot")
       )
