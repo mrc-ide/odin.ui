@@ -43,6 +43,17 @@ test_that("parameters must have defaults", {
 })
 
 
+test_that("models can have no parameters", {
+  pars <- data_frame(name = character(0),
+                     has_default = logical(0),
+                     default_value = I(list()),
+                     rank = integer(0))
+  gen <- mock_model(pars)
+  expect_identical(odin_ui_parameters(gen),
+                   list(tags = list(), name_map = character(0)))
+})
+
+
 test_that("time can be length 1", {
   res <- odin_ui_time(10)
   expect_false(res$has_start_time)

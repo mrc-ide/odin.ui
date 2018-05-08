@@ -12,9 +12,6 @@ odin_app <- function(model, default_time) {
 
 
 odin_server <- function(model, default_time) {
-  force(model)
-  force(default_time)
-
   sidebar <- odin_ui_sidebar(model, default_time)
 
   function(input, output, session) {
