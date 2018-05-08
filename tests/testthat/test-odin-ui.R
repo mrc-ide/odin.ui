@@ -4,7 +4,7 @@ context("odin.ui")
 test_that("generated parameter interface includes all parameters", {
   pars <- data_frame(name = c("N0", "K", "r"),
                      has_default = TRUE,
-                     default_value = c(1, 100, 0.5),
+                     default_value = I(list(1, 100, 0.5)),
                      rank = 0L)
   gen <- mock_model(pars)
 
@@ -24,7 +24,7 @@ test_that("generated parameter interface includes all parameters", {
 test_that("parameters must be scalar", {
   pars <- data_frame(name = "v",
                      has_default = FALSE,
-                     default_value = NA_real_,
+                     default_value = I(list(NULL)),
                      rank = 1L)
   gen <- mock_model(pars)
   expect_error(odin_ui_parameters(gen),
@@ -35,7 +35,7 @@ test_that("parameters must be scalar", {
 test_that("parameters must have defaults", {
   pars <- data_frame(name = "v",
                      has_default = FALSE,
-                     default_value = NA_real_,
+                     default_value = I(list(NULL)),
                      rank = 0L)
   gen <- mock_model(pars)
   expect_error(odin_ui_parameters(gen),
