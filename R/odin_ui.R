@@ -5,26 +5,34 @@
 ##' @export
 odin_app <- function(model, default_time) {
   shiny::shinyApp(
-    ui = odin_ui(model, default_time),
-    server = odin_server)
+    ui = odin_ui(),
+    server = odin_server(model, default_time))
 }
 
 
-odin_server <- function(input, output, session) {
-  output$result_plot <- shiny::renderPlot({
-    x <- stats::rnorm(100)
-    y <- stats::rnorm(100)
-    graphics::plot(x, y, asp = 1)
-  })
+odin_server <- function(model, default_time) {
+  force(model)
+  force(default_time)
+
+  sidebar <- odin_ui_sidebar(model, default_time)
+
+  function(input, output, session) {
+    output$model_parameters <- shiny::renderUI(sidebar)
+    output$result_plot <- shiny::renderPlot({
+      x <- stats::rnorm(100)
+      y <- stats::rnorm(100)
+      graphics::plot(x, y, asp = 1)
+    })
+  }
 }
 
 
-odin_ui <- function(model, default_time) {
+odin_ui <- function() {
   shiny::shinyUI(shiny::fluidPage(
     shiny::titlePanel("odin ui"),
 
     shiny::sidebarLayout(
-      odin_ui_sidebar(model, default_time),
+      shiny::uiOutput("model_parameters"),
       shiny::mainPanel(
         shiny::plotOutput("result_plot")
       )
@@ -36,7 +44,7 @@ odin_ui <- function(model, default_time) {
 odin_ui_sidebar <- function(model, default_time) {
   els <- c(odin_ui_parameters(model),
            odin_ui_time(default_time))
-  do.call(shiny::sidebarPanel, unname(els), quote = TRUE)
+  shiny::sidebarPanel(els)
 }
 
 
