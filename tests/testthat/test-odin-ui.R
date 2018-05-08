@@ -12,9 +12,9 @@ test_that("generated parameter interface includes all parameters", {
 
   expect_is(p, "list")
   expect_setequal(names(p), c("name_map", "tags"))
-  expect_equal(length(p$tags), 4L)
 
-  id <- vapply(p$tags[-1], function(x) x$children[[2]]$attribs$id, "")
+  id <- vapply(p$tags[[2]]$children[[1]], function(x)
+    x$children[[2]]$attribs$id, "")
   expect_equal(id, unname(p$name_map))
 
   expect_equal(unname(p$name_map), paste0("pars_", names(p$name_map)))
@@ -57,17 +57,22 @@ test_that("models can have no parameters", {
 test_that("time can be length 1", {
   res <- odin_ui_time(10)
   expect_false(res$has_start_time)
-  expect_equal(length(res$tags), 2L)
-  expect_equal(res$tags[[2]]$children[[2]]$attribs$id, "time_end")
+
+  tags <- res$tags[[2]]$children[[1]]
+  expect_equal(length(tags), 1L)
+
+expect_equal(tags[[1]]$children[[2]]$attribs$id, "time_end")
 })
 
 
 test_that("time can be length 2", {
   res <- odin_ui_time(c(0, 10))
   expect_true(res$has_start_time)
-  expect_equal(length(res$tags), 3L)
-  expect_equal(res$tags[[2]]$children[[2]]$attribs$id, "time_start")
-  expect_equal(res$tags[[3]]$children[[2]]$attribs$id, "time_end")
+
+  tags <- res$tags[[2]]$children[[1]]
+  expect_equal(length(tags), 2L)
+  expect_equal(tags[[1]]$children[[2]]$attribs$id, "time_start")
+  expect_equal(tags[[2]]$children[[2]]$attribs$id, "time_end")
 })
 
 
