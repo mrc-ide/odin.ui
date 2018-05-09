@@ -1,24 +1,21 @@
 
 ## Internal function generating the plotting output.
 
+## - 'xy' is a matrix whose first column is always time, but with varying labels
+## ('t' or 'step')
+
+## 'include' is a vector of names of outputs to be included in the plot, matched
+## against the columns of xy[, -1]
+
+## 'cols' is a vector of colors corresponding to 'include'
+
+
 
 plot_model_output <- function(xy, include, cols) {
 
-  dygraphs::
+  df <- as.data.frame(xy[, c(TRUE, include), drop = FALSE])
 
-  op <- graphics::par(mar = c(4.6, 4.6, .1, .1))
-  on.exit(graphics::par(op))
+  out <- dygraphs::dygraph(df)
 
-  x <- xy[, 1, drop = TRUE]
-
-  if (any(include)) {
-    y <- xy[, names(include)[include], drop = FALSE]
-    graphics::matplot(x, y, type = "l", lty = 1, las = 1, col = cols[include],
-                      xlab = "Time", ylab = "Variable")
-  } else {
-    graphics::plot(x, x, type = "n", las = 1, yaxt = "n",
-                   xlab = "Time", ylab = "Variable")
-    pos <- mean(range(x))
-    graphics::text(pos, pos, "(nothing to plot)")
-  }
+  out
 }

@@ -16,7 +16,7 @@ odin_ui_model_input <- function(id) {
 
 odin_ui_model_output <- function(id) {
   ns <- shiny::NS(id)
-  shiny::plotOutput(ns("result_plot"))
+  dygraphs::dygraphOutput(ns("result_plot"))
 }
 
 
@@ -52,7 +52,7 @@ odin_ui_model <- function(input, output, session,
       model_output$data <- run_model(model, p, t)
     })
 
-  output$result_plot <- shiny::renderPlot({
+  output$result_plot <-dygraphs::renderDygraph({
     if (is.null(model_output$data)) {
       return()
     }
