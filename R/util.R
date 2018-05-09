@@ -26,3 +26,13 @@ transp <- function (col, alpha = 0.5) {
   col_rgb <- grDevices::col2rgb(col) / 255
   grDevices::rgb(col_rgb[1, ], col_rgb[2, ],col_rgb[3, ], alpha)
 }
+
+
+odin_ui_file <- function(path) {
+  system.file(path, package = "odin.ui", mustWork = TRUE)
+}
+
+
+read_text <- function(filename) {
+  readChar(filename, file.size(filename))
+}
