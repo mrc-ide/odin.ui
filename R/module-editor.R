@@ -1,5 +1,9 @@
-odin_ui_editor_ui <- function() {
-  initial_code <- read_text(odin_ui_file("minimal_model.R"))
+odin_ui_editor_ui <- function(initial_code) {
+  if (is.null(initial_code)) {
+    initial_code <- read_text(odin_ui_file("minimal_model.R"))
+  } else {
+    initial_code <- paste(initial_code, collapse = "\n")
+  }
 
   ## The ace editor setting "showPrintMargin" is the one to control
   ## the 80 char bar but I don't see how to get that through here.
@@ -69,11 +73,4 @@ odin_ui_editor_server <- function(input, output, session) {
           shiny::renderText(paste0(res$output, collapse = "\n"))
       }
     })
-}
-
-
-odin_editor_app <- function(...) {
-  app <- shiny::shinyApp(
-    ui = odin_ui_editor_ui(), server = odin_ui_editor_server)
-  shiny::runApp(app, ...)
 }
