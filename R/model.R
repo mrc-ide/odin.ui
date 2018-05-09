@@ -35,5 +35,10 @@ compile_model <- function(code, dest = NULL, safe = FALSE, skip_cache = FALSE) {
 
 
 run_model <- function(model, pars, time) {
-  mod <- model(user = pars)$run(time)
+  if (length(pars) > 0L) {
+    mod <- model(user = pars)
+  } else {
+    mod <- model()
+  }
+  mod$run(time)
 }
