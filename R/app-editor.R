@@ -1,3 +1,25 @@
+##' Shiny app for interactively creating odin models
+##'
+##' This shiny app is subject to all the restrictions that the
+##' \code{\link{odin_ui_app}} shiny app is subject to (no vector
+##' inputs or outputs).
+##'
+##' @title Shiny app for interactively creating odin models
+##'
+##' @param initial_code Optional character vector of odin code to be
+##'   used as the contents of the editor on startup.  If omitted (or
+##'   \code{NULL}) then a very simple default model is used
+##'   (exponential growth).
+##'
+##' @param ... Additional paramters passed to \code{shiny::runApp}
+##' @export
+odin_ui_editor_app <- function(initial_code, ...) {
+  app <- shiny::shinyApp(
+    ui = odin_ui_editor_ui(initial_code), server = odin_ui_editor_server)
+  shiny::runApp(app, ...)
+}
+
+
 odin_ui_editor_ui <- function(initial_code) {
   if (is.null(initial_code)) {
     initial_code <- read_text(odin_ui_file("minimal_model.R"))

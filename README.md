@@ -5,3 +5,18 @@
 [![codecov.io](https://codecov.io/github/mrc-ide/odin.ui/coverage.svg?branch=master)](https://codecov.io/github/mrc-ide/odin.ui?branch=master)
 
 A shiny UI for [`odin`](https://github.com/mrc-ide/odin)
+
+
+## Usage
+
+Create a dynamic `odin` model editor:
+
+```r
+odin.ui::odin_ui_editor_app()
+```
+
+Create an interface for a particular odin model:
+
+```r
+odin.ui::odin_ui_app(model, default_time = 10)
+```
