@@ -1,5 +1,5 @@
 odin_ui_editor_ui <- function() {
-  initial_code <- read_text(odin_ui_file("dummy_model.R"))
+  initial_code <- read_text(odin_ui_file("minimal_model.R"))
 
   ## The ace editor setting "showPrintMargin" is the one to control
   ## the 80 char bar but I don't see how to get that through here.
