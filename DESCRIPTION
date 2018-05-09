@@ -11,7 +11,7 @@ Encoding: UTF-8
 Imports:
     dygraphs,
     odin (>= 0.0.7),
-    shiny,
+    shiny (>= 1.0.4),
     shinyAce
 RoxygenNote: 6.0.1
 Suggests:

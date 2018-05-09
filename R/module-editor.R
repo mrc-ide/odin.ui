@@ -1,33 +1,37 @@
-odin_ui_editor_ui <- function(id) {
-  ns <- shiny::NS(id)
-
+odin_ui_editor_ui <- function() {
   initial_code <- read_text(odin_ui_file("dummy_model.R"))
 
   ## The ace editor setting "showPrintMargin" is the one to control
   ## the 80 char bar but I don't see how to get that through here.
   ## https://github.com/ajaxorg/ace/wiki/Configuring-Ace
-  shiny::tagList(
-    shinyAce::aceEditor(ns("editor"), mode = "r", value = initial_code,
-                        debounce = 10),
-    shiny::actionButton(ns("go_button"), "Compile",
-                        shiny::icon("cogs"),
-                        class = "btn-primary"),
-    shiny::htmlOutput(ns("status")),
-    shiny::verbatimTextOutput(ns("messages")),
-    shiny::verbatimTextOutput(ns("input_code")),
-    shiny::verbatimTextOutput(ns("compiler_output")))
+
+  shiny::shinyUI(
+    shiny::fluidPage(
+      shiny::tabsetPanel(
+        id = "models",
+        shiny::tabPanel(
+          "Build",
+          shiny::textInput("title", "Model name", "model"),
+          shinyAce::aceEditor("editor", mode = "r", value = initial_code,
+                              debounce = 10),
+          shiny::actionButton("go_button", "Compile",
+                              shiny::icon("cogs"),
+                              class = "btn-primary"),
+          shiny::htmlOutput("status"),
+          shiny::verbatimTextOutput("messages"),
+          shiny::verbatimTextOutput("input_code"),
+          shiny::verbatimTextOutput("compiler_output")))))
 }
 
 
-odin_ui_editor <- function(input, output, session) {
-  ns <- session$ns
-
-  model <- shiny::reactiveValues(data = NULL)
-  ret <- shiny::reactive(model$data)
+odin_ui_editor_server <- function(input, output, session) {
+  models <- shiny::reactiveValues(data = list())
 
   shiny::observeEvent(
     input$go_button,  {
       code <- input$editor
+      title <- input$title
+      model_id <- gsub(" -", "_", tolower(title))
 
       res <- withProgress(
         message = "Compiling model...",
@@ -44,27 +48,32 @@ odin_ui_editor <- function(input, output, session) {
       if (res$success) {
         output$compiler_output <- shiny::renderText(NULL)
         output$messages <- shiny::renderText(NULL)
+
+        new_tab <- !(title %in% names(models$data))
+
+        models$data[[title]] <- res$model
+
+        if (new_tab) {
+          shiny::appendTab(
+            "models",
+            shiny::tabPanel(title, odin_ui_model_ui(model_id, title)))
+        }
+
+        default_time <- 10
+        shiny::callModule(odin_ui_model, model_id, models$data[[title]],
+                          default_time)
+        shiny::updateTabsetPanel(session, "models", model_id)
       } else {
         output$messages <- shiny::renderText(paste0(res$error))
         output$compiler_output <-
           shiny::renderText(paste0(res$output, collapse = "\n"))
       }
-
-      model$data <- res$model
     })
-
-  return(ret)
 }
 
 
 odin_editor_app <- function(...) {
-  ui <- shiny::shinyUI(
-    shiny::fluidPage(
-      odin_ui_editor_ui("odin_editor")))
-  server <- function(input, output, session) {
-    shiny::callModule(odin_ui_editor, "odin_editor")
-  }
   app <- shiny::shinyApp(
-    ui = ui, server = server)
+    ui = odin_ui_editor_ui(), server = odin_ui_editor_server)
   shiny::runApp(app, ...)
 }

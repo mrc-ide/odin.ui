@@ -27,8 +27,8 @@ odin_ui_model_ui <- function(id, title) {
     shiny::includeCSS(path_css),
     shiny::titlePanel(title),
     shiny::sidebarLayout(
-      shiny::sidebarPanel(odin_ui_model_input("odin_ui")),
-      shiny::mainPanel(odin_ui_model_output("odin_ui"))))
+      shiny::sidebarPanel(odin_ui_model_input(id)),
+      shiny::mainPanel(odin_ui_model_output(id))))
 }
 
 
