@@ -36,9 +36,6 @@ odin_server <- function(model, default_time) {
         return()
       }
       include <- get_output(input, sidebar$output_name_map)
-      if (!any(include)) {
-        return()
-      }
       plot_model_output(model_output$data, include, sidebar$output_cols)
     })
   }
@@ -192,9 +189,17 @@ plot_model_output <- function(xy, include, cols) {
   on.exit(graphics::par(op))
 
   x <- xy[, 1, drop = TRUE]
-  y <- xy[, names(include)[include], drop = FALSE]
-  graphics::matplot(x, y, type = "l", lty = 1, las = 1, col = cols[include],
-                    xlab = "Time", ylab = "Variable")
+
+  if (any(include)) {
+    y <- xy[, names(include)[include], drop = FALSE]
+    graphics::matplot(x, y, type = "l", lty = 1, las = 1, col = cols[include],
+                      xlab = "Time", ylab = "Variable")
+  } else {
+    graphics::plot(x, x, type = "n", las = 1, yaxt = "n",
+                   xlab = "Time", ylab = "Variable")
+    pos <- mean(range(x))
+    graphics::text(pos, pos, "(nothing to plot)")
+  }
 }
 
 
