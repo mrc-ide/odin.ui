@@ -8,7 +8,7 @@ test_that("generated parameter interface includes all parameters", {
                      rank = 0L)
   gen <- mock_model(pars)
 
-  p <- odin_ui_parameters(gen)
+  p <- odin_ui_control_parameters(gen, identity)
 
   expect_is(p, "list")
   expect_setequal(names(p), c("name_map", "tags"))
@@ -27,7 +27,7 @@ test_that("parameters must be scalar", {
                      default_value = I(list(NULL)),
                      rank = 1L)
   gen <- mock_model(pars)
-  expect_error(odin_ui_parameters(gen),
+  expect_error(odin_ui_control_parameters(gen, identity),
                "Only scalar parameters are currently supported")
 })
 
@@ -38,7 +38,7 @@ test_that("parameters must have defaults", {
                      default_value = I(list(NULL)),
                      rank = 0L)
   gen <- mock_model(pars)
-  expect_error(odin_ui_parameters(gen),
+  expect_error(odin_ui_control_parameters(gen, identity),
                "All parameters must have defaults")
 })
 
@@ -49,36 +49,36 @@ test_that("models can have no parameters", {
                      default_value = I(list()),
                      rank = integer(0))
   gen <- mock_model(pars)
-  expect_identical(odin_ui_parameters(gen),
+  expect_identical(odin_ui_control_parameters(gen, identity),
                    list(tags = list(), name_map = character(0)))
 })
 
 
 test_that("time can be length 1", {
-  res <- odin_ui_time(10)
+  res <- odin_ui_control_time(10, identity)
   expect_false(res$has_start_time)
 
   tags <- res$tags[[2]]$children[[1]]
-  expect_equal(length(tags), 1L)
+  expect_equal(length(tags), 2L)
 
 expect_equal(tags[[1]]$children[[2]]$attribs$id, "time_end")
 })
 
 
 test_that("time can be length 2", {
-  res <- odin_ui_time(c(0, 10))
+  res <- odin_ui_control_time(c(0, 10), identity)
   expect_true(res$has_start_time)
 
   tags <- res$tags[[2]]$children[[1]]
-  expect_equal(length(tags), 2L)
+  expect_equal(length(tags), 3L)
   expect_equal(tags[[1]]$children[[2]]$attribs$id, "time_start")
   expect_equal(tags[[2]]$children[[2]]$attribs$id, "time_end")
 })
 
 
 test_that("time must be length 1-2", {
-  expect_error(odin_ui_time(numeric()),
+  expect_error(odin_ui_control_time(numeric(), identity),
                "'default_time' must be length 1 or 2", fixed = TRUE)
-  expect_error(odin_ui_time(1:3),
+  expect_error(odin_ui_control_time(1:3, identity),
                "'default_time' must be length 1 or 2", fixed = TRUE)
 })
