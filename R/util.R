@@ -23,3 +23,12 @@ cols <- function(n) {
   }
   pos[seq_len(n)]
 }
+
+
+
+load_pkg <- function(x) {
+  if (!suppressWarnings(require(x))) {
+    stop(sprintf("package '%s' is needed by the app but missing", x))
+  }
+}
+
