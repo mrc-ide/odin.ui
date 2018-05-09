@@ -36,5 +36,7 @@ plot_model_output <- function(xy, include, cols) {
                                highlightCircleSize = 3,
                                highlightSeriesBackgroundAlpha = 1,
                                hideOnMouseOut = TRUE)
+
+  out <- dygraphs::dyCSS(out, system.file("dygraphs.css", package = "odin.ui"))
   out
 }
