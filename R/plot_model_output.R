@@ -28,7 +28,13 @@ plot_model_output <- function(xy, include, cols) {
   out <- dygraphs::dyAxis(out, "x", label = "Time", drawGrid = FALSE)
   out <- dygraphs::dyAxis(out, "y", label = NULL, drawGrid = FALSE)
   out <- dygraphs::dyRangeSelector(out, strokeColor = "#00000099",
-                                   fillColor = "#0000004D")
+                                   fillColor = "#0000004D",
+                                   height = 0)
 
+  out <- dygraphs::dyHighlight(out,
+                               highlightSeriesOpts = list(strokeWidth = 2),
+                               highlightCircleSize = 3,
+                               highlightSeriesBackgroundAlpha = 1,
+                               hideOnMouseOut = TRUE)
   out
 }
