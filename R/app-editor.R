@@ -45,6 +45,18 @@ odin_ui_editor_ui <- function(initial_code) {
           shiny::actionButton("reset_button", "Reset",
                               shiny::icon("refresh"),
                               class = "btn-danger"),
+
+          ## Ideally these would be aligned further right
+          shiny::downloadButton("download_button", "Save"),
+          shiny::fileInput("uploaded_file",
+                           "Upload model file",
+                           multiple = FALSE,
+                           accept = c("text/plain", ".R")),
+          ## TODO: this disables _all_ progress - ideally we'd do this
+          ## just for this id, which is going to be a slightly more
+          ## clever css rule.
+          shiny::tags$style(".shiny-file-input-progress {display: none}"),
+
           shiny::htmlOutput("status"),
           shiny::verbatimTextOutput("messages"),
           shiny::verbatimTextOutput("input_code"),
@@ -68,6 +80,26 @@ odin_ui_editor_server <- function(initial_code) {
         ## name.  These are probably worthwhile things to get done at
         ## some point.
         shinyAce::updateAceEditor(session, "editor", value = initial_code)
+      })
+
+    output$download_button <- shiny::downloadHandler(
+      filename = function() {
+        title_to_filename(input$title)
+      },
+      content = function(con) {
+        writeLines(input$editor, con)
+      })
+
+    shiny::observeEvent(
+      input$uploaded_file, {
+        if (!is.null(input$uploaded_file)) {
+          code <- read_text(input$uploaded_file$datapath)
+          title <- filename_to_title(input$uploaded_file$name)
+
+          ## TODO: This probably needs considerable santisation!
+          shinyAce::updateAceEditor(session, "editor", value = code)
+          shiny::updateTextInput(session, "title", value = title)
+        }
       })
 
     shiny::observeEvent(
@@ -127,4 +159,14 @@ validate_initial_code <- function(initial_code) {
     initial_code <- paste0(initial_code, "\n")
   }
   initial_code
+}
+
+
+title_to_filename <- function(name) {
+  paste0(gsub(" ", "_", name), ".R")
+}
+
+
+filename_to_title <- function(filename) {
+  gsub("[_-]", " ", sub("\\.R$", "", filename))
 }
