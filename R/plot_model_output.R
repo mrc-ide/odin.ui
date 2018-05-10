@@ -1,7 +1,3 @@
-
-## Internal function generating the plotting output.
-## Author: Thibaut Jombart, 2018
-
 ## - 'xy' is a matrix whose first column is always time, but with varying labels
 ## ('t' or 'step')
 

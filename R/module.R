@@ -52,7 +52,7 @@ odin_ui_model <- function(input, output, session,
       model_output$data <- run_model(model, p, t)
     })
 
-  output$result_plot <-dygraphs::renderDygraph({
+  output$result_plot <- dygraphs::renderDygraph({
     if (is.null(model_output$data)) {
       return()
     }

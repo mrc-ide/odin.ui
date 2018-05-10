@@ -2,13 +2,16 @@ Package: odin.ui
 Version: 0.0.1
 Title: Shiny User Interface for 'odin'
 Description: A user interface for 'odin', using Shiny.
-Authors@R: person("Rich", "FitzJohn", role = c("aut", "cre"),
-                  email = "rich.fitzjohn@gmail.com")
+Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
+                    email = "rich.fitzjohn@gmail.com"),
+	     person("Thibaut", "Jombart", role = c("aut"),
+                    email = "thibautjombart@gmail.com"))
 License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:
     odin (>= 0.0.7),
     shiny
+    dygraphs
 RoxygenNote: 6.0.1
 Suggests:
     testthat
