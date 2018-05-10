@@ -108,7 +108,7 @@ odin_ui_editor_server <- function(initial_code) {
         title <- input$title
         model_id <- gsub(" -", "_", tolower(title))
 
-        res <- withProgress(
+        res <- shiny::withProgress(
           message = "Compiling model...",
           detail = "some detail", value = 1, {
             compile_model(code, tempfile(), skip_cache = TRUE)

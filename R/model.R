@@ -4,7 +4,7 @@ compile_model <- function(code, dest = NULL, safe = FALSE, skip_cache = FALSE) {
   ## TODO: this needs to capture all messages because there are
   ## informational ones there that are not used
   elapsed <- system.time(
-    output <- capture.output(
+    output <- utils::capture.output(
       suppressMessages(
         model <- tryCatch(
           odin::odin_(code, dest, verbose = TRUE,
