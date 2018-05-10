@@ -151,7 +151,7 @@ odin_ui_editor_server <- function(initial_code) {
 validate_initial_code <- function(initial_code) {
   if (is.null(initial_code)) {
     initial_code <- readLines(odin_ui_file("minimal_model.R"))
-  } else if (!is.character(x)) {
+  } else if (!is.character(initial_code)) {
     stop("'initial_code' must be a character vector", call. = FALSE)
   }
   initial_code <- paste(initial_code, collapse = "\n")
