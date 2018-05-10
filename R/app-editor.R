@@ -13,7 +13,7 @@
 ##'
 ##' @param ... Additional paramters passed to \code{shiny::runApp}
 ##' @export
-odin_ui_editor_app <- function(initial_code, ...) {
+odin_ui_editor_app <- function(initial_code = NULL, ...) {
   app <- shiny::shinyApp(
     ui = odin_ui_editor_ui(initial_code), server = odin_ui_editor_server)
   shiny::runApp(app, ...)
