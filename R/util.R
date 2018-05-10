@@ -25,10 +25,8 @@ cols <- function(n) {
 }
 
 
-
 ## TODO: we'll need to decide how to handle time once time outputs have been
 ## generalised in odin.
-
 round_time <- function(x) {
   round(x, 2L)
 }
