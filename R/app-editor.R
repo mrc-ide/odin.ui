@@ -14,19 +14,15 @@
 ##' @param ... Additional paramters passed to \code{shiny::runApp}
 ##' @export
 odin_ui_editor_app <- function(initial_code = NULL, ...) {
+  initial_code <- validate_initial_code(initial_code)
   app <- shiny::shinyApp(
-    ui = odin_ui_editor_ui(initial_code), server = odin_ui_editor_server)
+    ui = odin_ui_editor_ui(initial_code),
+    server = odin_ui_editor_server(initial_code))
   shiny::runApp(app, ...)
 }
 
 
 odin_ui_editor_ui <- function(initial_code) {
-  if (is.null(initial_code)) {
-    initial_code <- read_text(odin_ui_file("minimal_model.R"))
-  } else {
-    initial_code <- paste(initial_code, collapse = "\n")
-  }
-
   ## The ace editor setting "showPrintMargin" is the one to control
   ## the 80 char bar but I don't see how to get that through here.
   ## https://github.com/ajaxorg/ace/wiki/Configuring-Ace
@@ -38,11 +34,17 @@ odin_ui_editor_ui <- function(initial_code) {
         shiny::tabPanel(
           "Build",
           shiny::textInput("title", "Model name", "model"),
+          ## This should not run over all the grid columns and perhaps
+          ## should display some helper text on the right panel.  That
+          ## would be super useful for a teaching situation.
           shinyAce::aceEditor("editor", mode = "r", value = initial_code,
                               debounce = 10),
           shiny::actionButton("go_button", "Compile",
                               shiny::icon("cogs"),
                               class = "btn-primary"),
+          shiny::actionButton("reset_button", "Reset",
+                              shiny::icon("refresh"),
+                              class = "btn-danger"),
           shiny::htmlOutput("status"),
           shiny::verbatimTextOutput("messages"),
           shiny::verbatimTextOutput("input_code"),
@@ -50,49 +52,79 @@ odin_ui_editor_ui <- function(initial_code) {
 }
 
 
-odin_ui_editor_server <- function(input, output, session) {
-  models <- shiny::reactiveValues(data = list())
+## If I pull the editor code into a module, most of the bits here
+## really come out into the controlling app becaues they are logic
+## that needs to get involved with multiple model instances.
+odin_ui_editor_server <- function(initial_code) {
+  force(initial_code)
 
-  shiny::observeEvent(
-    input$go_button,  {
-      code <- input$editor
-      title <- input$title
-      model_id <- gsub(" -", "_", tolower(title))
+  function(input, output, session) {
+    models <- shiny::reactiveValues(data = list())
 
-      res <- withProgress(
-        message = "Compiling model...",
-        detail = "some detail", value = 1, {
-          compile_model(code, tempfile(), skip_cache = TRUE)
-        })
+    shiny::observeEvent(
+      input$reset_button, {
+        ## NOTE: this does not reset the rest of the interface
+        ## (e.g. tabs) or the rest of the *inputs* e.g. the model
+        ## name.  These are probably worthwhile things to get done at
+        ## some point.
+        shinyAce::updateAceEditor(session, "editor", value = initial_code)
+      })
 
-      msg <- sprintf("%s, %.2f s elapsed",
-                     if (res$success) "Success" else "Error",
-                     res$elapsed[["elapsed"]])
-      cls <- if (res$success) "bg-success" else "bg-danger"
-      output$status <- shiny::renderUI(shiny::p(class = cls, msg))
+    shiny::observeEvent(
+      input$go_button, {
+        code <- input$editor
+        title <- input$title
+        model_id <- gsub(" -", "_", tolower(title))
 
-      if (res$success) {
-        output$compiler_output <- shiny::renderText(NULL)
-        output$messages <- shiny::renderText(NULL)
+        res <- withProgress(
+          message = "Compiling model...",
+          detail = "some detail", value = 1, {
+            compile_model(code, tempfile(), skip_cache = TRUE)
+          })
 
-        new_tab <- !(title %in% names(models$data))
+        msg <- sprintf("%s, %.2f s elapsed",
+                       if (res$success) "Success" else "Error",
+                       res$elapsed[["elapsed"]])
+        cls <- if (res$success) "bg-success" else "bg-danger"
+        output$status <- shiny::renderUI(shiny::p(class = cls, msg))
 
-        models$data[[title]] <- res$model
+        if (res$success) {
+          output$compiler_output <- shiny::renderText(NULL)
+          output$messages <- shiny::renderText(NULL)
 
-        if (new_tab) {
-          shiny::appendTab(
-            "models",
-            shiny::tabPanel(title, odin_ui_model_ui(model_id, title)))
+          new_tab <- !(title %in% names(models$data))
+
+          models$data[[title]] <- res$model
+
+          if (new_tab) {
+            shiny::appendTab(
+              "models",
+              shiny::tabPanel(title, odin_ui_model_ui(model_id, title)))
+          }
+
+          default_time <- 10
+          shiny::callModule(odin_ui_model, model_id, models$data[[title]],
+                            default_time)
+          shiny::updateTabsetPanel(session, "models", model_id)
+        } else {
+          output$messages <- shiny::renderText(paste0(res$error))
+          output$compiler_output <-
+            shiny::renderText(paste0(res$output, collapse = "\n"))
         }
+      })
+  }
+}
 
-        default_time <- 10
-        shiny::callModule(odin_ui_model, model_id, models$data[[title]],
-                          default_time)
-        shiny::updateTabsetPanel(session, "models", model_id)
-      } else {
-        output$messages <- shiny::renderText(paste0(res$error))
-        output$compiler_output <-
-          shiny::renderText(paste0(res$output, collapse = "\n"))
-      }
-    })
+
+validate_initial_code <- function(initial_code) {
+  if (is.null(initial_code)) {
+    initial_code <- readLines(odin_ui_file("minimal_model.R"))
+  } else if (!is.character(x)) {
+    stop("'initial_code' must be a character vector", call. = FALSE)
+  }
+  initial_code <- paste(initial_code, collapse = "\n")
+  if (!grepl("\\n$", initial_code)) {
+    initial_code <- paste0(initial_code, "\n")
+  }
+  initial_code
 }
