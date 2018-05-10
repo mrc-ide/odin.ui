@@ -10,7 +10,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:
     odin (>= 0.0.7),
-    shiny
+    shiny,
     dygraphs
 RoxygenNote: 6.0.1
 Suggests:
