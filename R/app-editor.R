@@ -54,9 +54,9 @@ odin_ui_editor_ui <- function(initial_code) {
                            accept = c("text/plain", ".R")),
 
           ## And these should go elsewhere too
-          shiny::actionButton("validate", "Validate",
-                              shiny::icon("check"), class = "bn-success"),
-          shiny::checkboxInput("auto_validate", "Auto validate", value = TRUE),
+          shiny::actionButton("validate_button", "Validate",
+                              shiny::icon("check"), class = "btn-success"),
+          shiny::checkboxInput("auto_validate", "Auto validate", value = FALSE),
 
           ## TODO: this disables _all_ progress - ideally we'd do this
           ## just for this id, which is going to be a slightly more
@@ -79,7 +79,8 @@ odin_ui_editor_server <- function(initial_code) {
   force(initial_code)
 
   function(input, output, session) {
-    models <- shiny::reactiveValues(data = list())
+    models <- shiny::reactiveValues(data = list(), errors = NULL)
+    validation <- shiny::reactiveValues(status = NULL)
 
     shiny::observeEvent(
       input$reset_button, {
@@ -110,18 +111,24 @@ odin_ui_editor_server <- function(initial_code) {
         }
       })
 
+    shiny::observeEvent(
+      input$validate_button, {
+        validation$status <- odin::odin_validate_model(input$editor, "text")
+      })
+
     output$parse_status <- shiny::renderText({
-      code <- input$editor
-
-      status <- odin::odin_validate_model(code, "text")
-      valid <- status$success
-
-      len <- nchar(code)
-      if (valid) {
-        shinyAce::updateAceEditor(session, "editor", border = "normal")
+      if (is.null(validation$status) || validation$status$success) {
+        border <- "normal"
       } else {
-        shinyAce::updateAceEditor(session, "editor", border = "alert")
-        status$error$message
+        border <- "alert"
+      }
+      shinyAce::updateAceEditor(session, "editor", border = border)
+      validation$status$error$message
+    })
+
+    shiny::observe({
+      if (input$auto_validate) {
+        validation$status <- odin::odin_validate_model(input$editor, "text")
       }
     })
 
