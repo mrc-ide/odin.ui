@@ -1,9 +1,11 @@
 odin_ui_control <- function(model, default_time, ns = identity) {
   pars <- odin_ui_control_parameters(model, ns)
   time <- odin_ui_control_time(default_time, ns)
-  colors <- odin_ui_control_colors(ns)
   output <- odin_ui_control_output(model, ns)
-  els <- c(pars$tags, time$tags, output$tags, colors$tags)
+  colors <- odin_ui_control_colors(ns)
+  line_width <- odin_ui_control_line_width(ns)
+  els <- c(pars$tags, time$tags, output$tags,
+           colors$tags, line_width$tags)
   list(tags = els,
        parameter_name_map = pars$name_map,
        has_start_time = time$has_start_time,
@@ -126,7 +128,21 @@ odin_ui_control_colors <- function(ns) {
 
   list(tags = tags)
 }
-  
+
+
+odin_ui_control_line_width <- function(ns) {
+  slider <- shiny::sliderInput(ns("line_width"),
+                               "Indicate line width",
+                               min = 0, max = 10,
+                               value = 1, step = 0.1)
+
+  tags <- odin_ui_control_section(
+    "Line width",
+    list(slider),
+    ns = ns)
+
+  list(tags = tags)
+}
 
 
 
