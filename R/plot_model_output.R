@@ -7,9 +7,11 @@
 ## - 'cols' is a named vector of colors to be used for plotting the variables,
 ## matched against the columns of xy[, -1]
 
+## - 'line_width' is a fixed line width
+
 ## Note: we purposedly avoid the use of a piping operator here.
 
-plot_model_output <- function(xy, include, cols) {
+plot_model_output <- function(xy, include, cols, line_width) {
 
   ## Generation of the basic plot
   var_to_keep <- names(include)[include]
@@ -21,7 +23,9 @@ plot_model_output <- function(xy, include, cols) {
 
   ## Customisation of the plot
 
-  out <- dygraphs::dyOptions(out, colors = unname(cols[var_to_keep]),
+  out <- dygraphs::dyOptions(out,
+                             colors = unname(cols[var_to_keep]),
+                             strokeWidth = line_width,
                              labelsKMB = TRUE,
                              digitsAfterDecimal = 0,
                              animatedZooms = TRUE)

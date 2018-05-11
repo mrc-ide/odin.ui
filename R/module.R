@@ -58,7 +58,8 @@ odin_ui_model <- function(input, output, session,
     }
     include <- odin_ui_get_output(input, control$output_name_map)
     colors <- odin_ui_get_colors(input, include)
-    plot_model_output(model_output$data, include, colors)
+    line_width <- input$line_width
+    plot_model_output(model_output$data, include, colors, line_width)
   })
 }
 
