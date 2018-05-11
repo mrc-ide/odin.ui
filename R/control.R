@@ -115,10 +115,10 @@ odin_ui_control_colors <- function(ns) {
                "soft1", "soft2", "spectral")
   
   
-  choice_palette <- shiny::radioButtons(ns("choice_palette"),
-                                        "Choose a palette",
-                                        choices,
-                                        selected = "odin")
+  choice_palette <- shiny::selectInput(ns("choice_palette"),
+                                       "Choose a palette",
+                                       choices,
+                                       selected = "odin")
 
   tags <- odin_ui_control_section(
     "Colors",
@@ -130,14 +130,29 @@ odin_ui_control_colors <- function(ns) {
 
 
 odin_ui_control_line_width <- function(ns) {
-  slider <- shiny::sliderInput(ns("line_width"),
+  width_slider <- shiny::sliderInput(ns("line_width"),
                                "Indicate line width",
                                min = 0, max = 10,
                                value = 1, step = 0.1)
 
+  fill_checkbox <- shiny::checkboxInput(ns("graph_fill"),
+                                        "Fill the graph?",
+                                        value = FALSE
+                                        )
+
+  stack_checkbox <- shiny::checkboxInput(ns("graph_stack"),
+                                        "Stack the graph?",
+                                        value = FALSE
+                                        )
+
+  alpha_slider <- shiny::sliderInput(ns("graph_alpha"),
+                                     "Opacity",
+                                     min = 0, max = 1,
+                                     value = 1, step = 0.01)
+  
   tags <- odin_ui_control_section(
-    "Line width",
-    list(slider),
+    "Graph options",
+    list(width_slider, fill_checkbox, stack_checkbox, alpha_slider),
     ns = ns)
 
   list(tags = tags)
