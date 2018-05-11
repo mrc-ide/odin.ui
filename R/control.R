@@ -1,13 +1,15 @@
 odin_ui_control <- function(model, default_time, ns = identity) {
   pars <- odin_ui_control_parameters(model, ns)
   time <- odin_ui_control_time(default_time, ns)
+  colors <- odin_ui_control_colors(ns)
   output <- odin_ui_control_output(model, ns)
-  els <- c(pars$tags, time$tags, output$tags)
+  els <- c(pars$tags, time$tags, output$tags, colors$tags)
   list(tags = els,
        parameter_name_map = pars$name_map,
        has_start_time = time$has_start_time,
        output_name_map = output$name_map,
-       output_cols = output$cols)
+       output_cols = output$cols
+       )
 }
 
 
@@ -95,7 +97,7 @@ odin_ui_control_output <- function(model, ns) {
 
   name_map <- set_names(paste0("plot_", vars$name_target), vars$name_target)
   cols <- set_names(cols(length(name_map)), vars$name_target)
-
+  
   tags <- odin_ui_control_section(
     "Output",
     Map(shiny::checkboxInput, ns(name_map), vars$name_target, value = TRUE),
@@ -103,3 +105,28 @@ odin_ui_control_output <- function(model, ns) {
 
   list(tags = tags, name_map = name_map, cols = cols)
 }
+
+
+odin_ui_control_colors <- function(ns) {
+  ## note: choices must be valid palettes, as the palette will be obtained by
+  ## 'get' in odin_ui_get_colors
+  choices <- c("funky", "heat.colors", "odin", "rainbow", "soft1", "soft2",
+               "spectral", "terrain.colors")
+  
+  
+  choice_palette <- shiny::radioButtons(ns("choice_palette"),
+                                        "Choose a palette",
+                                        choices,
+                                        selected = "odin")
+
+  tags <- odin_ui_control_section(
+    "Colors",
+    list(choice_palette),
+    ns = ns)
+
+  list(tags = tags)
+}
+  
+
+
+
