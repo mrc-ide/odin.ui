@@ -52,6 +52,12 @@ odin_ui_editor_ui <- function(initial_code) {
                            "Upload model file",
                            multiple = FALSE,
                            accept = c("text/plain", ".R")),
+
+          ## And these should go elsewhere too
+          shiny::actionButton("validate", "Validate",
+                              shiny::icon("check"), class = "bn-success"),
+          shiny::checkboxInput("auto_validate", "Auto validate", value = TRUE),
+
           ## TODO: this disables _all_ progress - ideally we'd do this
           ## just for this id, which is going to be a slightly more
           ## clever css rule.
