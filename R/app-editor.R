@@ -121,14 +121,16 @@ odin_ui_editor_server <- function(initial_code) {
       shinyAce::updateAceEditor(session, "editor", border = info$border)
       output$validation_info <- shiny::renderUI(
         shiny::div(
-          class = sprintf("panel panel-%s", info$class),
+          class = "panel-group",
           shiny::div(
-            class = "panel-heading",
-            shiny::icon(paste(info$icon, "fa-lg")),
-            "Validation:",
-            info$result),
-          if (nzchar(info$info)) shiny::div(class = "panel-body",
-                                            shiny::pre(info$info))))
+            class = sprintf("panel panel-%s", info$class),
+            shiny::div(
+              class = "panel-heading",
+              shiny::icon(paste(info$icon, "fa-lg")),
+              "Validation:",
+              info$result),
+            if (nzchar(info$info)) shiny::div(class = "panel-body",
+                                              shiny::pre(info$info)))))
     })
 
     shiny::observe({
