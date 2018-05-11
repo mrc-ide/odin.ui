@@ -2,10 +2,9 @@ odin_ui_control <- function(model, default_time, ns = identity) {
   pars <- odin_ui_control_parameters(model, ns)
   time <- odin_ui_control_time(default_time, ns)
   output <- odin_ui_control_output(model, ns)
-  colors <- odin_ui_control_colors(ns)
-  line_width <- odin_ui_control_line_width(ns)
+  graph_options <- odin_ui_control_graph_options(ns)
   els <- c(pars$tags, time$tags, output$tags,
-           colors$tags, line_width$tags)
+           graph_options$tags)
   list(tags = els,
        parameter_name_map = pars$name_map,
        has_start_time = time$has_start_time,
@@ -108,7 +107,7 @@ odin_ui_control_output <- function(model, ns) {
 }
 
 
-odin_ui_control_colors <- function(ns) {
+odin_ui_control_graph_options <- function(ns) {
   ## note: choices must be valid palettes, as the palette will be obtained by
   ## 'get' in odin_ui_get_colors
   choices <- c("brewer_set1", "brewer_set2", "funky", "odin", "rainbow",
@@ -120,16 +119,6 @@ odin_ui_control_colors <- function(ns) {
                                        choices,
                                        selected = "odin")
 
-  tags <- odin_ui_control_section(
-    "Colors",
-    list(choice_palette),
-    ns = ns)
-
-  list(tags = tags)
-}
-
-
-odin_ui_control_line_width <- function(ns) {
   width_slider <- shiny::sliderInput(ns("line_width"),
                                "Indicate line width",
                                min = 0, max = 10,
@@ -152,7 +141,8 @@ odin_ui_control_line_width <- function(ns) {
   
   tags <- odin_ui_control_section(
     "Graph options",
-    list(width_slider, fill_checkbox, stack_checkbox, alpha_slider),
+    list(choice_palette, width_slider, fill_checkbox,
+         stack_checkbox, alpha_slider),
     ns = ns)
 
   list(tags = tags)
