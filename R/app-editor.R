@@ -116,8 +116,9 @@ odin_ui_editor_server <- function(initial_code) {
         validation$status <- odin::odin_validate_model(input$editor, "text")
       })
 
-    output$validation_info <- shiny::renderText({
+    shiny::observe({
       status <- validation$status
+
       if (is.null(status) || status$success) {
         border <- "normal"
       } else {
@@ -125,11 +126,12 @@ odin_ui_editor_server <- function(initial_code) {
       }
       shinyAce::updateAceEditor(session, "editor", border = border)
       if (!is.null(status$error$message)) {
-        status$error$message
+        out <- status$error$message
       } else {
-        paste(vcapply(validation$status$messages, "[[", "message"),
-              collapse = "\n\n")
+        out <- paste(vcapply(validation$status$messages, "[[", "message"),
+                     collapse = "\n\n")
       }
+      output$validation_info <- shiny::renderText(out)
     })
 
     shiny::observe({
