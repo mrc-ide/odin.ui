@@ -64,11 +64,7 @@ odin_ui_editor_ui <- function(initial_code) {
           shiny::tags$style(".shiny-file-input-progress {display: none}"),
 
           shiny::htmlOutput("validation_info"),
-
-          shiny::htmlOutput("status"),
-          shiny::verbatimTextOutput("messages"),
-          shiny::verbatimTextOutput("input_code"),
-          shiny::verbatimTextOutput("compiler_output")))))
+          shiny::htmlOutput("compilation_info")))))
 }
 
 
@@ -81,6 +77,7 @@ odin_ui_editor_server <- function(initial_code) {
   function(input, output, session) {
     models <- shiny::reactiveValues(data = list(), errors = NULL)
     validation <- shiny::reactiveValues(status = NULL)
+    compilation <- shiny::reactiveValues(result = NULL)
 
     shiny::observeEvent(
       input$reset_button, {
@@ -134,6 +131,26 @@ odin_ui_editor_server <- function(initial_code) {
     })
 
     shiny::observe({
+      if (is.null(compilation$result)) {
+        output$compilation_info <- shiny::renderUI(NULL)
+        return()
+      }
+      info <- odin_compilation_info(compilation$result)
+      output$compilation_info <- shiny::renderUI(
+        shiny::div(
+          class = "panel-group",
+          shiny::div(
+            class = sprintf("panel panel-%s", info$class),
+            shiny::div(
+              class = "panel-heading",
+              shiny::icon(paste(info$icon, "fa-lg")),
+              "Compilation: ",
+              info$result),
+            if (nzchar(info$info)) shiny::div(class = "panel-body",
+                                              shiny::pre(info$info)))))
+    })
+
+    shiny::observe({
       if (input$auto_validate) {
         validation$status <- odin::odin_validate_model(input$editor, "text")
       }
@@ -151,16 +168,11 @@ odin_ui_editor_server <- function(initial_code) {
             compile_model(code, tempfile(), skip_cache = TRUE)
           })
 
-        msg <- sprintf("%s, %.2f s elapsed",
-                       if (res$success) "Success" else "Error",
-                       res$elapsed[["elapsed"]])
-        cls <- if (res$success) "bg-success" else "bg-danger"
-        output$status <- shiny::renderUI(shiny::p(class = cls, msg))
+        ## Some extra bits here to allow for lazy re-building of the
+        ## interface
+        compilation$result <- list(code = code, result = res, current = TRUE)
 
         if (res$success) {
-          output$compiler_output <- shiny::renderText(NULL)
-          output$messages <- shiny::renderText(NULL)
-
           new_tab <- !(title %in% names(models$data))
 
           models$data[[title]] <- res$model
@@ -175,10 +187,6 @@ odin_ui_editor_server <- function(initial_code) {
           shiny::callModule(odin_ui_model, model_id, models$data[[title]],
                             default_time)
           shiny::updateTabsetPanel(session, "models", model_id)
-        } else {
-          output$messages <- shiny::renderText(paste0(res$error))
-          output$compiler_output <-
-            shiny::renderText(paste0(res$output, collapse = "\n"))
         }
       })
   }
@@ -237,4 +245,29 @@ odin_validation_info <- function(status) {
 
   list(success = success, border = border, info = info,
        class = class, icon = icon, result = result)
+}
+
+
+odin_compilation_info <- function(x) {
+  x <- data$result
+
+  success <- x$success
+  msg <- sprintf("%s, %.2f s elapsed",
+                 if (x$success) "success" else "error",
+                 x$elapsed[["elapsed"]])
+  if (success) {
+    class <- "success"
+    icon <- "check-circle"
+    info <- paste(x$output, collapse = "\n")
+  } else {
+    class <- "danger"
+    icon <- "times-circle"
+    info <- x$error
+  }
+
+  list(success = success,
+       info = info,
+       class = class,
+       icon = icon,
+       result = msg)
 }
