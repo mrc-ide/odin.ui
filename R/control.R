@@ -96,14 +96,13 @@ odin_ui_control_output <- function(model, ns) {
   }
 
   name_map <- set_names(paste0("plot_", vars$name_target), vars$name_target)
-  cols <- set_names(cols(length(name_map)), vars$name_target)
   
   tags <- odin_ui_control_section(
     "Output",
     Map(shiny::checkboxInput, ns(name_map), vars$name_target, value = TRUE),
     ns = ns)
 
-  list(tags = tags, name_map = name_map, cols = cols)
+  list(tags = tags, name_map = name_map)
 }
 
 
