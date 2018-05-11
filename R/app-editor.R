@@ -63,7 +63,7 @@ odin_ui_editor_ui <- function(initial_code) {
           ## clever css rule.
           shiny::tags$style(".shiny-file-input-progress {display: none}"),
 
-          shiny::textOutput("parse_status"),
+          shiny::verbatimTextOutput("validation_info"),
 
           shiny::htmlOutput("status"),
           shiny::verbatimTextOutput("messages"),
@@ -116,14 +116,20 @@ odin_ui_editor_server <- function(initial_code) {
         validation$status <- odin::odin_validate_model(input$editor, "text")
       })
 
-    output$parse_status <- shiny::renderText({
-      if (is.null(validation$status) || validation$status$success) {
+    output$validation_info <- shiny::renderText({
+      status <- validation$status
+      if (is.null(status) || status$success) {
         border <- "normal"
       } else {
         border <- "alert"
       }
       shinyAce::updateAceEditor(session, "editor", border = border)
-      validation$status$error$message
+      if (!is.null(status$error$message)) {
+        status$error$message
+      } else {
+        paste(vcapply(validation$status$messages, "[[", "message"),
+              collapse = "\n\n")
+      }
     })
 
     shiny::observe({

@@ -9,6 +9,11 @@ vlapply <- function(X, FUN, ...) {
 }
 
 
+vcapply <- function(X, FUN, ...) {
+  vapply(X, FUN, character(1), ...)
+}
+
+
 drop_null <- function(x) {
   x[!vlapply(x, is.null)]
 }
