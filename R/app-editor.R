@@ -12,13 +12,22 @@
 ##'   (exponential growth).
 ##'
 ##' @param ... Additional paramters passed to \code{shiny::runApp}
+##'
+##' @param run Logical, indicating if the app should be run.  If
+##'   \code{false} then the app is returned rather than run, and all
+##'   arguments in \code{...} are ignored.
+##'
 ##' @export
-odin_ui_editor_app <- function(initial_code = NULL, ...) {
+odin_ui_editor_app <- function(initial_code = NULL, ..., run = TRUE) {
   initial_code <- validate_initial_code(initial_code)
   app <- shiny::shinyApp(
     ui = odin_ui_editor_ui(initial_code),
     server = odin_ui_editor_server(initial_code))
-  shiny::runApp(app, ...)
+  if (run) {
+    shiny::runApp(app, ...)
+  } else {
+    app
+  }
 }
 
 

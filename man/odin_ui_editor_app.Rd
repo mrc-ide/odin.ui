@@ -4,7 +4,7 @@
 \alias{odin_ui_editor_app}
 \title{Shiny app for interactively creating odin models}
 \usage{
-odin_ui_editor_app(initial_code = NULL, ...)
+odin_ui_editor_app(initial_code = NULL, ..., run = TRUE)
 }
 \arguments{
 \item{initial_code}{Optional character vector of odin code to be
@@ -13,6 +13,10 @@ used as the contents of the editor on startup.  If omitted (or
 (exponential growth).}
 
 \item{...}{Additional paramters passed to \code{shiny::runApp}}
+
+\item{run}{Logical, indicating if the app should be run.  If
+\code{false} then the app is returned rather than run, and all
+arguments in \code{...} are ignored.}
 }
 \description{
 Shiny app for interactively creating odin models
