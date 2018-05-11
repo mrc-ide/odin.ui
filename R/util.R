@@ -41,3 +41,12 @@ odin_ui_file <- function(path) {
 read_text <- function(filename) {
   readChar(filename, file.size(filename))
 }
+
+
+run_app <- function(app, run, ...) {
+  if (run) {
+    shiny::runApp(app, ...)
+  } else {
+    app
+  }
+}

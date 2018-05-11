@@ -1,0 +1,4 @@
+title: SIR model
+code: sir.R
+docs: sir.md
+default_time: 10

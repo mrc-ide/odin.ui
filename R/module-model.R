@@ -25,7 +25,7 @@ odin_ui_model_ui <- function(id, title) {
   path_css <- system.file("styles.css", package = "odin.ui", mustWork = TRUE)
   shiny::tagList(
     shiny::includeCSS(path_css),
-    shiny::titlePanel(title),
+    if (!is.null(title)) shiny::titlePanel(title),
     shiny::sidebarLayout(
       shiny::sidebarPanel(odin_ui_model_input(id)),
       shiny::mainPanel(odin_ui_model_output(id))))

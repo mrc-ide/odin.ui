@@ -12,7 +12,8 @@ Imports:
     dygraphs,
     odin (>= 0.0.8),
     shiny (>= 1.0.4),
-    shinyAce
+    shinyAce,
+    yaml
 RoxygenNote: 6.0.1
 Suggests:
     testthat

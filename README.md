@@ -21,6 +21,12 @@ Create an interface for a particular odin model:
 odin.ui::odin_ui_app(model, default_time = 10)
 ```
 
+Code and docs side by side
+
+```r
+odin.ui::odin_ui_doc_app(system.file("examples/sir.yml", package = "odin.ui"))
+```
+
 ## Docker
 
 
