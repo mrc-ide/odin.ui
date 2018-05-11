@@ -38,9 +38,7 @@ odin_ui_palettes <- function(palette = NULL) {
     spectral = grDevices::colorRampPalette(
       c("#D53E4F", "#E55748", "#F47145", "#F99455", "#FDB466", "#FDCF7C", 
         "#FEE695", "#FEF6B1", "#F8FCB4", "#EBF79F", "#D2ED9C", "#B2E0A2", 
-        "#8FD2A4", "#6AC3A4", "#4DA6B0", "#3288BD")
-    )
-  )
+        "#8FD2A4", "#6AC3A4", "#4DA6B0", "#3288BD")))
 
   if (!is.null(palette)) {
     if (!palette %in% names(out)) {

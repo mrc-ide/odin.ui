@@ -8,8 +8,7 @@ odin_ui_control <- function(model, default_time, ns = identity) {
   list(tags = els,
        parameter_name_map = pars$name_map,
        has_start_time = time$has_start_time,
-       output_name_map = output$name_map
-       )
+       output_name_map = output$name_map)
 }
 
 
@@ -107,10 +106,7 @@ odin_ui_control_output <- function(model, ns) {
 
 
 odin_ui_control_graph_options <- function(ns) {
-  ## note: choices must be valid palettes, as the palette will be obtained by
-  ## 'get' in odin_ui_get_colors
   choices <- names(odin_ui_palettes())
-  
   
   choice_palette <- shiny::selectInput(ns("choice_palette"),
                                        "Choose a palette",
@@ -124,13 +120,11 @@ odin_ui_control_graph_options <- function(ns) {
 
   fill_checkbox <- shiny::checkboxInput(ns("graph_fill"),
                                         "Fill the graph?",
-                                        value = FALSE
-                                        )
+                                        value = FALSE)
 
   stack_checkbox <- shiny::checkboxInput(ns("graph_stack"),
                                         "Stack the graph?",
-                                        value = FALSE
-                                        )
+                                        value = FALSE)
 
   alpha_slider <- shiny::sliderInput(ns("graph_alpha"),
                                      "Opacity",

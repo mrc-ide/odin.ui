@@ -6,7 +6,7 @@
 ## - 'include' is a named logical vector indicating which variables should be
 ## - included in the plot, matched against the columns of xy[, -1]
 
-## - 'cols' is a named vector of colors to be used for plotting the variables,
+## - 'col' is a named vector of colours to be used for plotting the variables,
 ## matched against the columns of xy[, -1]
 
 ## - 'line_width' is a fixed line width
@@ -27,13 +27,13 @@ plot_model_output <- function(xy, options) {
                          xy[, var_to_keep, drop = FALSE])
   out <- dygraphs::dygraph(df)
 
-  ## colors need to be unnamed; we also add transparency
-  colors <- options$colors[var_to_keep]
-  colors <- unname(transp(colors, options$alpha))
+  ## colours need to be unnamed; we also add transparency
+  cols <- options$cols[var_to_keep]
+  cols <- unname(transp(cols, options$alpha))
   
   ## Customisation of the plot
   out <- dygraphs::dyOptions(out,
-                             colors = colors,
+                             colors = cols,
                              strokeWidth = options$line_width,
                              fillGraph = options$fill,
                              fillAlpha = max(0, options$alpha - 0.1),
