@@ -36,3 +36,8 @@ odin_ui_file <- function(path) {
 read_text <- function(filename) {
   readChar(filename, file.size(filename))
 }
+
+
+is_valid_code <- function(x) {
+  !inherits(tryCatch(parse(text = x), error = identity), "error")
+}

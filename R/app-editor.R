@@ -38,7 +38,7 @@ odin_ui_editor_ui <- function(initial_code) {
           ## should display some helper text on the right panel.  That
           ## would be super useful for a teaching situation.
           shinyAce::aceEditor("editor", mode = "r", value = initial_code,
-                              debounce = 10),
+                              debounce = 100),
           shiny::actionButton("go_button", "Compile",
                               shiny::icon("cogs"),
                               class = "btn-primary"),
@@ -56,6 +56,8 @@ odin_ui_editor_ui <- function(initial_code) {
           ## just for this id, which is going to be a slightly more
           ## clever css rule.
           shiny::tags$style(".shiny-file-input-progress {display: none}"),
+
+          shiny::textOutput("parse_status"),
 
           shiny::htmlOutput("status"),
           shiny::verbatimTextOutput("messages"),
@@ -101,6 +103,19 @@ odin_ui_editor_server <- function(initial_code) {
           shiny::updateTextInput(session, "title", value = title)
         }
       })
+
+    output$parse_status <- shiny::renderText({
+      code <- input$editor
+      valid <- is_valid_code(code)
+      len <- nchar(code)
+      if (valid) {
+        shinyAce::updateAceEditor(session, "editor", border = "normal")
+      } else {
+        shinyAce::updateAceEditor(session, "editor", border = "alert")
+      }
+      sprintf("%s code with %d characters", if (valid) "valid" else "invalid",
+              len)
+    })
 
     shiny::observeEvent(
       input$go_button, {
