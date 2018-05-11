@@ -2,24 +2,15 @@
 ## single argument 'n' which is the number of colors to be taken from the
 ## palette.
 
-soft1 <- grDevices::colorRampPalette(
-  c("#CD88AF", "#9E4779", "#711A4B", "#440027", "#FFE4AA", "#C6A359", 
-    "#8E6A21", "#553A00", "#7986AC", "#445585", "#1E2F5F", "#061439", 
-    "#D4EE9F", "#97B953", "#62841F", "#354F00")
+brewer_set1 <-  grDevices::colorRampPalette(
+  c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#FFFF33", 
+    "#A65628", "#F781BF")
 )
 
 
-soft2 <- grDevices::colorRampPalette(
-  c("#7BB992", "#418F5E", "#176735", "#003E17", "#FFF3AA", "#C6B759", "#8E7E21",
-    "#554900", "#FFB9AA", "#C66C59", "#8E3421", "#550F00", "#8B7AAE", "#5A4587",
-    "#331E60", "#16063A")
-)
-
-
-spectral <- grDevices::colorRampPalette(
-  c("#D53E4F", "#E55748", "#F47145", "#F99455", "#FDB466", "#FDCF7C", 
-    "#FEE695", "#FEF6B1", "#F8FCB4", "#EBF79F", "#D2ED9C", "#B2E0A2", 
-    "#8FD2A4", "#6AC3A4", "#4DA6B0", "#3288BD")
+brewer_set2 <-  grDevices::colorRampPalette(
+  c("#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", 
+    "#E5C494", "#B3B3B3")
 )
 
 
@@ -31,4 +22,22 @@ funky <- grDevices::colorRampPalette(
 
 odin <-  grDevices::colorRampPalette(
   c("#2e5cb8", "#39ac73", "#cccc00", "#ff884d", "#cc0044")
+)
+
+
+soft1 <- grDevices::colorRampPalette(
+  c("#7BB992", "#418F5E", "#FFF3AA", "#C6B759", "#FFB9AA", "#C66C59", 
+    "#8B7AAE", "#5A4587")
+)
+
+
+soft2 <- grDevices::colorRampPalette(
+  c("#9E4779", "#BA9057", "#3C4D7D", "#93B54F")
+)
+
+
+spectral <- grDevices::colorRampPalette(
+  c("#D53E4F", "#E55748", "#F47145", "#F99455", "#FDB466", "#FDCF7C", 
+    "#FEE695", "#FEF6B1", "#F8FCB4", "#EBF79F", "#D2ED9C", "#B2E0A2", 
+    "#8FD2A4", "#6AC3A4", "#4DA6B0", "#3288BD")
 )

@@ -9,8 +9,7 @@ odin_ui_control <- function(model, default_time, ns = identity) {
   list(tags = els,
        parameter_name_map = pars$name_map,
        has_start_time = time$has_start_time,
-       output_name_map = output$name_map,
-       output_cols = output$cols
+       output_name_map = output$name_map
        )
 }
 
@@ -112,8 +111,8 @@ odin_ui_control_output <- function(model, ns) {
 odin_ui_control_colors <- function(ns) {
   ## note: choices must be valid palettes, as the palette will be obtained by
   ## 'get' in odin_ui_get_colors
-  choices <- c("funky", "heat.colors", "odin", "rainbow", "soft1", "soft2",
-               "spectral", "terrain.colors")
+  choices <- c("brewer_set1", "brewer_set2", "funky", "odin", "rainbow",
+               "soft1", "soft2", "spectral")
   
   
   choice_palette <- shiny::radioButtons(ns("choice_palette"),
@@ -143,6 +142,3 @@ odin_ui_control_line_width <- function(ns) {
 
   list(tags = tags)
 }
-
-
-
