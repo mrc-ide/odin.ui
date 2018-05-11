@@ -110,8 +110,7 @@ odin_ui_control_output <- function(model, ns) {
 odin_ui_control_graph_options <- function(ns) {
   ## note: choices must be valid palettes, as the palette will be obtained by
   ## 'get' in odin_ui_get_colors
-  choices <- c("brewer_set1", "brewer_set2", "funky", "odin", "rainbow",
-               "soft1", "soft2", "spectral")
+  choices <- names(odin_ui_palettes())
   
   
   choice_palette <- shiny::selectInput(ns("choice_palette"),

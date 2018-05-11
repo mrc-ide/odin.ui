@@ -83,7 +83,7 @@ odin_ui_get_output <- function(x, map) {
 
 odin_ui_get_graph_options <- function(input, name_map) {
   include <- odin_ui_get_output(input, name_map)
-  palette <- get(input$choice_palette)
+  palette <- odin_ui_palettes(input$choice_palette)
   colors <- set_names(palette(length(include)), names(include))
   list(include = include,
        colors = colors,
