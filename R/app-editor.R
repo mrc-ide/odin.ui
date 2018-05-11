@@ -106,15 +106,17 @@ odin_ui_editor_server <- function(initial_code) {
 
     output$parse_status <- shiny::renderText({
       code <- input$editor
-      valid <- is_valid_code(code)
+
+      status <- odin::odin_validate_model(code, "text")
+      valid <- status$success
+
       len <- nchar(code)
       if (valid) {
         shinyAce::updateAceEditor(session, "editor", border = "normal")
       } else {
         shinyAce::updateAceEditor(session, "editor", border = "alert")
+        status$error$message
       }
-      sprintf("%s code with %d characters", if (valid) "valid" else "invalid",
-              len)
     })
 
     shiny::observeEvent(
