@@ -20,3 +20,13 @@ Create an interface for a particular odin model:
 ```r
 odin.ui::odin_ui_app(model, default_time = 10)
 ```
+
+## Docker
+
+
+```
+docker pull mrcide/odin.ui
+docker run --rm -p 3838:3838 mrcide/odin.ui
+```
+
+Then visit http://localhost:3838/odin.ui/

@@ -12,3 +12,5 @@ __pycache__
 ^development\.md$
 vignettes_src
 examples
+^docker$
+^\.dockerignore$
