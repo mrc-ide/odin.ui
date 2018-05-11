@@ -63,7 +63,7 @@ odin_ui_editor_ui <- function(initial_code) {
           ## clever css rule.
           shiny::tags$style(".shiny-file-input-progress {display: none}"),
 
-          shiny::verbatimTextOutput("validation_info"),
+          shiny::htmlOutput("validation_info"),
 
           shiny::htmlOutput("status"),
           shiny::verbatimTextOutput("messages"),
@@ -119,7 +119,16 @@ odin_ui_editor_server <- function(initial_code) {
     shiny::observe({
       info <- odin_validation_info(validation$status)
       shinyAce::updateAceEditor(session, "editor", border = info$border)
-      output$validation_info <- shiny::renderText(info$info)
+      output$validation_info <- shiny::renderUI(
+        shiny::div(
+          class = sprintf("panel panel-%s", info$class),
+          shiny::div(
+            class = "panel-heading",
+            shiny::icon(paste(info$icon, "fa-lg")),
+            "Validation:",
+            info$result),
+          if (nzchar(info$info)) shiny::div(class = "panel-body",
+                                            shiny::pre(info$info))))
     })
 
     shiny::observe({
@@ -199,14 +208,31 @@ filename_to_title <- function(filename) {
 
 
 odin_validation_info <- function(status) {
-  success <- is.null(status) || status$success
-
-  border <- if (success) "normal" else "alert"
   if (!is.null(status$error$message)) {
     info <- status$error$message
-  } else {
+    result <- "error"
+  } else if (length(status$messages) > 0L) {
     info <- paste(vcapply(status$messages, "[[", "message"), collapse = "\n\n")
+    result <- "note"
+  } else {
+    info <- ""
+    result <- "success"
   }
 
-  list(success = success, border = border, info = info)
+  success <- result != "error"
+  border <- if (success) "normal" else "alert"
+
+  if (result == "success") {
+    class <- "success"
+    icon <- "check-circle"
+  } else if (result == "note") {
+    class <- "info"
+    icon <- "info-circle"
+  } else {
+    class <- "danger"
+    icon <- "times-circle"
+  }
+
+  list(success = success, border = border, info = info,
+       class = class, icon = icon, result = result)
 }
