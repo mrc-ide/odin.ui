@@ -1,3 +1,5 @@
+## 'options' is a list containing the following names elements:
+
 ## - 'xy' is a matrix whose first column is always time, but with varying labels
 ## ('t' or 'step')
 
@@ -15,10 +17,10 @@
 
 ## Note: we purposedly avoid the use of a piping operator here.
 
-plot_model_output <- function(xy, include, cols, line_width = 1,
-                              fill = FALSE, stack = FALSE, alpha = 1) {
-
+plot_model_output <- function(xy, options) {
+  
   ## Generation of the basic plot
+  include <- options$include
   var_to_keep <- names(include)[include]
   time <- round_time(xy[, 1, drop = TRUE])
   df <- cbind.data.frame(time = time,
@@ -26,17 +28,17 @@ plot_model_output <- function(xy, include, cols, line_width = 1,
   out <- dygraphs::dygraph(df)
 
   ## colors need to be unnamed; we also add transparency
-  colors <- unname(cols[var_to_keep])
-  colors <- transp(colors, alpha)
+  colors <- options$colors[var_to_keep]
+  colors <- unname(transp(colors, options$alpha))
   
   ## Customisation of the plot
   out <- dygraphs::dyOptions(out,
                              colors = colors,
-                             strokeWidth = line_width,
-                             fillGraph = fill,
-                             fillAlpha = max(0, alpha - 0.1),
+                             strokeWidth = options$line_width,
+                             fillGraph = options$fill,
+                             fillAlpha = max(0, options$alpha - 0.1),
                              labelsKMB = TRUE,
-                             stackedGraph = stack,
+                             stackedGraph = options$stack,
                              digitsAfterDecimal = 0,
                              animatedZooms = TRUE)
   out <- dygraphs::dyAxis(out, "x", label = "Time", drawGrid = FALSE)
