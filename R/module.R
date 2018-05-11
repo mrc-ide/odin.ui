@@ -57,7 +57,8 @@ odin_ui_model <- function(input, output, session,
       return()
     }
     include <- odin_ui_get_output(input, control$output_name_map)
-    plot_model_output(model_output$data, include, control$output_cols)
+    colors <- odin_ui_get_colors(input, include)
+    plot_model_output(model_output$data, include, colors)
   })
 }
 
@@ -76,4 +77,10 @@ odin_ui_get_time <- function(x, has_start_time) {
 
 odin_ui_get_output <- function(x, map) {
   vlapply(map, function(el) x[[el]])
+}
+
+
+odin_ui_get_colors <- function(input, include) {
+  palette <- get(input$choice_palette)
+  set_names(palette(length(include)), names(include))
 }
