@@ -151,6 +151,10 @@ odin_ui_editor_server <- function(initial_code) {
     })
 
     shiny::observe({
+      if (isTRUE(compilation$result$is_current) &&
+          !identical(compilation$result$code, input$editor)) {
+        compilation$result$is_current <- FALSE
+      }
       if (input$auto_validate) {
         validation$status <- odin::odin_validate_model(input$editor, "text")
       }
@@ -170,7 +174,7 @@ odin_ui_editor_server <- function(initial_code) {
 
         ## Some extra bits here to allow for lazy re-building of the
         ## interface
-        compilation$result <- list(code = code, result = res, current = TRUE)
+        compilation$result <- list(code = code, result = res, is_current = TRUE)
 
         if (res$success) {
           new_tab <- !(title %in% names(models$data))
@@ -248,19 +252,23 @@ odin_validation_info <- function(status) {
 }
 
 
-odin_compilation_info <- function(x) {
+odin_compilation_info <- function(data) {
   x <- data$result
+  is_current <- data$is_current
 
   success <- x$success
   msg <- sprintf("%s, %.2f s elapsed",
                  if (x$success) "success" else "error",
                  x$elapsed[["elapsed"]])
+  if (!is_current) {
+    msg <- paste(msg, "(code has changed since this was run)")
+  }
   if (success) {
-    class <- "success"
+    class <- if (is_current) "success" else "default"
     icon <- "check-circle"
     info <- paste(x$output, collapse = "\n")
   } else {
-    class <- "danger"
+    class <- if (is_current) "danger" else "warning"
     icon <- "times-circle"
     info <- x$error
   }
