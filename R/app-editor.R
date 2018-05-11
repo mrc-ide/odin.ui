@@ -117,21 +117,9 @@ odin_ui_editor_server <- function(initial_code) {
       })
 
     shiny::observe({
-      status <- validation$status
-
-      if (is.null(status) || status$success) {
-        border <- "normal"
-      } else {
-        border <- "alert"
-      }
-      shinyAce::updateAceEditor(session, "editor", border = border)
-      if (!is.null(status$error$message)) {
-        out <- status$error$message
-      } else {
-        out <- paste(vcapply(validation$status$messages, "[[", "message"),
-                     collapse = "\n\n")
-      }
-      output$validation_info <- shiny::renderText(out)
+      info <- odin_validation_info(validation$status)
+      shinyAce::updateAceEditor(session, "editor", border = info$border)
+      output$validation_info <- shiny::renderText(info$info)
     })
 
     shiny::observe({
@@ -207,4 +195,18 @@ title_to_filename <- function(name) {
 
 filename_to_title <- function(filename) {
   gsub("[_-]", " ", sub("\\.R$", "", filename))
+}
+
+
+odin_validation_info <- function(status) {
+  success <- is.null(status) || status$success
+
+  border <- if (success) "normal" else "alert"
+  if (!is.null(status$error$message)) {
+    info <- status$error$message
+  } else {
+    info <- paste(vcapply(status$messages, "[[", "message"), collapse = "\n\n")
+  }
+
+  list(success = success, border = border, info = info)
 }
