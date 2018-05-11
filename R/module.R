@@ -56,10 +56,18 @@ odin_ui_model <- function(input, output, session,
     if (is.null(model_output$data)) {
       return()
     }
+    
+    ## we may want to i) move all this inside plot_model_output, and pass only
+    ## 'input' to the function, or ii) make a get_graph_params function and use
+    ## it here
     include <- odin_ui_get_output(input, control$output_name_map)
     colors <- odin_ui_get_colors(input, include)
     line_width <- input$line_width
-    plot_model_output(model_output$data, include, colors, line_width)
+    fill <- input$graph_fill
+    alpha <- input$graph_alpha
+    stack <- input$graph_stack
+    plot_model_output(model_output$data, include, colors,
+                      line_width, fill, stack, alpha)
   })
 }
 
