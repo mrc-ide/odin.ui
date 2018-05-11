@@ -34,7 +34,10 @@ round_time <- function(x) {
 
 ## make a color transparent
 transp <- function (col, alpha = 0.5) {
-  apply(col2rgb(col),
+  apply(grDevices::col2rgb(col),
         2,
-        function(c) rgb(c[1]/255, c[2]/255, c[3]/255, alpha))
+        function(c) grDevices::rgb(c[1]/255,
+                                   c[2]/255,
+                                   c[3]/255,
+                                   alpha))
 }
