@@ -13,16 +13,21 @@
 ##'
 ##' @param title String to use for the application title
 ##'
-##' @param ... Additional arguments passed through to \code{shiny::runApp}
+##' @param ... Additional paramters passed to \code{shiny::runApp}
+##'
+##' @param run Logical, indicating if the app should be run.  If
+##'   \code{false} then the app is returned rather than run, and all
+##'   arguments in \code{...} are ignored.
 ##'
 ##' @export
 ##' @importFrom odin odin
-odin_ui_app <- function(model, default_time, title = "odin ui", ...) {
+odin_ui_app <- function(model, default_time, title = "odin ui", ...,
+                        run = TRUE) {
   ## TODO: this needs a better name - this is pretty poor
   app <- shiny::shinyApp(
     ui = odin_ui_app_ui(title),
     server = odin_ui_app_server(model, default_time))
-  shiny::runApp(app, ...)
+  run_app(app, run, ...)
 }
 
 

@@ -2,7 +2,7 @@
 ##'
 ##' @title Display model with documentation
 ##' @param path_config Path to a yml file with configuration
-##' @inheritParams odin_ui_editor_app
+##' @inheritParams odin_ui_app
 ##' @export
 odin_ui_doc_app <- function(path_config, ..., run = TRUE) {
   config <- mod_doc_config(path_config)
