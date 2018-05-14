@@ -37,3 +37,21 @@ test_that("read_text gives scalar character", {
 test_that("run_app can pass app through", {
   expect_null(run_app(NULL, FALSE))
 })
+
+
+test_that("typed vapply", {
+  x <- list(TRUE, FALSE, NA)
+  expect_identical(vlapply(x, identity), c(TRUE, FALSE, NA))
+  expect_error(vlapply(x, as.character))
+  expect_identical(vcapply(x, as.character), c("TRUE", "FALSE", NA))
+  expect_error(vcapply(x, identity))
+})
+
+
+test_that("round_time", {
+  expect_equal(round_time(pi), 3.14)
+
+  x <- seq(0, 10, length.out = 100)
+  expect_equal(round_time(x), round(x, 2))
+  expect_equal(round_time(numeric(0)), numeric(0))
+})
