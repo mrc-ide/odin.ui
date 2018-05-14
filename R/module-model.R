@@ -2,15 +2,15 @@ mod_model_input <- function(id) {
   ns <- shiny::NS(id)
 
   shiny::tagList(
-    shiny::uiOutput(ns("odin_control")),
-    shiny::hr(),
     ## https://github.com/rstudio/shiny/issues/1675#issuecomment-298398997
     shiny::actionButton(ns("go_button"), "Run model",
                         shiny::icon("play"),
                         class = "btn-primary"),
     shiny::actionButton(ns("reset_button"), "Reset",
                         shiny::icon("refresh"),
-                        class = "btn-danger"))
+                        class = "btn-danger"),
+    shiny::hr(),
+    shiny::uiOutput(ns("odin_control")))
 }
 
 
