@@ -35,12 +35,12 @@ odin_ui_app_ui <- function(title) {
   path_css <- system.file("styles.css", package = "odin.ui", mustWork = TRUE)
   shiny::shinyUI(
     shiny::fluidPage(
-      odin_ui_model_ui("odin_ui", title)))
+      mod_model_ui("odin_ui", title)))
 }
 
 
 odin_ui_app_server <- function(model, default_time) {
   function(input, output, session) {
-    shiny::callModule(odin_ui_model, "odin_ui", model, default_time)
+    shiny::callModule(mod_model, "odin_ui", model, default_time)
   }
 }

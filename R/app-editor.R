@@ -184,11 +184,11 @@ odin_ui_editor_server <- function(initial_code) {
           if (new_tab) {
             shiny::appendTab(
               "models",
-              shiny::tabPanel(title, odin_ui_model_ui(model_id, title)))
+              shiny::tabPanel(title, mod_model_ui(model_id, title)))
           }
 
           default_time <- 10
-          shiny::callModule(odin_ui_model, model_id, models$data[[title]],
+          shiny::callModule(mod_model, model_id, models$data[[title]],
                             default_time)
           shiny::updateTabsetPanel(session, "models", model_id)
         }

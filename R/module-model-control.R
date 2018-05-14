@@ -1,8 +1,8 @@
-odin_ui_control <- function(model, default_time, ns = identity) {
-  pars <- odin_ui_control_parameters(model, ns)
-  time <- odin_ui_control_time(default_time, ns)
-  output <- odin_ui_control_output(model, ns)
-  graph_options <- odin_ui_control_graph_options(ns)
+mod_model_control <- function(model, default_time, ns = identity) {
+  pars <- mod_model_control_parameters(model, ns)
+  time <- mod_model_control_time(default_time, ns)
+  output <- mod_model_control_output(model, ns)
+  graph_options <- mod_model_control_graph_options(ns)
   els <- c(pars$tags, time$tags, output$tags,
            graph_options$tags)
   list(tags = els,
@@ -12,7 +12,7 @@ odin_ui_control <- function(model, default_time, ns = identity) {
 }
 
 
-odin_ui_control_section <- function(title, ..., ns) {
+mod_model_control_section <- function(title, ..., ns) {
   ## TODO: this needs some css styling
   ## https://stackoverflow.com/questions/29030260/inline-checkbox-next-to-a-h3-header
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
@@ -26,7 +26,7 @@ odin_ui_control_section <- function(title, ..., ns) {
 }
 
 
-odin_ui_control_parameters <- function(model, ns) {
+mod_model_control_parameters <- function(model, ns) {
   x <- stats::coef(model)
 
   if (!all(x$rank == 0L)) {
@@ -39,7 +39,7 @@ odin_ui_control_parameters <- function(model, ns) {
   ## TODO: can we have a real list structure here?
   if (nrow(x) > 0L) {
     name_map <- set_names(paste0("pars_", x$name), x$name)
-    tags <- odin_ui_control_section(
+    tags <- mod_model_control_section(
       "Parameters",
       unname(Map(shiny::numericInput, ns(name_map), x$name, x$default_value)),
       ns = ns)
@@ -56,7 +56,7 @@ odin_ui_control_parameters <- function(model, ns) {
 ## * critical time
 ## * disable time selector entirely
 ## * solution tolerance
-odin_ui_control_time <- function(default_time, ns) {
+mod_model_control_time <- function(default_time, ns) {
   if (length(default_time) == 1L) {
     default_time <- c(0, default_time)
     has_start_time <- FALSE
@@ -78,7 +78,7 @@ odin_ui_control_time <- function(default_time, ns) {
     time_start <- NULL
   }
 
-  tags <- odin_ui_control_section(
+  tags <- mod_model_control_section(
     "Time",
     drop_null(list(time_start, time_end, time_detail)),
     ns = ns)
@@ -87,7 +87,7 @@ odin_ui_control_time <- function(default_time, ns) {
 }
 
 
-odin_ui_control_output <- function(model, ns) {
+mod_model_control_output <- function(model, ns) {
   x <- attr(model, "graph_data")()
   vars <- x$nodes[x$nodes$type %in% c("variable", "output"), ]
   if (!all(vars$rank == 0L)) {
@@ -95,8 +95,8 @@ odin_ui_control_output <- function(model, ns) {
   }
 
   name_map <- set_names(paste0("plot_", vars$name_target), vars$name_target)
-  
-  tags <- odin_ui_control_section(
+
+  tags <- mod_model_control_section(
     "Output",
     Map(shiny::checkboxInput, ns(name_map), vars$name_target, value = TRUE),
     ns = ns)
@@ -105,9 +105,9 @@ odin_ui_control_output <- function(model, ns) {
 }
 
 
-odin_ui_control_graph_options <- function(ns) {
+mod_model_control_graph_options <- function(ns) {
   choices <- names(odin_ui_palettes())
-  
+
   choice_palette <- shiny::selectInput(ns("choice_palette"),
                                        "Choose a palette",
                                        choices,
@@ -130,8 +130,8 @@ odin_ui_control_graph_options <- function(ns) {
                                      "Opacity",
                                      min = 0, max = 1,
                                      value = 1, step = 0.01)
-  
-  tags <- odin_ui_control_section(
+
+  tags <- mod_model_control_section(
     "Graph options",
     list(choice_palette, width_slider, fill_checkbox,
          stack_checkbox, alpha_slider),

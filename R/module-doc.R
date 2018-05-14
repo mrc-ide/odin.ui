@@ -47,11 +47,11 @@ mod_doc_ui <- function(id, config) {
           shiny::column(6, docs))),
       shiny::tabPanel(
         "Run",
-        odin_ui_model_ui(ns("model"), NULL))))
+        mod_model_ui(ns("model"), NULL))))
 }
 
 
 mod_doc_server <- function(input, output, session, config) {
-  shiny::callModule(odin_ui_model, "model",
+  shiny::callModule(mod_model, "model",
                     config$model, config$default_time)
 }

@@ -1,4 +1,4 @@
-odin_ui_model_input <- function(id) {
+mod_model_input <- function(id) {
   ns <- shiny::NS(id)
 
   shiny::tagList(
@@ -14,29 +14,29 @@ odin_ui_model_input <- function(id) {
 }
 
 
-odin_ui_model_output <- function(id) {
+mod_model_output <- function(id) {
   ns <- shiny::NS(id)
   dygraphs::dygraphOutput(ns("result_plot"))
 }
 
 
 ## all-in-one module that includes a sidebar interface
-odin_ui_model_ui <- function(id, title) {
+mod_model_ui <- function(id, title) {
   path_css <- system.file("styles.css", package = "odin.ui", mustWork = TRUE)
   shiny::tagList(
     shiny::includeCSS(path_css),
     if (!is.null(title)) shiny::titlePanel(title),
     shiny::sidebarLayout(
-      shiny::sidebarPanel(odin_ui_model_input(id)),
-      shiny::mainPanel(odin_ui_model_output(id))))
+      shiny::sidebarPanel(mod_model_input(id)),
+      shiny::mainPanel(mod_model_output(id))))
 }
 
 
-odin_ui_model <- function(input, output, session,
+mod_model <- function(input, output, session,
                           model, default_time) {
   ns <- session$ns
   model_output <- shiny::reactiveValues(data = NULL)
-  control <- odin_ui_control(model, default_time, ns)
+  control <- mod_model_control(model, default_time, ns)
 
   output$odin_control <- shiny::renderUI({
     times <- input$reset_button
@@ -47,8 +47,8 @@ odin_ui_model <- function(input, output, session,
 
   shiny::observeEvent(
     input$go_button, {
-      p <- odin_ui_get_pars(input, control$parameter_name_map)
-      t <- odin_ui_get_time(input, control$has_start_time)
+      p <- mod_model_getpars(input, control$parameter_name_map)
+      t <- mod_model_gettime(input, control$has_start_time)
       model_output$data <- run_model(model, p, t)
     })
 
@@ -57,32 +57,32 @@ odin_ui_model <- function(input, output, session,
       return()
     }
     
-    graph_options <- odin_ui_get_graph_options(input, control$output_name_map)
+    graph_options <- mod_model_getgraph_options(input, control$output_name_map)
     
     plot_model_output(model_output$data, graph_options)
   })
 }
 
 
-odin_ui_get_pars <- function(x, map) {
+mod_model_getpars <- function(x, map) {
   ret <- lapply(map, function(el) x[[el]])
   ret[lengths(ret) != 0L]
 }
 
 
-odin_ui_get_time <- function(x, has_start_time) {
+mod_model_gettime <- function(x, has_start_time) {
   time_start <- if (has_start_time) x$time_start else 0.0
   seq(time_start, x$time_end, length.out = round(x$time_detail))
 }
 
 
-odin_ui_get_output <- function(x, map) {
+mod_model_getoutput <- function(x, map) {
   vlapply(map, function(el) x[[el]])
 }
 
 
-odin_ui_get_graph_options <- function(input, name_map) {
-  include <- odin_ui_get_output(input, name_map)
+mod_model_getgraph_options <- function(input, name_map) {
+  include <- mod_model_getoutput(input, name_map)
   palette <- odin_ui_palettes(input$choice_palette)
   cols <- set_names(palette(length(include)), names(include))
   list(include = include,
