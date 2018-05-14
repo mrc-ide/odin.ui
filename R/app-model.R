@@ -32,7 +32,6 @@ odin_ui_app <- function(model, default_time, title = "odin ui", ...,
 
 
 odin_ui_app_ui <- function(title) {
-  path_css <- system.file("styles.css", package = "odin.ui", mustWork = TRUE)
   shiny::shinyUI(
     shiny::fluidPage(
       mod_model_ui("odin_ui", title)))
