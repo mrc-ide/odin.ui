@@ -57,6 +57,6 @@ plot_model_output <- function(xy, options) {
                             showZeroValues = TRUE,
                             labelsSeparateLines = TRUE,
                             hideOnMouseOut = TRUE)
-  out <- dygraphs::dyCSS(out, odin_ui_file("dygraphs.css"))
+  out <- dygraphs::dyCSS(out, odin_ui_file("css/dygraphs.css"))
   out
 }
