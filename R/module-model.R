@@ -14,23 +14,9 @@ mod_model_input <- function(id) {
 }
 
 
-mod_model_output <- function(id) {
-  ns <- shiny::NS(id)
-  shiny::tagList(
-    dygraphs::dygraphOutput(ns("result_plot")),
-    shiny::hr(),
-    shiny::h3("Download data"),
-    ## TODO: these should be rendered with renderui to avoid the null
-    ## case - quite possibly the whole thing
-    shiny::selectInput(ns("download_format"), "Format",
-                       c("auto", "csv", "rds", "json")),
-    shiny::textInput(ns("download_filename"), "Filename:", value = ""),
-    shiny::downloadButton(ns("download_button"), "Download"))
-}
-
-
 ## all-in-one module that includes a sidebar interface
 mod_model_ui <- function(id, title) {
+  ns <- shiny::NS(id)
   path_css <- odin_ui_file("css/styles.css")
   shiny::tagList(
     shiny::includeCSS(path_css),
@@ -44,7 +30,7 @@ mod_model_ui <- function(id, title) {
     },
     shiny::sidebarLayout(
       shiny::sidebarPanel(mod_model_input(id)),
-      shiny::mainPanel(mod_model_output(id))))
+      shiny::mainPanel(shiny::uiOutput(ns("odin_output")))))
 }
 
 
@@ -61,6 +47,21 @@ mod_model <- function(input, output, session,
                control$tags)
   })
 
+  output$odin_output <- shiny::renderUI({
+    if (is.null(model_output$data)) {
+      shiny::tagList()
+    } else {
+      shiny::tagList(
+        dygraphs::dygraphOutput(ns("result_plot")),
+        shiny::hr(),
+        shiny::h3("Download data"),
+        shiny::selectInput(ns("download_format"), "Format",
+                           c("auto", "csv", "rds", "json")),
+        shiny::textInput(ns("download_filename"), "Filename:", value = ""),
+        shiny::downloadButton(ns("download_button"), "Download"))
+    }
+  })
+
   shiny::observeEvent(
     input$go_button, {
       p <- mod_model_getpars(input, control$parameter_name_map)
@@ -69,12 +70,7 @@ mod_model <- function(input, output, session,
     })
 
   output$result_plot <- dygraphs::renderDygraph({
-    if (is.null(model_output$data)) {
-      return()
-    }
-    
     graph_options <- mod_model_getgraph_options(input, control$output_name_map)
-    
     plot_model_output(model_output$data$output, graph_options)
   })
 
