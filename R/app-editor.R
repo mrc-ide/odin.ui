@@ -27,44 +27,51 @@ odin_ui_editor_ui <- function(initial_code) {
   ## the 80 char bar but I don't see how to get that through here.
   ## https://github.com/ajaxorg/ace/wiki/Configuring-Ace
 
+  docs <- shiny::includeMarkdown(odin_ui_file("md/editor.md"))
+  editor <- shiny::tagList(
+    shiny::textInput("title", "Model name", "model"),
+    ## This should not run over all the grid columns and perhaps
+    ## should display some helper text on the right panel.  That
+    ## would be super useful for a teaching situation.
+    shinyAce::aceEditor("editor", mode = "r", value = initial_code,
+                        debounce = 100),
+    shiny::actionButton("go_button", "Compile",
+                        shiny::icon("cogs"),
+                        class = "btn-primary"),
+    shiny::actionButton("reset_button", "Reset",
+                        shiny::icon("refresh"),
+                        class = "btn-danger"),
+
+    ## Ideally these would be aligned further right
+    shiny::downloadButton("download_button", "Save"),
+    shiny::fileInput("uploaded_file",
+                     "Upload model file",
+                     multiple = FALSE,
+                     accept = c("text/plain", ".R")),
+
+    ## And these should go elsewhere too
+    shiny::actionButton("validate_button", "Validate",
+                        shiny::icon("check"), class = "btn-success"),
+    shiny::checkboxInput("auto_validate", "Auto validate",
+                         value = FALSE),
+
+    ## TODO: this disables _all_ progress - ideally we'd do this
+    ## just for this id, which is going to be a slightly more
+    ## clever css rule.
+    shiny::tags$style(".shiny-file-input-progress {display: none}"),
+
+    shiny::htmlOutput("validation_info"),
+    shiny::htmlOutput("compilation_info"))
+
   shiny::shinyUI(
     shiny::fluidPage(
       shiny::tabsetPanel(
         id = "models",
         shiny::tabPanel(
           "Build",
-          shiny::textInput("title", "Model name", "model"),
-          ## This should not run over all the grid columns and perhaps
-          ## should display some helper text on the right panel.  That
-          ## would be super useful for a teaching situation.
-          shinyAce::aceEditor("editor", mode = "r", value = initial_code,
-                              debounce = 100),
-          shiny::actionButton("go_button", "Compile",
-                              shiny::icon("cogs"),
-                              class = "btn-primary"),
-          shiny::actionButton("reset_button", "Reset",
-                              shiny::icon("refresh"),
-                              class = "btn-danger"),
-
-          ## Ideally these would be aligned further right
-          shiny::downloadButton("download_button", "Save"),
-          shiny::fileInput("uploaded_file",
-                           "Upload model file",
-                           multiple = FALSE,
-                           accept = c("text/plain", ".R")),
-
-          ## And these should go elsewhere too
-          shiny::actionButton("validate_button", "Validate",
-                              shiny::icon("check"), class = "btn-success"),
-          shiny::checkboxInput("auto_validate", "Auto validate", value = FALSE),
-
-          ## TODO: this disables _all_ progress - ideally we'd do this
-          ## just for this id, which is going to be a slightly more
-          ## clever css rule.
-          shiny::tags$style(".shiny-file-input-progress {display: none}"),
-
-          shiny::htmlOutput("validation_info"),
-          shiny::htmlOutput("compilation_info")))))
+          shiny::fluidRow(
+            shiny::column(6, editor),
+            shiny::column(6, docs))))))
 }
 
 
