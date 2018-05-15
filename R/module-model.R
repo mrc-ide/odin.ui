@@ -34,7 +34,14 @@ mod_model_ui <- function(id, title) {
   path_css <- odin_ui_file("css/styles.css")
   shiny::tagList(
     shiny::includeCSS(path_css),
-    if (!is.null(title)) shiny::titlePanel(title),
+    if (!is.null(title)) {
+      shiny::titlePanel(title)
+    } else {
+      ## TODO: This is not really super tidy but I need a little
+      ## spare vertical space here before the panel layout but I
+      ## don't see the cleanest way of adding it.
+      shiny::p(class = "spacer")
+    },
     shiny::sidebarLayout(
       shiny::sidebarPanel(mod_model_input(id)),
       shiny::mainPanel(mod_model_output(id))))
