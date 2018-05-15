@@ -10,6 +10,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:
     dygraphs,
+    jsonlite,
     odin (>= 0.0.8),
     shiny (>= 1.0.4),
     shinyAce,

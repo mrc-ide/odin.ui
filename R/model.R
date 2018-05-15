@@ -34,11 +34,30 @@ compile_model <- function(code, dest = NULL, safe = FALSE, skip_cache = FALSE) {
 }
 
 
-run_model <- function(model, pars, time) {
+run_model <- function(generator, pars, time) {
   if (length(pars) > 0L) {
-    mod <- model(user = pars)
+    model <- generator(user = pars)
   } else {
-    mod <- model()
+    model <- generator()
   }
-  mod$run(time)
+  list(model = model, output = model$run(time))
+}
+
+
+write_model_data <- function(data, filename, format) {
+  if (is.null(format) || format == "auto") {
+    ext <- tolower(tools::file_ext(filename))
+    format <- switch(ext, rds = "rds", json = "json", "csv")
+  }
+
+  switch(format,
+         rds = saveRDS(data$output, filename),
+         json = write_model_data_json(data$model, data$output, filename),
+         write_csv(data$output, filename))
+}
+
+
+write_model_data_json <- function(model, data, filename) {
+  out <- model$transform_variables(data)
+  jsonlite::write_json(out, filename, digits = NA)
 }

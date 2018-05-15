@@ -50,3 +50,8 @@ run_app <- function(app, run, ...) {
     app
   }
 }
+
+
+write_csv <- function(data, filename) {
+  write.csv(data, filename, row.names = FALSE)
+}

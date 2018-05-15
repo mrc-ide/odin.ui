@@ -16,7 +16,16 @@ mod_model_input <- function(id) {
 
 mod_model_output <- function(id) {
   ns <- shiny::NS(id)
-  dygraphs::dygraphOutput(ns("result_plot"))
+  shiny::tagList(
+    dygraphs::dygraphOutput(ns("result_plot")),
+    shiny::hr(),
+    shiny::h3("Download data"),
+    ## TODO: these should be rendered with renderui to avoid the null
+    ## case - quite possibly the whole thing
+    shiny::selectInput(ns("download_format"), "Format",
+                       c("auto", "csv", "rds", "json")),
+    shiny::textInput(ns("download_filename"), "Filename:", value = ""),
+    shiny::downloadButton(ns("download_button"), "Download"))
 }
 
 
@@ -33,7 +42,7 @@ mod_model_ui <- function(id, title) {
 
 
 mod_model <- function(input, output, session,
-                          model, default_time) {
+                      model, default_time) {
   ns <- session$ns
   model_output <- shiny::reactiveValues(data = NULL)
   control <- mod_model_control(model, default_time, ns)
@@ -59,8 +68,22 @@ mod_model <- function(input, output, session,
     
     graph_options <- mod_model_getgraph_options(input, control$output_name_map)
     
-    plot_model_output(model_output$data, graph_options)
+    plot_model_output(model_output$data$output, graph_options)
   })
+
+  output$download_button <- shiny::downloadHandler(
+    filename = function() {
+      ## This should be the model title but for some reason that's
+      ## hard to get here.  So it needs passing into the module on
+      ## creation instead and that's a bit more work than I'd like to
+      ## do right now.
+      mod_model_compute_filename("model",
+                                 input$download_filename,
+                                 input$download_format)
+    },
+    content = function(filename) {
+      write_model_data(model_output$data, filename, input$download_format)
+    })
 }
 
 
@@ -91,4 +114,14 @@ mod_model_getgraph_options <- function(input, name_map) {
        fill = input$graph_fill,
        alpha = input$graph_alpha,
        stack = input$graph_stack)
+}
+
+
+mod_model_compute_filename <- function(title, filename, format) {
+  if (nzchar(filename)) {
+    filename
+  } else {
+    ext <- if (format == "auto") "csv" else format
+    sprintf("%s.%s", title, ext)
+  }
 }
