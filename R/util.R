@@ -53,5 +53,5 @@ run_app <- function(app, run, ...) {
 
 
 write_csv <- function(data, filename) {
-  write.csv(data, filename, row.names = FALSE)
+  utils::write.csv(data, filename, row.names = FALSE)
 }
