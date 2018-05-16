@@ -23,266 +23,42 @@ odin_ui_editor_app <- function(initial_code = NULL, ..., run = TRUE) {
 
 
 odin_ui_editor_ui <- function(initial_code) {
-  ## The ace editor setting "showPrintMargin" is the one to control
-  ## the 80 char bar but I don't see how to get that through here.
-  ## https://github.com/ajaxorg/ace/wiki/Configuring-Ace
-
-  docs <- shiny::includeMarkdown(odin_ui_file("md/editor.md"))
-  editor <- shiny::tagList(
-    shiny::textInput("title", "Model name", "model"),
-    ## This should not run over all the grid columns and perhaps
-    ## should display some helper text on the right panel.  That
-    ## would be super useful for a teaching situation.
-    shinyAce::aceEditor("editor", mode = "r", value = initial_code,
-                        debounce = 100),
-    shiny::actionButton("go_button", "Compile",
-                        shiny::icon("cogs"),
-                        class = "btn-primary"),
-    shiny::actionButton("reset_button", "Reset",
-                        shiny::icon("refresh"),
-                        class = "btn-danger"),
-
-    ## Ideally these would be aligned further right
-    shiny::downloadButton("download_button", "Save"),
-    shiny::fileInput("uploaded_file",
-                     "Upload model file",
-                     multiple = FALSE,
-                     accept = c("text/plain", ".R")),
-
-    ## And these should go elsewhere too
-    shiny::actionButton("validate_button", "Validate",
-                        shiny::icon("check"), class = "btn-success"),
-    shiny::checkboxInput("auto_validate", "Auto validate",
-                         value = FALSE),
-
-    ## TODO: this disables _all_ progress - ideally we'd do this
-    ## just for this id, which is going to be a slightly more
-    ## clever css rule.
-    shiny::tags$style(".shiny-file-input-progress {display: none}"),
-
-    shiny::htmlOutput("validation_info"),
-    shiny::htmlOutput("compilation_info"))
-
+  ## TODO: consider a navbar page as the build tab is "different" to
+  ## the other types.
   shiny::shinyUI(
     shiny::fluidPage(
       shiny::tabsetPanel(
         id = "models",
         shiny::tabPanel(
           "Build",
-          shiny::fluidRow(
-            shiny::column(6, editor),
-            shiny::column(6, docs))))))
+          mod_editor_ui("odin_editor", initial_code)))))
 }
 
 
-## If I pull the editor code into a module, most of the bits here
-## really come out into the controlling app becaues they are logic
-## that needs to get involved with multiple model instances.
 odin_ui_editor_server <- function(initial_code) {
   force(initial_code)
-
   function(input, output, session) {
-    models <- shiny::reactiveValues(data = list(), errors = NULL)
-    validation <- shiny::reactiveValues(status = NULL)
-    compilation <- shiny::reactiveValues(result = NULL)
+    models <- shiny::reactiveValues(data = list())
 
-    shiny::observeEvent(
-      input$reset_button, {
-        ## NOTE: this does not reset the rest of the interface
-        ## (e.g. tabs) or the rest of the *inputs* e.g. the model
-        ## name.  These are probably worthwhile things to get done at
-        ## some point.
-        shinyAce::updateAceEditor(session, "editor", value = initial_code)
-      })
-
-    output$download_button <- shiny::downloadHandler(
-      filename = function() {
-        title_to_filename(input$title)
-      },
-      content = function(con) {
-        writeLines(input$editor, con)
-      })
-
-    shiny::observeEvent(
-      input$uploaded_file, {
-        if (!is.null(input$uploaded_file)) {
-          code <- read_text(input$uploaded_file$datapath)
-          title <- filename_to_title(input$uploaded_file$name)
-
-          ## TODO: This probably needs considerable santisation!
-          shinyAce::updateAceEditor(session, "editor", value = code)
-          shiny::updateTextInput(session, "title", value = title)
-        }
-      })
-
-    shiny::observeEvent(
-      input$validate_button, {
-        validation$status <- odin::odin_validate_model(input$editor, "text")
-      })
+    model <- shiny::callModule(
+      mod_editor_server, "odin_editor", initial_code)
 
     shiny::observe({
-      info <- odin_validation_info(validation$status)
-      shinyAce::updateAceEditor(session, "editor", border = info$border)
-      output$validation_info <- shiny::renderUI(
-        shiny::div(
-          class = "panel-group",
-          shiny::div(
-            class = sprintf("panel panel-%s", info$class),
-            shiny::div(
-              class = "panel-heading",
-              shiny::icon(paste(info$icon, "fa-lg")),
-              "Validation:",
-              info$result),
-            if (nzchar(info$info)) shiny::div(class = "panel-body",
-                                              shiny::pre(info$info)))))
-    })
-
-    shiny::observe({
-      if (is.null(compilation$result)) {
-        output$compilation_info <- shiny::renderUI(NULL)
-        return()
-      }
-      info <- odin_compilation_info(compilation$result)
-      output$compilation_info <- shiny::renderUI(
-        shiny::div(
-          class = "panel-group",
-          shiny::div(
-            class = sprintf("panel panel-%s", info$class),
-            shiny::div(
-              class = "panel-heading",
-              shiny::icon(paste(info$icon, "fa-lg")),
-              "Compilation: ",
-              info$result),
-            if (nzchar(info$info)) shiny::div(class = "panel-body",
-                                              shiny::pre(info$info)))))
-    })
-
-    shiny::observe({
-      if (isTRUE(compilation$result$is_current) &&
-          !identical(compilation$result$code, input$editor)) {
-        compilation$result$is_current <- FALSE
-      }
-      if (input$auto_validate) {
-        validation$status <- odin::odin_validate_model(input$editor, "text")
-      }
-    })
-
-    shiny::observeEvent(
-      input$go_button, {
-        code <- input$editor
-        title <- input$title
-        model_id <- gsub(" -", "_", tolower(title))
-
-        res <- shiny::withProgress(
-          message = "Compiling model...",
-          detail = "some detail", value = 1, {
-            compile_model(code, tempfile(), skip_cache = TRUE)
-          })
-
-        ## Some extra bits here to allow for lazy re-building of the
-        ## interface
-        compilation$result <- list(code = code, result = res, is_current = TRUE)
-
-        if (res$success) {
-          new_tab <- !(title %in% names(models$data))
-
-          models$data[[title]] <- res$model
-
+      m <- model()
+      shiny::isolate({
+        if (!is.null(m)) {
+          new_tab <- !(m$title %in% names(models$data))
+          models$data[[m$title]] <- m$generator
           if (new_tab) {
             shiny::appendTab(
               "models",
-              shiny::tabPanel(title, mod_model_ui(model_id, title)))
+              shiny::tabPanel(m$title, mod_model_ui(m$model_id, m$title)))
           }
-
-          default_time <- 10
-          shiny::callModule(mod_model, model_id, models$data[[title]],
-                            default_time)
-          shiny::updateTabsetPanel(session, "models", model_id)
+          shiny::callModule(
+            mod_model, m$model_id, models$data[[m$title]], m$default_time)
+          shiny::updateTabsetPanel(session, "models", m$title)
         }
       })
+    })
   }
-}
-
-
-validate_initial_code <- function(initial_code) {
-  if (is.null(initial_code)) {
-    initial_code <- readLines(odin_ui_file("minimal_model.R"))
-  } else if (!is.character(initial_code)) {
-    stop("'initial_code' must be a character vector", call. = FALSE)
-  }
-  initial_code <- paste(initial_code, collapse = "\n")
-  if (!grepl("\\n$", initial_code)) {
-    initial_code <- paste0(initial_code, "\n")
-  }
-  initial_code
-}
-
-
-title_to_filename <- function(name) {
-  paste0(gsub(" ", "_", name), ".R")
-}
-
-
-filename_to_title <- function(filename) {
-  gsub("[_-]", " ", sub("\\.R$", "", filename))
-}
-
-
-odin_validation_info <- function(status) {
-  if (!is.null(status$error$message)) {
-    info <- status$error$message
-    result <- "error"
-  } else if (length(status$messages) > 0L) {
-    info <- paste(vcapply(status$messages, "[[", "message"), collapse = "\n\n")
-    result <- "note"
-  } else {
-    info <- ""
-    result <- "success"
-  }
-
-  success <- result != "error"
-  border <- if (success) "normal" else "alert"
-
-  if (result == "success") {
-    class <- "success"
-    icon <- "check-circle"
-  } else if (result == "note") {
-    class <- "info"
-    icon <- "info-circle"
-  } else {
-    class <- "danger"
-    icon <- "times-circle"
-  }
-
-  list(success = success, border = border, info = info,
-       class = class, icon = icon, result = result)
-}
-
-
-odin_compilation_info <- function(data) {
-  x <- data$result
-  is_current <- data$is_current
-
-  success <- x$success
-  msg <- sprintf("%s, %.2f s elapsed",
-                 if (x$success) "success" else "error",
-                 x$elapsed[["elapsed"]])
-  if (!is_current) {
-    msg <- paste(msg, "(code has changed since this was run)")
-  }
-  if (success) {
-    class <- if (is_current) "success" else "default"
-    icon <- "check-circle"
-    info <- paste(x$output, collapse = "\n")
-  } else {
-    class <- if (is_current) "danger" else "warning"
-    icon <- "times-circle"
-    info <- x$error
-  }
-
-  list(success = success,
-       info = info,
-       class = class,
-       icon = icon,
-       result = msg)
 }
