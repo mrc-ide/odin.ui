@@ -22,15 +22,23 @@ odin_ui_editor_app <- function(initial_code = NULL, ..., run = TRUE) {
 
 
 odin_ui_editor_ui <- function(initial_code) {
-  ## TODO: consider a navbar page as the build tab is "different" to
-  ## the other types.
   shiny::shinyUI(
-    shiny::fluidPage(
-      shiny::tabsetPanel(
-        id = "models",
-        shiny::tabPanel(
-          "Build",
-          mod_editor_ui("odin_editor", initial_code)))))
+    shiny::navbarPage(
+      "odin editor",
+      id = "odin_ui_navbar",
+      inverse = TRUE,
+      shiny::tabPanel(
+        "Write and build",
+        icon = shiny::icon("edit"),
+        mod_editor_ui("odin_editor", initial_code)),
+      shiny::tabPanel(
+        "Interact",
+        icon = shiny::icon("search"),
+        shiny::tabsetPanel(id = "models")),
+      shiny::tabPanel(
+        "Help",
+        icon = shiny::icon("question"),
+        shiny::includeMarkdown(odin_ui_file("md/editor.md")))))
 }
 
 
@@ -55,6 +63,7 @@ odin_ui_editor_server <- function(initial_code) {
           shiny::callModule(
             mod_model_server, m$model_id,
             models$data[[m$title]], m$default_time)
+          shiny::updateNavbarPage(session, "odin_ui_navbar", "Models")
           shiny::updateTabsetPanel(session, "models", m$title)
         }
       })
