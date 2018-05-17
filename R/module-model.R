@@ -34,7 +34,7 @@ mod_model_ui <- function(id, title) {
 }
 
 
-mod_model <- function(input, output, session,
+mod_model_server <- function(input, output, session,
                       model, default_time) {
   ns <- session$ns
   model_output <- shiny::reactiveValues(data = NULL)

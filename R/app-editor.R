@@ -53,7 +53,8 @@ odin_ui_editor_server <- function(initial_code) {
               shiny::tabPanel(m$title, mod_model_ui(m$model_id, m$title)))
           }
           shiny::callModule(
-            mod_model, m$model_id, models$data[[m$title]], m$default_time)
+            mod_model_server, m$model_id,
+            models$data[[m$title]], m$default_time)
           shiny::updateTabsetPanel(session, "models", m$title)
         }
       })

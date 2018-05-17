@@ -40,6 +40,6 @@ odin_ui_app_ui <- function(title) {
 
 odin_ui_app_server <- function(model, default_time) {
   function(input, output, session) {
-    shiny::callModule(mod_model, "odin_ui", model, default_time)
+    shiny::callModule(mod_model_server, "odin_ui", model, default_time)
   }
 }
