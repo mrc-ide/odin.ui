@@ -58,12 +58,12 @@ odin_ui_editor_server <- function(initial_code) {
           if (new_tab) {
             shiny::appendTab(
               "models",
-              shiny::tabPanel(m$title, mod_model_ui(m$model_id, m$title)))
+              shiny::tabPanel(m$title, mod_model_ui(m$id, m$title)))
           }
           shiny::callModule(
-            mod_model_server, m$model_id,
+            mod_model_server, m$id,
             models$data[[m$title]], m$default_time)
-          shiny::updateNavbarPage(session, "odin_ui_navbar", "Models")
+          shiny::updateNavbarPage(session, "odin_ui_navbar", "Interact")
           shiny::updateTabsetPanel(session, "models", m$title)
         }
       })
