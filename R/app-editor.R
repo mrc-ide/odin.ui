@@ -14,7 +14,6 @@
 ##' @inheritParams odin_ui_app
 ##' @export
 odin_ui_editor_app <- function(initial_code = NULL, ..., run = TRUE) {
-  initial_code <- validate_initial_code(initial_code)
   app <- shiny::shinyApp(
     ui = odin_ui_editor_ui(initial_code),
     server = odin_ui_editor_server(initial_code))
@@ -36,7 +35,6 @@ odin_ui_editor_ui <- function(initial_code) {
 
 
 odin_ui_editor_server <- function(initial_code) {
-  force(initial_code)
   function(input, output, session) {
     models <- shiny::reactiveValues(data = list())
 

@@ -1,5 +1,7 @@
 mod_editor_ui <- function(id, initial_code) {
   ns <- shiny::NS(id)
+
+  initial_code <- mod_editor_validate_initial_code(initial_code)
   docs <- shiny::includeMarkdown(odin_ui_file("md/editor.md"))
   editor <- shiny::tagList(
     shiny::textInput(ns("title"), "Model name", "model"),
@@ -45,10 +47,11 @@ mod_editor_ui <- function(id, initial_code) {
 
 mod_editor_server <- function(input, output, session, initial_code) {
   ns <- session$ns
-
   data <- shiny::reactiveValues(model = NULL,
                                 validation = NULL,
                                 compilation = NULL)
+
+  initial_code <- mod_editor_validate_initial_code(initial_code)
 
   shiny::observeEvent(
     input$reset_button, {
@@ -59,7 +62,7 @@ mod_editor_server <- function(input, output, session, initial_code) {
 
   output$download_button <- shiny::downloadHandler(
     filename = function() {
-      title_to_filename(input$title)
+      mod_editor_title_to_filename(input$title)
     },
     content = function(con) {
       writeLines(input$editor, con)
@@ -69,7 +72,7 @@ mod_editor_server <- function(input, output, session, initial_code) {
     input$uploaded_file, {
       if (!is.null(input$uploaded_file)) {
         code <- read_text(input$uploaded_file$datapath)
-        title <- filename_to_title(input$uploaded_file$name)
+        title <- mod_editor_filename_to_title(input$uploaded_file$name)
 
         ## TODO: This probably needs considerable santisation!
         shinyAce::updateAceEditor(session, ns("editor"), value = code)
@@ -95,13 +98,15 @@ mod_editor_server <- function(input, output, session, initial_code) {
   })
 
   shiny::observe({
-    info <- odin_validation_info(data$validation)
-    output$validation_info <- mod_editor_status_panel(info)
+    res <- mod_editor_validation_info(data$validation)
+    output$validation_info <- res$panel
+    shinyAce::updateAceEditor(session, ns("editor"), border = res$border)
   })
 
   shiny::observe({
-    info <- odin_compilation_info(data$compilation)
-    output$compilation_info <- mod_editor_status_panel(info)
+    res <- mod_editor_compilation_info(data$compilation)
+    output$compilation_info <- res$panel
+    shinyAce::updateAceEditor(session, ns("editor"), border = res$border)
   })
 
   ## Here is the exit route out of the module
@@ -134,7 +139,7 @@ mod_editor_server <- function(input, output, session, initial_code) {
 
 
 ## Support functions:
-validate_initial_code <- function(initial_code) {
+mod_editor_validate_initial_code <- function(initial_code) {
   if (is.null(initial_code)) {
     initial_code <- readLines(odin_ui_file("minimal_model.R"))
   } else if (!is.character(initial_code)) {
@@ -148,98 +153,92 @@ validate_initial_code <- function(initial_code) {
 }
 
 
-title_to_filename <- function(name) {
+mod_editor_title_to_filename <- function(name) {
   paste0(gsub(" ", "_", name), ".R")
 }
 
 
-filename_to_title <- function(filename) {
+mod_editor_filename_to_title <- function(filename) {
   gsub("[_-]", " ", sub("\\.R$", "", filename))
 }
 
 
-odin_validation_info <- function(status) {
+## The functions below here (a third of the file!) just do the error
+## reporting.  It feels like something that could be done more
+## efficiently!
+mod_editor_validation_info <- function(status) {
   if (is.null(status)) {
-    return(NULL)
-  }
-  if (!is.null(status$error$message)) {
-    info <- status$error$message
-    result <- "error"
-  } else if (length(status$messages) > 0L) {
-    info <- paste(vcapply(status$messages, "[[", "message"), collapse = "\n\n")
-    result <- "note"
+    panel <- shiny::renderUI(NULL)
+    border <- "normal"
   } else {
-    info <- ""
-    result <- "success"
+    if (!is.null(status$error$message)) {
+      info <- status$error$message
+      result <- "error"
+    } else if (length(status$messages) > 0L) {
+      info <- paste(vcapply(status$messages, "[[", "message"),
+                    collapse = "\n\n")
+      result <- "note"
+    } else {
+      info <- ""
+      result <- "success"
+    }
+
+    success <- result != "error"
+    border <- if (success) "normal" else "alert"
+
+    if (result == "success") {
+      class <- "success"
+      icon <- "check-circle"
+    } else if (result == "note") {
+      class <- "info"
+      icon <- "info-circle"
+    } else {
+      class <- "danger"
+      icon <- "times-circle"
+    }
+    panel <- mod_editor_status_panel("Validation", result, info, class, icon)
   }
 
-  success <- result != "error"
-  border <- if (success) "normal" else "alert"
-
-  if (result == "success") {
-    class <- "success"
-    icon <- "check-circle"
-  } else if (result == "note") {
-    class <- "info"
-    icon <- "info-circle"
-  } else {
-    class <- "danger"
-    icon <- "times-circle"
-  }
-
-  list(success = success,
-       border = border,
-       info = info,
-       class = class,
-       icon = icon,
-       result = result,
-       header = "Validation")
+  list(panel = panel, border = border)
 }
 
 
-odin_compilation_info <- function(data) {
+mod_editor_compilation_info <- function(data) {
   if (is.null(data)) {
-    return(NULL)
-  }
-  x <- data$result
-  is_current <- data$is_current
-
-  success <- x$success
-  border <- if (success) "normal" else "alert"
-
-  msg <- sprintf("%s, %.2f s elapsed",
-                 if (x$success) "success" else "error",
-                 x$elapsed[["elapsed"]])
-  if (!is_current) {
-    msg <- paste(msg, "(code has changed since this was run)")
-  }
-  if (success) {
-    class <- if (is_current) "success" else "default"
-    icon <- "check-circle"
-    info <- paste(x$output, collapse = "\n")
+    panel <- shiny::renderUI(NULL)
+    border <- "normal"
   } else {
-    class <- if (is_current) "danger" else "warning"
-    icon <- "times-circle"
-    info <- x$error
+    x <- data$result
+    is_current <- data$is_current
+
+    success <- x$success
+    border <- if (success) "normal" else "alert"
+
+    result <- sprintf("%s, %.2f s elapsed",
+                      if (x$success) "success" else "error",
+                      x$elapsed[["elapsed"]])
+    if (!is_current) {
+      result <- paste(result, "(code has changed since this was run)")
+    }
+    if (success) {
+      class <- if (is_current) "success" else "default"
+      icon <- "check-circle"
+      info <- paste(x$output, collapse = "\n")
+    } else {
+      class <- if (is_current) "danger" else "warning"
+      icon <- "times-circle"
+      info <- x$error
+    }
+    panel <- mod_editor_status_panel("Compilation", result, info, class, icon)
   }
 
-  list(success = success,
-       border = border,
-       info = info,
-       class = class,
-       icon = icon,
-       result = msg,
-       header = "Compilation")
+  list(panel = panel, border = border)
 }
 
 
-mod_editor_status_panel <- function(info) {
-  if (is.null(info)) {
-    return(shiny::renderUI(NULL))
-  }
-
-  if (nzchar(info$info)) {
-    body <- shiny::div(class = "panel-body", shiny::pre(info$info))
+mod_editor_status_panel <- function(header, result, info, class, icon) {
+  if (nzchar(info)) {
+    body <- shiny::div(class = "panel-body", shiny::pre(info))
   } else {
     body <- NULL
   }
@@ -247,10 +246,10 @@ mod_editor_status_panel <- function(info) {
     shiny::div(
       class = "panel-group",
       shiny::div(
-        class = sprintf("panel panel-%s", info$class),
+        class = sprintf("panel panel-%s", class),
         shiny::div(
           class = "panel-heading",
-          shiny::icon(paste(info$icon, "fa-lg")),
-          sprintf("%s: %s", info$header, info$result)),
+          shiny::icon(paste(icon, "fa-lg")),
+          sprintf("%s: %s", header, result)),
         body)))
 }
