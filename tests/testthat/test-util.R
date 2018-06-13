@@ -55,3 +55,12 @@ test_that("round_time", {
   expect_equal(round_time(x), round(x, 2))
   expect_equal(round_time(numeric(0)), numeric(0))
 })
+
+
+test_that("write_csv does not add row labels", {
+  d <- data.frame(a = 1:2, b = 3:4)
+  path <- tempfile()
+  on.exit(unlink(path))
+  write_csv(d, path)
+  expect_equal(readLines(path)[[2]], c("1,3"))
+})
