@@ -2,3 +2,11 @@ title: SIR model
 code: sir.R
 docs: sir.md
 default_time: 10
+parameters:
+  I0:
+    description: The number of initial infected individuals
+    default: 10
+    range: [0, 100]
+  beta:
+    description: Per-interaction rate of infection
+    range: [0, 50]

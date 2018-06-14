@@ -61,3 +61,38 @@ write_model_data_json <- function(model, data, filename) {
   out <- model$transform_variables(data)
   jsonlite::write_json(out, filename, digits = NA)
 }
+
+
+## There's really quite a lot to do here.  This will be fairly lenient
+## at first and we'll get a more agressive version as it becomes clear
+## what is needed.
+validate_model_parameters <- function(model, parameters) {
+  p <- coef(model)
+
+  if (!all(p$rank == 0L)) {
+    stop("Only scalar parameters are currently supported")
+  }
+  ## This can be relaxed now:
+  if (!all(p$has_default)) {
+    stop("All parameters must have defaults")
+  }
+
+  f <- function(nm) {
+    x <- parameters[[nm]] %||% list()
+    assert_has_fields(x, NULL, c("description", "default", "range"))
+
+    ## There's lots of tedious validation here to do that I'm not
+    ## bothering with for now.
+    x$has_range <- !is.null(x$range)
+    x$range_min <- x$range[[1L]]
+    x$range_max <- x$range[[2L]]
+    x$has_description <- !is.null(x$description)
+    if (is.null(x$default)) {
+      x$default <- p$default_value[p$name == nm][[1L]]
+    }
+    x$name <- nm
+    x
+  }
+
+  set_names(lapply(p$name, f), p$name)
+}

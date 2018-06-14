@@ -35,10 +35,10 @@ mod_model_ui <- function(id, title) {
 
 
 mod_model_server <- function(input, output, session,
-                      model, default_time) {
+                             model, default_time, parameters) {
   ns <- session$ns
   model_output <- shiny::reactiveValues(data = NULL)
-  control <- mod_model_control(model, default_time, ns)
+  control <- mod_model_control(model, default_time, parameters, ns)
 
   output$odin_control <- shiny::renderUI({
     times <- input$reset_button

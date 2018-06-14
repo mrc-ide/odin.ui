@@ -1,5 +1,5 @@
-mod_model_control <- function(model, default_time, ns = identity) {
-  pars <- mod_model_control_parameters(model, ns)
+mod_model_control <- function(model, default_time, parameters, ns = identity) {
+  pars <- mod_model_control_parameters(model, parameters, ns)
   time <- mod_model_control_time(default_time, ns)
   output <- mod_model_control_output(model, ns)
   graph_options <- mod_model_control_graph_options(ns)
@@ -26,22 +26,28 @@ mod_model_control_section <- function(title, ..., ns) {
 }
 
 
-mod_model_control_parameters <- function(model, ns) {
-  x <- stats::coef(model)
-
-  if (!all(x$rank == 0L)) {
-    stop("Only scalar parameters are currently supported")
-  }
-  if (!all(x$has_default)) {
-    stop("All parameters must have defaults")
-  }
-
+mod_model_control_parameters <- function(model, parameters, ns) {
   ## TODO: can we have a real list structure here?
-  if (nrow(x) > 0L) {
-    name_map <- set_names(paste0("pars_", x$name), x$name)
+  if (length(parameters) > 0L) {
+    name_map <- set_names(paste0("pars_", names(parameters)), names(parameters))
+    input <- function(x) {
+      if (is.null(x$description)) {
+        title <- x$name
+      } else {
+        title <- sprintf("%s: %s", x$name, x$description)
+      }
+
+      if (x$has_range) {
+        shiny::sliderInput(ns(name_map[[x$name]]), title, min = x$range_min,
+                           max = x$range_max, value = x$default)
+      } else {
+        shiny::numericInput(ns(name_map[[x$name]]), title,
+                            value = x$default)
+      }
+    }
     tags <- mod_model_control_section(
       "Parameters",
-      unname(Map(shiny::numericInput, ns(name_map), x$name, x$default_value)),
+      unname(lapply(parameters, input)),
       ns = ns)
   } else {
     name_map <- character()

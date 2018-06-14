@@ -55,3 +55,8 @@ run_app <- function(app, run, ...) {
 write_csv <- function(data, filename) {
   utils::write.csv(data, filename, row.names = FALSE)
 }
+
+
+`%||%` <- function(a, b) {
+  if (is.null(a)) b else a
+}
