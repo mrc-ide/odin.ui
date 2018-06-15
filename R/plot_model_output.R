@@ -18,7 +18,9 @@
 ## Note: we purposedly avoid the use of a piping operator here.
 
 plot_model_output <- function(xy, options) {
-  
+  if (is.null(xy)) {
+    return(NULL)
+  }
   ## Generation of the basic plot
   include <- options$include
   var_to_keep <- names(include)[include]
