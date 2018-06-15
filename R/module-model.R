@@ -9,6 +9,7 @@ mod_model_input <- function(id) {
     shiny::actionButton(ns("reset_button"), "Reset",
                         shiny::icon("refresh"),
                         class = "btn-danger"),
+    shiny::checkboxInput(ns("auto_run"), "Auto run", value = FALSE),
     shiny::hr(),
     shiny::uiOutput(ns("odin_control")))
 }
@@ -62,11 +63,15 @@ mod_model_server <- function(input, output, session,
     }
   })
 
+  shiny::observe({
+    if (input$auto_run) {
+      update_model(model, input, model_output, control)
+    }
+  })
+
   shiny::observeEvent(
     input$go_button, {
-      p <- mod_model_getpars(input, control$parameter_name_map)
-      t <- mod_model_gettime(input, control$has_start_time)
-      model_output$data <- run_model(model, p, t)
+      update_model(model, input, model_output, control)
     })
 
   output$result_plot <- dygraphs::renderDygraph({
@@ -127,4 +132,14 @@ mod_model_compute_filename <- function(title, filename, format) {
     ext <- if (format == "auto") "csv" else format
     sprintf("%s.%s", title, ext)
   }
+}
+
+
+update_model <- function(model, input, output, control) {
+  pars <- mod_model_getpars(input, control$parameter_name_map)
+  time <- mod_model_gettime(input, control$has_start_time)
+  if (identical(pars, output$pars) && identical(time, output$time)) {
+    return()
+  }
+  output$data <- run_model(model, pars, time)
 }

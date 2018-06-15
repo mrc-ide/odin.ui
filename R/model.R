@@ -34,13 +34,13 @@ compile_model <- function(code, dest = NULL, safe = FALSE, skip_cache = FALSE) {
 }
 
 
-run_model <- function(generator, pars, time) {
+run_model <- function(generator, pars, time, prev) {
   if (length(pars) > 0L) {
     model <- generator(user = pars)
   } else {
     model <- generator()
   }
-  list(model = model, output = model$run(time))
+  list(model = model, pars = pars, time = time, output = model$run(time))
 }
 
 
