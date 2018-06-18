@@ -8,7 +8,8 @@ test_that("generated parameter interface includes all parameters", {
                      rank = 0L)
   gen <- mock_model(pars)
 
-  p <- mod_model_control_parameters(gen, identity)
+  parameters <- validate_model_parameters(gen, NULL)
+  p <- mod_model_control_parameters(gen, parameters, identity)
 
   expect_is(p, "list")
   expect_setequal(names(p), c("name_map", "tags"))
@@ -27,7 +28,7 @@ test_that("parameters must be scalar", {
                      default_value = I(list(NULL)),
                      rank = 1L)
   gen <- mock_model(pars)
-  expect_error(mod_model_control_parameters(gen, identity),
+  expect_error(validate_model_parameters(gen, NULL),
                "Only scalar parameters are currently supported")
 })
 
@@ -38,7 +39,7 @@ test_that("parameters must have defaults", {
                      default_value = I(list(NULL)),
                      rank = 0L)
   gen <- mock_model(pars)
-  expect_error(mod_model_control_parameters(gen, identity),
+  expect_error(validate_model_parameters(gen, NULL),
                "All parameters must have defaults")
 })
 
@@ -49,7 +50,8 @@ test_that("models can have no parameters", {
                      default_value = I(list()),
                      rank = integer(0))
   gen <- mock_model(pars)
-  expect_identical(mod_model_control_parameters(gen, identity),
+  parameters <- validate_model_parameters(gen, NULL)
+  expect_identical(mod_model_control_parameters(gen, parameters, identity),
                    list(tags = list(), name_map = character(0)))
 })
 
@@ -61,7 +63,7 @@ test_that("time can be length 1", {
   tags <- res$tags[[2]]$children[[1]]
   expect_equal(length(tags), 2L)
 
-expect_equal(tags[[1]]$children[[2]]$attribs$id, "time_end")
+  expect_equal(tags[[1]]$children[[2]]$attribs$id, "time_end")
 })
 
 
