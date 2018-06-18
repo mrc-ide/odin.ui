@@ -25,7 +25,6 @@
 ##' @importFrom odin odin
 odin_ui_app <- function(model, default_time, title = "odin ui",
                         parameters = NULL, ..., run = TRUE) {
-  parameters <- validate_model_parameters(model, parameters)
   app <- shiny::shinyApp(
     ui = odin_ui_app_ui(title),
     server = odin_ui_app_server(model, default_time, parameters))

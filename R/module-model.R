@@ -38,6 +38,8 @@ mod_model_ui <- function(id, title) {
 mod_model_server <- function(input, output, session,
                              model, default_time, parameters) {
   ns <- session$ns
+
+  parameters <- validate_model_parameters(model, parameters)
   model_output <- shiny::reactiveValues(data = NULL)
   control <- mod_model_control(model, default_time, parameters, ns)
 
@@ -64,7 +66,10 @@ mod_model_server <- function(input, output, session,
   })
 
   shiny::observe({
-    if (input$auto_run) {
+    ## NOTE: the isTRUE here seems necessary when this is composed
+    ## into the editor app at least; otherwise it fails to start up
+    ## somehow!
+    if (isTRUE(input$auto_run)) {
       update_model(model, input, model_output, control)
     }
   })

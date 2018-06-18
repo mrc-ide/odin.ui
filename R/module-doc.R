@@ -24,7 +24,8 @@ mod_doc_config_validate <- function(config, path) {
        code = read_text(path_code),
        model = model,
        title = config$title,
-       default_time = config$default_time)
+       default_time = config$default_time,
+       parameters = config$parameters)
 }
 
 
@@ -53,5 +54,5 @@ mod_doc_ui <- function(id, config) {
 
 mod_doc_server <- function(input, output, session, config) {
   shiny::callModule(mod_model_server, "model",
-                    config$model, config$default_time)
+                    config$model, config$default_time, config$parameters)
 }
