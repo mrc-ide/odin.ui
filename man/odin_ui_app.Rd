@@ -4,7 +4,8 @@
 \alias{odin_ui_app}
 \title{Interactive odin app}
 \usage{
-odin_ui_app(model, default_time, title = "odin ui", ..., run = TRUE)
+odin_ui_app(model, default_time, title = "odin ui", parameters = NULL, ...,
+  run = TRUE)
 }
 \arguments{
 \item{model}{An odin model (a generator function) created by
@@ -17,6 +18,8 @@ length-two vector in which case both the start and end times are
 configurable.}
 
 \item{title}{String to use for the application title}
+
+\item{parameters}{A list of parameter information}
 
 \item{...}{Additional paramters passed to \code{shiny::runApp}}
 
