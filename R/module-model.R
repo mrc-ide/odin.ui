@@ -53,6 +53,18 @@ mod_model_server <- function(input, output, session,
   output$odin_output <- shiny::renderUI({
     if (is.null(model_output$data)) {
       shiny::tagList()
+    } else if (inherits(model_output$data, "error")) {
+      shiny::div(
+        class = "panel-group",
+        shiny::div(
+          class = sprintf("panel panel-%s", "danger"),
+          shiny::div(
+            class = "panel-heading",
+            shiny::icon(paste("times-circle", "fa-lg")),
+            sprintf("%s: %s", "Error", "running model")),
+          shiny::div(
+            class = "panel-body",
+            model_output$data$message)))
     } else {
       shiny::tagList(
         dygraphs::dygraphOutput(ns("result_plot")),
@@ -146,12 +158,12 @@ mod_model_compute_filename <- function(title, filename, format) {
 
 
 update_model <- function(model, input, output, control) {
-  tryCatch({
+  output$data <- tryCatch({
     pars <- mod_model_getpars(input, control$parameter_name_map)
     time <- mod_model_gettime(input, control$has_start_time)
     if (identical(pars, output$pars) && identical(time, output$time)) {
       return()
     }
-    output$data <- run_model(model, pars, time)
-  }, error = function(e) NULL)
+    run_model(model, pars, time)
+  }, error = identity)
 }
