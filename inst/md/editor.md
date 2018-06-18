@@ -18,4 +18,4 @@ The code here looks like R but is not R.  Not everything will work
 
 ## Validating the code
 
-Select `auto vaidate` to validate as you type.  This may get annoying and/or slow.
+Select `auto validate` to validate as you type.  This may get annoying and/or slow.
