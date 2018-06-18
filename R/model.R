@@ -67,7 +67,7 @@ write_model_data_json <- function(model, data, filename) {
 ## at first and we'll get a more agressive version as it becomes clear
 ## what is needed.
 validate_model_parameters <- function(model, parameters) {
-  p <- coef(model)
+  p <- stats::coef(model)
 
   if (!all(p$rank == 0L)) {
     stop("Only scalar parameters are currently supported")
