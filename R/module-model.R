@@ -108,7 +108,12 @@ mod_model_getpars <- function(x, map) {
 
 mod_model_gettime <- function(x, has_start_time) {
   time_start <- if (has_start_time) x$time_start else 0.0
-  seq(time_start, x$time_end, length.out = round(x$time_detail))
+  time_end <- x$time_end
+  if (is.null(time_start) || is.null(time_end)) {
+    msg <- if (has_start_time) "Start and end" else "End"
+    stop(sprintf("%s must be given", msg))
+  }
+  seq(time_start, time_end, length.out = round(x$time_detail))
 }
 
 
@@ -141,10 +146,12 @@ mod_model_compute_filename <- function(title, filename, format) {
 
 
 update_model <- function(model, input, output, control) {
-  pars <- mod_model_getpars(input, control$parameter_name_map)
-  time <- mod_model_gettime(input, control$has_start_time)
-  if (identical(pars, output$pars) && identical(time, output$time)) {
-    return()
-  }
-  output$data <- run_model(model, pars, time)
+  tryCatch({
+    pars <- mod_model_getpars(input, control$parameter_name_map)
+    time <- mod_model_gettime(input, control$has_start_time)
+    if (identical(pars, output$pars) && identical(time, output$time)) {
+      return()
+    }
+    output$data <- run_model(model, pars, time)
+  }, error = function(e) NULL)
 }
