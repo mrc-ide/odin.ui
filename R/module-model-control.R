@@ -3,9 +3,15 @@ mod_model_control <- function(model, default_time, parameters, ns = identity) {
   time <- mod_model_control_time(default_time, ns)
   output <- mod_model_control_output(model, ns)
   graph_options <- mod_model_control_graph_options(ns)
-  els <- c(pars$tags, time$tags, output$tags,
-           graph_options$tags)
-  list(tags = els,
+
+  tags <- shiny::div(
+    class = "panel-group",
+    pars$tags,
+    time$tags,
+    output$tags,
+    graph_options$tags)
+
+  list(tags = tags,
        parameter_name_map = pars$name_map,
        has_start_time = time$has_start_time,
        output_name_map = output$name_map)
@@ -13,16 +19,28 @@ mod_model_control <- function(model, default_time, parameters, ns = identity) {
 
 
 mod_model_control_section <- function(title, ..., ns) {
-  ## TODO: this needs some css styling
-  ## https://stackoverflow.com/questions/29030260/inline-checkbox-next-to-a-h3-header
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
-  list(
-    shiny::div(class = "odin_control_section_head",
-               shiny::h2(title),
-               shiny::checkboxInput(id, "hide")),
-    shiny::conditionalPanel(
-      condition = sprintf("input['%s'] != true", id),
+
+  head <- shiny::div(
+    class = "panel-heading",
+    shiny::h4(
+      class = "panel-title",
+      shiny::a(
+        "data-toggle" = "collapse",
+        "href" = paste0("#", id),
+        title)))
+
+  body <- shiny::div(
+    id = id,
+    class = "panel-collapse collapse in",
+    shiny::div(
+      class = "panel-body",
       ...))
+
+  shiny::div(
+    class = "panel panel-info",
+    head,
+    body)
 }
 
 

@@ -10,7 +10,6 @@ mod_model_input <- function(id) {
                         shiny::icon("refresh"),
                         class = "btn-danger"),
     shiny::checkboxInput(ns("auto_run"), "Auto run", value = FALSE),
-    shiny::hr(),
     shiny::uiOutput(ns("odin_control")))
 }
 
