@@ -14,8 +14,8 @@ test_that("generated parameter interface includes all parameters", {
   expect_is(p, "list")
   expect_setequal(names(p), c("name_map", "tags"))
 
-  id <- vapply(p$tags[[2]]$children[[1]], function(x)
-    x$children[[2]]$attribs$id, "")
+  id <- vapply(p$tags$children[[2]]$children[[1]]$children[[1]],
+               function(x) x$children[[2]]$attribs$id, "")
   expect_equal(id, unname(p$name_map))
 
   expect_equal(unname(p$name_map), paste0("pars_", names(p$name_map)))
@@ -60,7 +60,7 @@ test_that("time can be length 1", {
   res <- mod_model_control_time(10, identity)
   expect_false(res$has_start_time)
 
-  tags <- res$tags[[2]]$children[[1]]
+  tags <- res$tags$children[[2]]$children[[1]]$children[[1]]
   expect_equal(length(tags), 2L)
 
   expect_equal(tags[[1]]$children[[2]]$attribs$id, "time_end")
@@ -71,7 +71,7 @@ test_that("time can be length 2", {
   res <- mod_model_control_time(c(0, 10), identity)
   expect_true(res$has_start_time)
 
-  tags <- res$tags[[2]]$children[[1]]
+  tags <- res$tags$children[[2]]$children[[1]]$children[[1]]
   expect_equal(length(tags), 3L)
   expect_equal(tags[[1]]$children[[2]]$attribs$id, "time_start")
   expect_equal(tags[[2]]$children[[2]]$attribs$id, "time_end")
