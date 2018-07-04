@@ -17,9 +17,7 @@ mod_model_input <- function(id) {
 ## all-in-one module that includes a sidebar interface
 mod_model_ui <- function(id, title) {
   ns <- shiny::NS(id)
-  path_css <- odin_ui_file("css/styles.css")
   shiny::tagList(
-    shiny::includeCSS(path_css),
     if (!is.null(title)) {
       shiny::titlePanel(title)
     } else {
