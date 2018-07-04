@@ -65,7 +65,9 @@ write_model_data_json <- function(model, data, filename) {
 
 ## There's really quite a lot to do here.  This will be fairly lenient
 ## at first and we'll get a more agressive version as it becomes clear
-## what is needed.
+## what is needed.  Part of the issue here is controlling when the
+## error is thrown so that the app feeds back the error information in
+## the most useful way.
 validate_model_parameters <- function(model, parameters) {
   p <- stats::coef(model)
 

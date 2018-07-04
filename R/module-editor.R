@@ -3,7 +3,10 @@ mod_editor_ui <- function(id, initial_code) {
 
   initial_code <- mod_editor_validate_initial_code(initial_code)
   docs <- shiny::includeMarkdown(odin_ui_file("md/editor.md"))
+  path_css <- odin_ui_file("css/styles-editor.css")
+
   editor <- shiny::tagList(
+    shiny::includeCSS(path_css),
     shiny::textInput(ns("title"), "Model name", "model"),
 
     ## The ace editor setting "showPrintMargin" is the one to control
@@ -109,15 +112,10 @@ mod_editor_server <- function(input, output, session, initial_code) {
     shinyAce::updateAceEditor(session, ns("editor"), border = res$border)
   })
 
-  ## Here is the exit route out of the module
+  ## Here is the first parr of the exit route out of the module
   shiny::observeEvent(
     input$go_button, {
       code <- input$editor
-      title <- input$title
-      default_time <- 10
-
-      model_id <- gsub(" -", "_", tolower(title))
-
       res <- shiny::withProgress(
         message = "Compiling model...",
         detail = "some detail", value = 1, {
@@ -127,12 +125,34 @@ mod_editor_server <- function(input, output, session, initial_code) {
       data$compilation <- list(code = code, result = res, is_current = TRUE)
 
       if (res$success) {
-        data$model <- list(generator = res$model,
-                           title = title,
-                           default_time = 10,
-                           id = model_id)
+        pars <- coef(res$model)
+        shiny::showModal(editor_metadata_modal(pars, NULL, TRUE, ns))
       }
     })
+
+  ## This is the second part of the exit route out
+  shiny::observeEvent(input$editor_metadata_ok, {
+    model <- data$compilation$result$model
+    pars <- coef(model)
+    res <- editor_metadata_validate(pars, input)
+    if (res$success) {
+      shiny::removeModal()
+      title <- input$title
+      model_id <- gsub(" -", "_", tolower(title))
+      ## This is needed to avoid a bit of zealous checking about
+      ## contents of the parameter list used in model.R
+      parameters <- lapply(
+        res$data[names(res$data) != "t"], function(el)
+          el[intersect(names(el), c("description", "default", "range"))])
+      data$model <- list(generator = model,
+                         title = title,
+                         default_time = res$data$t$range,
+                         id = model_id,
+                         parameters = parameters)
+    } else {
+      shiny::showModal(editor_metadata_modal(pars, res$data, FALSE, ns))
+    }
+  })
 
   return(shiny::reactive(data$model))
 }
@@ -141,7 +161,7 @@ mod_editor_server <- function(input, output, session, initial_code) {
 ## Support functions:
 mod_editor_validate_initial_code <- function(initial_code) {
   if (is.null(initial_code)) {
-    initial_code <- readLines(odin_ui_file("minimal_model.R"))
+    initial_code <- readLines(odin_ui_file("editor_default.R"))
   } else if (!is.character(initial_code)) {
     stop("'initial_code' must be a character vector", call. = FALSE)
   }
