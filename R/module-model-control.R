@@ -1,7 +1,9 @@
 mod_model_control <- function(model, default_time, parameters, ns = identity) {
-  pars <- mod_model_control_parameters(model, parameters, ns)
-  time <- mod_model_control_time(default_time, ns)
-  output <- mod_model_control_output(model, ns)
+  info <- attr(model, "graph_data")()
+
+  pars <- mod_model_control_parameters(parameters, ns)
+  time <- mod_model_control_time(default_time, info, ns)
+  output <- mod_model_control_output(info, ns)
   graph_options <- mod_model_control_graph_options(ns)
 
   tags <- shiny::div(
@@ -14,7 +16,8 @@ mod_model_control <- function(model, default_time, parameters, ns = identity) {
   list(tags = tags,
        parameter_name_map = pars$name_map,
        has_start_time = time$has_start_time,
-       output_name_map = output$name_map)
+       output_name_map = output$name_map,
+       discrete = info$discrete)
 }
 
 
@@ -44,7 +47,7 @@ mod_model_control_section <- function(title, ..., ns) {
 }
 
 
-mod_model_control_parameters <- function(model, parameters, ns) {
+mod_model_control_parameters <- function(parameters, ns) {
   ## TODO: can we have a real list structure here?
   if (length(parameters) > 0L) {
     name_map <- set_names(paste0("pars_", names(parameters)), names(parameters))
@@ -80,7 +83,7 @@ mod_model_control_parameters <- function(model, parameters, ns) {
 ## * critical time
 ## * disable time selector entirely
 ## * solution tolerance
-mod_model_control_time <- function(default_time, ns) {
+mod_model_control_time <- function(default_time, info, ns) {
   if (length(default_time) == 1L) {
     default_time <- c(0, default_time)
     has_start_time <- FALSE
@@ -90,8 +93,13 @@ mod_model_control_time <- function(default_time, ns) {
     stop("'default_time' must be length 1 or 2")
   }
 
-  time_detail <- shiny::numericInput(
-    ns("time_detail"), "number of output points", 1000)
+  if (info$discrete) {
+    time_detail <- shiny::numericInput(
+      ns("time_detail"), "reporting interval", 1L)
+  } else {
+    time_detail <- shiny::numericInput(
+      ns("time_detail"), "number of output points", 1000L)
+  }
   time_end <- shiny::numericInput(
     ns("time_end"), "end", default_time[[2L]])
 
@@ -111,12 +119,8 @@ mod_model_control_time <- function(default_time, ns) {
 }
 
 
-mod_model_control_output <- function(model, ns) {
-  x <- attr(model, "graph_data")()
-  vars <- x$nodes[x$nodes$type %in% c("variable", "output"), ]
-  if (!all(vars$rank == 0L)) {
-    stop("Currently all output must be scalar")
-  }
+mod_model_control_output <- function(info, ns) {
+  vars <- info$nodes[info$nodes$type %in% c("variable", "output"), ]
 
   name_map <- set_names(paste0("plot_", vars$name_target), vars$name_target)
 
