@@ -9,7 +9,7 @@ test_that("generated parameter interface includes all parameters", {
   gen <- mock_model(pars)
 
   parameters <- validate_model_parameters(gen, NULL)
-  p <- mod_model_control_parameters(gen, parameters, identity)
+  p <- mod_model_control_parameters(parameters, identity)
 
   expect_is(p, "list")
   expect_setequal(names(p), c("name_map", "tags"))
@@ -51,13 +51,13 @@ test_that("models can have no parameters", {
                      rank = integer(0))
   gen <- mock_model(pars)
   parameters <- validate_model_parameters(gen, NULL)
-  expect_identical(mod_model_control_parameters(gen, parameters, identity),
+  expect_identical(mod_model_control_parameters(parameters, identity),
                    list(tags = list(), name_map = character(0)))
 })
 
 
 test_that("time can be length 1", {
-  res <- mod_model_control_time(10, identity)
+  res <- mod_model_control_time(10, list(discrete = FALSE), identity)
   expect_false(res$has_start_time)
 
   tags <- res$tags$children[[2]]$children[[1]]$children[[1]]
@@ -68,7 +68,7 @@ test_that("time can be length 1", {
 
 
 test_that("time can be length 2", {
-  res <- mod_model_control_time(c(0, 10), identity)
+  res <- mod_model_control_time(c(0, 10), list(discrete = FALSE), identity)
   expect_true(res$has_start_time)
 
   tags <- res$tags$children[[2]]$children[[1]]$children[[1]]

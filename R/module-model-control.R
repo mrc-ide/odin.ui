@@ -1,9 +1,8 @@
-mod_model_control <- function(model, default_time, parameters, ns = identity) {
-  info <- attr(model, "graph_data")()
-
+mod_model_control <- function(graph_data, default_time, parameters,
+                              ns = identity) {
   pars <- mod_model_control_parameters(parameters, ns)
-  time <- mod_model_control_time(default_time, info, ns)
-  output <- mod_model_control_output(info, ns)
+  time <- mod_model_control_time(default_time, graph_data, ns)
+  output <- mod_model_control_output(graph_data, ns)
   graph_options <- mod_model_control_graph_options(ns)
 
   tags <- shiny::div(
@@ -17,7 +16,7 @@ mod_model_control <- function(model, default_time, parameters, ns = identity) {
        parameter_name_map = pars$name_map,
        has_start_time = time$has_start_time,
        output_name_map = output$name_map,
-       discrete = info$discrete)
+       discrete = graph_data$discrete)
 }
 
 
@@ -83,7 +82,7 @@ mod_model_control_parameters <- function(parameters, ns) {
 ## * critical time
 ## * disable time selector entirely
 ## * solution tolerance
-mod_model_control_time <- function(default_time, info, ns) {
+mod_model_control_time <- function(default_time, graph_data, ns) {
   if (length(default_time) == 1L) {
     default_time <- c(0, default_time)
     has_start_time <- FALSE
@@ -93,7 +92,7 @@ mod_model_control_time <- function(default_time, info, ns) {
     stop("'default_time' must be length 1 or 2")
   }
 
-  if (info$discrete) {
+  if (graph_data$discrete) {
     time_detail <- shiny::numericInput(
       ns("time_detail"), "reporting interval", 1L)
   } else {
@@ -119,8 +118,8 @@ mod_model_control_time <- function(default_time, info, ns) {
 }
 
 
-mod_model_control_output <- function(info, ns) {
-  vars <- info$nodes[info$nodes$type %in% c("variable", "output"), ]
+mod_model_control_output <- function(graph_data, ns) {
+  vars <- graph_data$nodes[graph_data$nodes$type %in% c("variable", "output"), ]
 
   name_map <- set_names(paste0("plot_", vars$name_target), vars$name_target)
 

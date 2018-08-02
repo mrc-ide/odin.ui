@@ -36,9 +36,11 @@ mod_model_server <- function(input, output, session,
                              model, default_time, parameters) {
   ns <- session$ns
 
+  graph_data <- attr(model, "graph_data")()
+
   parameters <- validate_model_parameters(model, parameters)
   model_output <- shiny::reactiveValues(data = NULL)
-  control <- mod_model_control(model, default_time, parameters, ns)
+  control <- mod_model_control(graph_data, default_time, parameters, ns)
 
   output$odin_control <- shiny::renderUI({
     times <- input$reset_button
