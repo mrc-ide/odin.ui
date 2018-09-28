@@ -11,13 +11,13 @@ dygraph_multi <- function(dat, include, cols, mean, interval) {
   ## hardest.
   dat_interval <- lapply(names(interval), dygraph_interval, dat, interval)
   ser_interval <- Map(function(d, c)
-    list(names = colnames(d), col = c, width = 2, group = FALSE),
+    list(names = colnames(d), col = c, width = 2, n = 3),
     dat_interval, cols[names(interval)])
 
   mean <- setdiff(mean, names(interval))
   dat_mean <- lapply(dat[mean], rowMeans)
   ser_mean <- Map(function(v, c)
-    list(names = v, col = c, width = 2, group = FALSE),
+    list(names = v, col = c, width = 2, n = 1),
     mean, cols[mean])
 
   ## Then we pull in the direct series too; this is different for
@@ -33,10 +33,10 @@ dygraph_multi <- function(dat, include, cols, mean, interval) {
     ser_individual <- lapply(include, function(v) {
       d <- dat_individual[[v]]
       if (is.array(d)) {
-        list(names = colnames(d), col = transp(rep(cols[[v]], ncol(d)), .3),
-             width = 0.5, group = TRUE)
+        list(names = colnames(d), col = transp(cols[[v]], .3),
+             width = 1, n = ncol(d))
       } else {
-        list(names = v, col = cols[[v]], width = 2, group = FALSE)
+        list(names = v, col = cols[[v]], width = 2, n = 1)
       }
     })
     if (all(i)) {
@@ -55,32 +55,32 @@ dygraph_multi <- function(dat, include, cols, mean, interval) {
                            check.names = FALSE)
   ser <- c(ser_interval, ser_mean, ser_individual)
 
-  ## We can break things here...
+  ## The function can be broken in two here; above is data assembly,
+  ## below is plotting
+  cols_use <- lapply(ser, function(s) rep(s$col, s$n))
 
-  ## then draw the graph:
   out <- dygraphs::dygraph(dat_use, xlab = "Time")
   out <- dygraphs::dyOptions(out,
+                             colors = unlist(cols_use, use.names = FALSE),
+                             strokeWidth = 1,
                              labelsKMB = TRUE,
                              animatedZooms = TRUE,
                              drawGrid = FALSE)
-  for (s in ser) {
-    if (s$group) {
-      ## TODO: this _should_ work IO think, but seems not too!
-      ##
-      ## out <- dygraphs::dyGroup(out, s$names, color = s$col,
-      ##                          strokeWidth = s$width)
-      ##
-      ## so instead, loop over the set, which is slower, but at least
-      ## works
-      for (i in s$names) {
-        out <- dygraphs::dySeries(out, i, color = s$col[[1]],
-                                  strokeWidth = s$width)
-      }
-    } else {
+  for (s in ser_interval) {
+    out <- dygraphs::dySeries(out, s$names, color = s$col,
+                              strokeWidth = s$width)
+  }
+  for (s in ser_mean) {
+    out <- dygraphs::dySeries(out, s$names, color = s$col,
+                              strokeWidth = s$width)
+  }
+  for (s in ser_individual) {
+    if (length(s$names) == 1L && s$names %in% include) {
       out <- dygraphs::dySeries(out, s$names, color = s$col,
                                 strokeWidth = s$width)
     }
   }
+
   out <- dygraphs::dyHighlight(out,
                                highlightSeriesOpts = list(strokeWidth = 2),
                                highlightCircleSize = 3,
