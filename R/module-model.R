@@ -34,14 +34,25 @@ mod_model_ui <- function(id, title) {
 
 
 mod_model_server <- function(input, output, session,
-                             model, default_time, parameters) {
+                             model, default_time, parameters,
+                             extra = NULL) {
   ns <- session$ns
 
   graph_data <- attr(model, "graph_data")()
 
+  if (!is.null(extra)) {
+    assert_named(extra)
+    if (!all(vlapply(extra, is.function))) {
+      stop("All elements of 'extra' must be functions", call. = FALSE)
+    }
+    if (any(names(extra) %in% graph_data$nodes$name_target)) {
+      stop("Names in 'extra' collide with model names")
+    }
+  }
+
   parameters <- validate_model_parameters(model, parameters)
   model_output <- shiny::reactiveValues(data = NULL)
-  control <- mod_model_control(graph_data, default_time, parameters, ns)
+  control <- mod_model_control(graph_data, default_time, parameters, extra, ns)
 
   output$odin_control <- shiny::renderUI({
     times <- input$reset_button
@@ -82,13 +93,13 @@ mod_model_server <- function(input, output, session,
     ## into the editor app at least; otherwise it fails to start up
     ## somehow!
     if (isTRUE(input$auto_run)) {
-      update_model(model, input, model_output, control)
+      update_model(model, input, model_output, control, extra)
     }
   })
 
   shiny::observeEvent(
     input$go_button, {
-      update_model(model, input, model_output, control)
+      update_model(model, input, model_output, control, extra)
     })
 
   output$result_plot <- dygraphs::renderDygraph({
@@ -165,7 +176,7 @@ mod_model_compute_filename <- function(title, filename, format) {
 }
 
 
-update_model <- function(model, input, output, control) {
+update_model <- function(model, input, output, control, extra) {
   output$data <- tryCatch({
     pars <- mod_model_getpars(input, control$parameter_name_map)
     time <- mod_model_gettime(input, control$has_start_time, control$discrete)
@@ -175,6 +186,6 @@ update_model <- function(model, input, output, control) {
       message("Skipping")
       return()
     }
-    run_model(model, pars, time, replicates)
+    run_model(model, pars, time, replicates, extra)
   }, error = identity)
 }

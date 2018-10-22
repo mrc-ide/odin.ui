@@ -15,6 +15,15 @@
 ##'
 ##' @param parameters A list of parameter information
 ##'
+##' @param extra A function to apply over the model output, in order
+##'   to produce additional derived columns.  This is designed to
+##'   allow more flexible post-run transformations than can easily be
+##'   allowed in odin and might be particularly useful in discrete
+##'   time stochastic models that are replicated (e.g., to summarise
+##'   across model realisations).  Must be provided as a named list of
+##'   functions.  The name of the element is the name of the new
+##'   variable in the output.
+##'
 ##' @param ... Additional paramters passed to \code{shiny::runApp}
 ##'
 ##' @param run Logical, indicating if the app should be run.  If
@@ -24,10 +33,11 @@
 ##' @export
 ##' @importFrom odin odin
 odin_ui_app <- function(model, default_time, title = "odin ui",
-                        parameters = NULL, ..., run = TRUE) {
+                        parameters = NULL, extra = NULL, ...,
+                        run = TRUE) {
   app <- shiny::shinyApp(
     ui = odin_ui_app_ui(title),
-    server = odin_ui_app_server(model, default_time, parameters))
+    server = odin_ui_app_server(model, default_time, parameters, extra))
   run_app(app, run, ...)
 }
 
@@ -39,9 +49,9 @@ odin_ui_app_ui <- function(title) {
 }
 
 
-odin_ui_app_server <- function(model, default_time, parameters) {
+odin_ui_app_server <- function(model, default_time, parameters, extra) {
   function(input, output, session) {
     shiny::callModule(mod_model_server, "odin_ui",
-                      model, default_time, parameters)
+                      model, default_time, parameters, extra)
   }
 }

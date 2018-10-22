@@ -1,9 +1,9 @@
-mod_model_control <- function(graph_data, default_time, parameters,
+mod_model_control <- function(graph_data, default_time, parameters, extra,
                               ns = identity) {
   pars <- mod_model_control_parameters(parameters, ns)
   time <- mod_model_control_time(default_time, graph_data, ns)
   reps <- mod_model_control_reps(graph_data, ns)
-  output <- mod_model_control_output(graph_data, ns)
+  output <- mod_model_control_output(graph_data, extra, ns)
   graph_options <- mod_model_control_graph_options(ns)
 
   tags <- shiny::div(
@@ -135,8 +135,15 @@ mod_model_control_reps <- function(graph_data, ns) {
 }
 
 
-mod_model_control_output <- function(graph_data, ns) {
+mod_model_control_output <- function(graph_data, extra, ns) {
   vars <- graph_data$nodes[graph_data$nodes$type %in% c("variable", "output"), ]
+
+  if (!is.null(extra)) {
+    extra <- data_frame(id = names(extra), label = names(extra),
+                        name_target = names(extra), rank = NA_integer_,
+                        type = "extra", stage = "time")
+    vars <- rbind(vars, extra)
+  }
 
   name_map <- set_names(paste0("plot_", vars$name_target), vars$name_target)
 

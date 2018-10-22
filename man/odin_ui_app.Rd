@@ -4,8 +4,8 @@
 \alias{odin_ui_app}
 \title{Interactive odin app}
 \usage{
-odin_ui_app(model, default_time, title = "odin ui", parameters = NULL, ...,
-  run = TRUE)
+odin_ui_app(model, default_time, title = "odin ui", parameters = NULL,
+  extra = NULL, ..., run = TRUE)
 }
 \arguments{
 \item{model}{An odin model (a generator function) created by
@@ -20,6 +20,15 @@ configurable.}
 \item{title}{String to use for the application title}
 
 \item{parameters}{A list of parameter information}
+
+\item{extra}{A function to apply over the model output, in order
+to produce additional derived columns.  This is designed to
+allow more flexible post-run transformations than can easily be
+allowed in odin and might be particularly useful in discrete
+time stochastic models that are replicated (e.g., to summarise
+across model realisations).  Must be provided as a named list of
+functions.  The name of the element is the name of the new
+variable in the output.}
 
 \item{...}{Additional paramters passed to \code{shiny::runApp}}
 

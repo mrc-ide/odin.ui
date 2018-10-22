@@ -34,7 +34,7 @@ compile_model <- function(code, dest = NULL, safe = FALSE, skip_cache = FALSE) {
 }
 
 
-run_model <- function(generator, pars, time, replicates) {
+run_model <- function(generator, pars, time, replicates, extra) {
   if (length(pars) > 0L) {
     model <- generator(user = pars)
   } else {
@@ -46,6 +46,11 @@ run_model <- function(generator, pars, time, replicates) {
     output <- model$run(time, replicate = replicates)
   }
   output_expanded <- model$transform_variables(output)
+  if (!is.null(extra)) {
+    for (i in names(extra)) {
+      output_expanded[[i]] <- extra[[i]](output_expanded)
+    }
+  }
   list(model = model, pars = pars, time = time, replicates = replicates,
        output = output, output_expanded = output_expanded)
 }
