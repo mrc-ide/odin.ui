@@ -65,7 +65,7 @@ plot_model_output_single <- function(xy, options) {
 
 
 plot_model_output_replicates <- function(dat, graph_options) {
-  xy <- dat$model$transform_variables(dat$output)
+  xy <- dat$output_expanded
   include <- names(which(graph_options$include))
   cols <- graph_options$cols
   mean <- character(0)

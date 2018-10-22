@@ -45,8 +45,9 @@ run_model <- function(generator, pars, time, replicates) {
   } else {
     output <- model$run(time, replicate = replicates)
   }
+  output_expanded <- model$transform_variables(output)
   list(model = model, pars = pars, time = time, replicates = replicates,
-       output = output)
+       output = output, output_expanded = output_expanded)
 }
 
 
