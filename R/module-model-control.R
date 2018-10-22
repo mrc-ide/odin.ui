@@ -2,6 +2,7 @@ mod_model_control <- function(graph_data, default_time, parameters,
                               ns = identity) {
   pars <- mod_model_control_parameters(parameters, ns)
   time <- mod_model_control_time(default_time, graph_data, ns)
+  reps <- mod_model_control_reps(graph_data, ns)
   output <- mod_model_control_output(graph_data, ns)
   graph_options <- mod_model_control_graph_options(ns)
 
@@ -9,6 +10,7 @@ mod_model_control <- function(graph_data, default_time, parameters,
     class = "panel-group",
     pars$tags,
     time$tags,
+    reps$tags,
     output$tags,
     graph_options$tags)
 
@@ -16,7 +18,9 @@ mod_model_control <- function(graph_data, default_time, parameters,
        parameter_name_map = pars$name_map,
        has_start_time = time$has_start_time,
        output_name_map = output$name_map,
-       discrete = graph_data$discrete)
+       discrete = graph_data$discrete,
+       stochastic = graph_data$stochastic,
+       replicates = reps$replicates)
 }
 
 
@@ -115,6 +119,19 @@ mod_model_control_time <- function(default_time, graph_data, ns) {
     ns = ns)
 
   list(tags = tags, has_start_time = has_start_time)
+}
+
+
+mod_model_control_reps <- function(graph_data, ns) {
+  if (!graph_data$stochastic) {
+    return(list(tags = NULL, replicates = FALSE))
+  }
+  tags <- mod_model_control_section(
+    "Replicates",
+    shiny::numericInput(
+      ns("replicates"), "replicates", 1L),
+    ns = ns)
+  list(tags = tags, replicates = TRUE)
 }
 
 

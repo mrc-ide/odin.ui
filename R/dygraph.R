@@ -85,8 +85,8 @@ dygraph_multi <- function(dat, include, cols, mean, interval) {
                                highlightSeriesOpts = list(strokeWidth = 2),
                                highlightCircleSize = 3,
                                highlightSeriesBackgroundAlpha = 1,
-                             hideOnMouseOut = TRUE)
-  out <- dygraphs::dyCSS(out, "dygraph.css")
+                               hideOnMouseOut = TRUE)
+  out <- dygraphs::dyCSS(out, odin_ui_file("css/dygraphs.css"))
   out
 }
 

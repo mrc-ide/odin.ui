@@ -17,7 +17,7 @@
 
 ## Note: we purposedly avoid the use of a piping operator here.
 
-plot_model_output <- function(xy, options) {
+plot_model_output_single <- function(xy, options) {
   if (is.null(xy)) {
     return(NULL)
   }
@@ -61,4 +61,14 @@ plot_model_output <- function(xy, options) {
                             hideOnMouseOut = TRUE)
   out <- dygraphs::dyCSS(out, odin_ui_file("css/dygraphs.css"))
   out
+}
+
+
+plot_model_output_replicates <- function(dat, graph_options) {
+  xy <- dat$model$transform_variables(dat$output)
+  include <- names(which(graph_options$include))
+  cols <- graph_options$cols
+  mean <- character(0)
+  interval <- list()
+  dygraph_multi(xy, include, cols, mean, interval)
 }

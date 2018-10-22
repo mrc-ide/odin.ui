@@ -9,10 +9,11 @@ Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
 License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:
+    dde (>= 0.0.6),
     dygraphs,
     jsonlite,
     markdown,
-    odin (>= 0.0.8),
+    odin (>= 0.0.10),
     shiny (>= 1.0.4),
     shinyAce,
     yaml

@@ -1,3 +1,4 @@
+##' @importFrom dde difeq_replicate
 mod_model_input <- function(id) {
   ns <- shiny::NS(id)
 
@@ -92,7 +93,11 @@ mod_model_server <- function(input, output, session,
 
   output$result_plot <- dygraphs::renderDygraph({
     graph_options <- mod_model_getgraph_options(input, control$output_name_map)
-    plot_model_output(model_output$data$output, graph_options)
+    if (is.null(model_output$data$replicates)) {
+      plot_model_output_single(model_output$data$output, graph_options)
+    } else {
+      plot_model_output_replicates(model_output$data, graph_options)
+    }
   })
 
   output$download_button <- shiny::downloadHandler(
@@ -164,9 +169,12 @@ update_model <- function(model, input, output, control) {
   output$data <- tryCatch({
     pars <- mod_model_getpars(input, control$parameter_name_map)
     time <- mod_model_gettime(input, control$has_start_time, control$discrete)
+    replicates <- input$replicates
     if (identical(pars, output$pars) && identical(time, output$time)) {
+      ## I think that this should *not* be possible for stochastic models!
+      message("Skipping")
       return()
     }
-    run_model(model, pars, time)
+    run_model(model, pars, time, replicates)
   }, error = identity)
 }

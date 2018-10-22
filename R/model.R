@@ -34,13 +34,19 @@ compile_model <- function(code, dest = NULL, safe = FALSE, skip_cache = FALSE) {
 }
 
 
-run_model <- function(generator, pars, time, prev) {
+run_model <- function(generator, pars, time, replicates) {
   if (length(pars) > 0L) {
     model <- generator(user = pars)
   } else {
     model <- generator()
   }
-  list(model = model, pars = pars, time = time, output = model$run(time))
+  if (is.null(replicates)) {
+    output <- model$run(time)
+  } else {
+    output <- model$run(time, replicate = replicates)
+  }
+  list(model = model, pars = pars, time = time, replicates = replicates,
+       output = output)
 }
 
 
