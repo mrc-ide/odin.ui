@@ -2,7 +2,7 @@ mod_model_control <- function(graph_data, default_time, parameters, extra,
                               ns = identity) {
   pars <- mod_model_control_parameters(parameters, ns)
   time <- mod_model_control_time(default_time, graph_data, ns)
-  reps <- mod_model_control_reps(graph_data, ns)
+  reps <- mod_model_control_reps(graph_data, 1L, ns)
   output <- mod_model_control_output(graph_data, extra, ns)
   graph_options <- mod_model_control_graph_options(ns)
 
@@ -122,14 +122,14 @@ mod_model_control_time <- function(default_time, graph_data, ns) {
 }
 
 
-mod_model_control_reps <- function(graph_data, ns) {
+mod_model_control_reps <- function(graph_data, default, ns) {
   if (!graph_data$stochastic) {
     return(list(tags = NULL, replicates = FALSE))
   }
   tags <- mod_model_control_section(
     "Replicates",
     shiny::numericInput(
-      ns("replicates"), "replicates", 1L),
+      ns("replicates"), "replicates", default),
     ns = ns)
   list(tags = tags, replicates = TRUE)
 }

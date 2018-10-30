@@ -110,3 +110,42 @@ validate_model_parameters <- function(model, parameters) {
 
   set_names(lapply(p$name, f), p$name)
 }
+
+
+## This requires quite a lot of work really; there are lots of moving
+## parts here.
+run_model_parameters <- function(generator, target, values, common, time,
+                                 replicates, extra, collect, callback = NULL) {
+  n <- length(values)
+  ret <- vector("list", n)
+  pars <- common
+  for (i in seq_len(n)) {
+    pars[[target]] <- values[[i]]
+    res <- run_model(generator, pars, time, replicates, extra)
+    ret[[i]] <- collect(res$output_expanded)
+    if (!is.null(callback)) {
+      callback(i, n)
+    }
+  }
+
+  ## This is not wonderful but will get things more or less sorted.
+  len <- lengths(ret)
+  stopifnot(all(len == len[[1]]))
+  m <- matrix(unlist(ret, use.names = FALSE), n)
+  colnames(m) <- names(ret[[1]])
+  as.data.frame(cbind(matrix(values, dimnames = list(NULL, target)), m))
+}
+
+
+validate_extra <- function(extra, graph_data) {
+  if (!is.null(extra)) {
+    assert_named(extra)
+    if (!all(vlapply(extra, is.function))) {
+      stop("All elements of 'extra' must be functions", call. = FALSE)
+    }
+    if (any(names(extra) %in% graph_data$nodes$name_target)) {
+      stop("Names in 'extra' collide with model names")
+    }
+  }
+  extra
+}

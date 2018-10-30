@@ -60,3 +60,8 @@ write_csv <- function(data, filename) {
 `%||%` <- function(a, b) {
   if (is.null(a)) b else a
 }
+
+
+callback_shiny_progress <- function(i, n) {
+  shiny::incProgress(1, detail = sprintf("%d / %d", i, n))
+}

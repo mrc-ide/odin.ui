@@ -39,16 +39,7 @@ mod_model_server <- function(input, output, session,
   ns <- session$ns
 
   graph_data <- attr(model, "graph_data")()
-
-  if (!is.null(extra)) {
-    assert_named(extra)
-    if (!all(vlapply(extra, is.function))) {
-      stop("All elements of 'extra' must be functions", call. = FALSE)
-    }
-    if (any(names(extra) %in% graph_data$nodes$name_target)) {
-      stop("Names in 'extra' collide with model names")
-    }
-  }
+  extra <- validate_extra(extra, graph_data)
 
   parameters <- validate_model_parameters(model, parameters)
   model_output <- shiny::reactiveValues(data = NULL)
