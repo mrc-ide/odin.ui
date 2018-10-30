@@ -139,9 +139,10 @@ mod_model_control_output <- function(graph_data, extra, ns) {
   vars <- graph_data$nodes[graph_data$nodes$type %in% c("variable", "output"), ]
 
   if (!is.null(extra)) {
-    extra <- data_frame(id = names(extra), label = names(extra),
+    extra <- data.frame(id = names(extra), label = names(extra),
                         name_target = names(extra), rank = NA_integer_,
-                        type = "extra", stage = "time")
+                        type = "extra", stage = "time",
+                        stringsAsFactors = FALSE, check.names = FALSE)
     vars <- rbind(vars, extra)
   }
 
