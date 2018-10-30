@@ -27,6 +27,12 @@ Code and docs side by side
 odin.ui::odin_ui_doc_app(system.file("examples/sir.yml", package = "odin.ui"))
 ```
 
+Example for teaching
+
+```r
+shiny::runApp("inst/examples/sis_app.R")
+```
+
 ## Docker
 
 
