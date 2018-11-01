@@ -108,7 +108,7 @@ mod_model_control_run_options <- function(default_time, graph_data, default_reps
 
   tags <- mod_model_control_section(
     "Run options",
-    drop_null(list(time_start, time_end, time_detail, reps, output)),
+    drop_null(list(time_start, time_end, time_detail, reps, output$tags)),
     ns = ns)
 
   list(tags = tags, has_start_time = has_start_time, replicates = has_replicates, output_name_map = output$name_map)
@@ -130,23 +130,6 @@ mod_model_control_output <- function(graph_data, extra, ns) {
   tags <- horizontal_form_group("outputs", Map(raw_checkbox_input, ns(name_map), vars$name_target, value = TRUE))
 
   list(tags = tags, name_map = name_map)
-}
-
-raw_numeric_input <- function(inputId, value) {
-  value <- restoreInput(id = inputId, default = value)
-  tags$input(id = inputId, type = "number", class = "form-control",
-    value = value, style = "width: 100px")
-}
-
-raw_checkbox_input <- function (inputId, label, value = FALSE)
-{
-  value <- shiny::restoreInput(id = inputId, default = value)
-  inputTag <- shiny::tags$input(id = inputId, type = "checkbox")
-  if (!is.null(value) && value)
-    inputTag$attribs$checked <- "checked"
-
- shiny::div(class = "checkbox",
-    shiny::tags$label(inputTag, shiny::tags$span(label)))
 }
 
 horizontal_form_group <- function(label_name, input, label_width = 6, label_class = "") {

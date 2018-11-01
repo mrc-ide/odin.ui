@@ -296,7 +296,8 @@
 }
 
 .options .list-group-item:hover {
-    background-color: #bcbcf2;
+    background-color: #7c7ce4;
+    color: white;
 }
 
 .options div:first-child {
@@ -305,4 +306,16 @@
 
 a.text-muted {
     color: #777 !important;
+}
+
+.btn-purple {
+    background-color: #7c7ce4;
+    border-color: #6666e0;
+    color: white;
+}
+
+.btn-purple:hover, .btn-purple:active, .btn-purple:focus {
+    background-color: #6666e0;
+    border-color: #6666e0;
+    color: white;
 }
