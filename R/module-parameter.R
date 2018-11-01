@@ -96,8 +96,7 @@ mod_parameter_control_report <- function(extra, ns) {
 mod_parameter_control <- function(graph_data, default_time, parameters, extra,
                                   ns = identity) {
   pars <- mod_model_control_parameters(parameters, ns)
-  time <- mod_model_control_time(default_time, graph_data, ns)
-  reps <- mod_model_control_reps(graph_data, 100L, ns)
+  run_options <- mod_model_control_run_options(default_time, graph_data, 100L, extra, ns)
   report <- mod_parameter_control_report(extra, ns)
   focal <- mod_parameter_control_focal(parameters, ns)
 
@@ -109,17 +108,16 @@ mod_parameter_control <- function(graph_data, default_time, parameters, extra,
     shiny::div(
       class = "panel-group",
       pars$tags,
-      time$tags,
-      reps$tags,
+      run_options$tags,
       report$tags,
       focal$tags))
 
   list(tags = tags,
        parameter_name_map = pars$name_map,
-       has_start_time = time$has_start_time,
+       has_start_time = run_options$has_start_time,
        discrete = graph_data$discrete,
        stochastic = graph_data$stochastic,
-       replicates = reps$replicates)
+       replicates = run_options$replicates)
 }
 
 

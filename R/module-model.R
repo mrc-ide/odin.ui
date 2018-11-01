@@ -3,22 +3,23 @@ mod_model_input <- function(id) {
   ns <- shiny::NS(id)
 
   shiny::tagList(
+    shiny::uiOutput(ns("odin_control")),
     ## https://github.com/rstudio/shiny/issues/1675#issuecomment-298398997
-    shiny::actionButton(ns("go_button"), "Run model",
-                        shiny::icon("play"),
-                        class = "btn-primary"),
-    shiny::actionButton(ns("reset_button"), "Reset",
-                        shiny::icon("refresh"),
-                        class = "btn-danger"),
-    shiny::checkboxInput(ns("auto_run"), "Auto run", value = FALSE),
-    shiny::uiOutput(ns("odin_control")))
+    shiny::actionButton(ns("reset_button"), "Reset", shiny::icon("refresh"), class = "btn-warning pull-right ml-2"),
+    shiny::actionButton(ns("go_button"), "Run model", shiny::icon("play"), class = "btn-success pull-right"),
+    shiny::div(class="form-group pull-right", style="clear:both;",
+      shiny::div(class="col-sm-12", raw_checkbox_input(ns("auto_run"), "Auto run", value = FALSE))
+    )
+  )
 }
 
 
 ## all-in-one module that includes a sidebar interface
 mod_model_ui <- function(id, title) {
   ns <- shiny::NS(id)
+  path_css <- odin_ui_file("css/styles.css")
   shiny::tagList(
+    shiny::includeCSS(path_css),
     if (!is.null(title)) {
       shiny::titlePanel(title)
     } else {
@@ -27,11 +28,33 @@ mod_model_ui <- function(id, title) {
       ## don't see the cleanest way of adding it.
       shiny::p(class = "spacer")
     },
+
+    shiny::p(class = "mt-5"),
     shiny::sidebarLayout(
-      shiny::sidebarPanel(mod_model_input(id)),
-      shiny::mainPanel(shiny::uiOutput(ns("odin_output")))))
+      shiny::div(class = "col-sm-4 col-lg-3", tags$form(class = "form-horizontal", mod_model_input(id))),
+      shiny::mainPanel(shiny::uiOutput(ns("odin_output")))
+    ))
 }
 
+raw_select_input <- function (inputId, label, choices, selected = NULL,
+                              selectize = TRUE, size = NULL)
+{
+  selected <- restoreInput(id = inputId, default = selected)
+  if (is.null(selected)) {
+    selected <- choices[[1]][1]
+  }
+  else selected <- as.character(selected)
+
+  options <- lapply(choices, function (choice) { shiny::tags$option(choice, value=choice) })
+
+  shiny::tags$select(id = inputId, class = "form-control", size = size, options)
+}
+
+raw_text_input <- function (inputId, value = "", placeholder = NULL)
+{
+  value <- restoreInput(id = inputId, default = value)
+  tags$input(id = inputId, type = "text", class = "form-control", value = value, placeholder = placeholder)
+}
 
 mod_model_server <- function(input, output, session,
                              model, default_time, parameters,
@@ -68,14 +91,18 @@ mod_model_server <- function(input, output, session,
             class = "panel-body",
             model_output$data$message)))
     } else {
+      graph_options <- mod_model_control_graph_options(ns)
       shiny::tagList(
         dygraphs::dygraphOutput(ns("result_plot")),
-        shiny::hr(),
-        shiny::h3("Download data"),
-        shiny::selectInput(ns("download_format"), "Format",
-                           c("auto", "csv", "rds", "json")),
-        shiny::textInput(ns("download_filename"), "Filename:", value = ""),
-        shiny::downloadButton(ns("download_button"), "Download"))
+        shiny::div(class="pull-right",
+                    shiny::div(class="form-inline mt-5",
+                                  shiny::div(class="form-group", shiny::tags$label("Format:"), raw_select_input(ns("download_format"), choices = list("auto","csv","rds","json"))),
+                                  shiny::div(class="form-group", shiny::tags$label("Filename:"), raw_text_input(ns("download_filename"), value = "")),
+                                  shiny::downloadButton(ns("download_button"), "Download", class="btn-success")
+                  ),
+                  graph_options$tags
+        )
+      )
     }
   })
 

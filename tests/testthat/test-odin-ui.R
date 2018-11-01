@@ -57,7 +57,7 @@ test_that("models can have no parameters", {
 
 
 test_that("time can be length 1", {
-  res <- mod_model_control_time(10, list(discrete = FALSE), identity)
+  res <- mod_model_control_run_options(10, list(discrete = FALSE), identity)
   expect_false(res$has_start_time)
 
   tags <- res$tags$children[[2]]$children[[1]]$children[[1]]
@@ -68,7 +68,7 @@ test_that("time can be length 1", {
 
 
 test_that("time can be length 2", {
-  res <- mod_model_control_time(c(0, 10), list(discrete = FALSE), identity)
+  res <- mod_model_control_run_options(c(0, 10), list(discrete = FALSE), identity)
   expect_true(res$has_start_time)
 
   tags <- res$tags$children[[2]]$children[[1]]$children[[1]]
@@ -79,8 +79,8 @@ test_that("time can be length 2", {
 
 
 test_that("time must be length 1-2", {
-  expect_error(mod_model_control_time(numeric(), identity),
+  expect_error(mod_model_control_run_options(numeric(), identity),
                "'default_time' must be length 1 or 2", fixed = TRUE)
-  expect_error(mod_model_control_time(1:3, identity),
+  expect_error(mod_model_control_run_options(1:3, identity),
                "'default_time' must be length 1 or 2", fixed = TRUE)
 })
