@@ -73,7 +73,7 @@ mod_model_server <- function(input, output, session,
     } else {
       graph_options <- mod_model_control_graph_options(ns)
       shiny::tagList(
-        dygraphs::dygraphOutput(ns("result_plot")),
+        shiny::div(class="graph-wrapper", dygraphs::dygraphOutput(ns("result_plot"))),
         shiny::div(class="pull-right",
                     shiny::div(class="form-inline mt-5",
                                   shiny::div(class="form-group", shiny::tags$label("Format:"), raw_select_input(ns("download_format"), choices = list("auto","csv","rds","json"))),

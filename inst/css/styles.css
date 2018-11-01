@@ -319,3 +319,16 @@ a.text-muted {
     border-color: #6666e0;
     color: white;
 }
+
+.graph-wrapper {
+    border: 1px solid #ddd;
+    padding: 20px 20px 20px 0;
+    background: #f8f8f8;
+}
+
+.box {
+    padding: 19px;
+    margin-bottom: 20px;
+    background-color: #f8f8f8;
+    border: 1px solid #e3e3e3;
+}
