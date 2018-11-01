@@ -176,9 +176,9 @@ mod_model_control_graph_options <- function(ns) {
                   title, shiny::icon("gear", lib="font-awesome"))
 
   body <- shiny::div(id = id,
-                    class = "collapse",
-                    list(choice_palette, width_slider, fill_checkbox,
-                    stack_checkbox, alpha_slider))
+                    class = "collapse well",
+                    style="width: 300px;",
+                    list(choice_palette, width_slider, fill_checkbox, stack_checkbox, alpha_slider))
 
   list(tags = shiny::div(class="pull-right mt-3", head, body))
 }
