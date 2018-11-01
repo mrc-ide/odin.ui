@@ -24,9 +24,8 @@ plot_model_output_single <- function(xy, options) {
   ## Generation of the basic plot
   include <- options$include
   var_to_keep <- names(include)[include]
-  time <- round_time(xy[, 1, drop = TRUE])
-  df <- cbind.data.frame(time = time,
-                         xy[, var_to_keep, drop = FALSE])
+  time <- round_time(xy$t)
+  df <- as.data.frame(c(list(time = time), xy[var_to_keep]))
   out <- dygraphs::dygraph(df)
 
   ## colours need to be unnamed; we also add transparency
@@ -64,8 +63,7 @@ plot_model_output_single <- function(xy, options) {
 }
 
 
-plot_model_output_replicates <- function(dat, graph_options) {
-  xy <- dat$output_expanded
+plot_model_output_replicates <- function(xy, graph_options) {
   include <- names(which(graph_options$include))
   cols <- graph_options$cols
   mean <- character(0)

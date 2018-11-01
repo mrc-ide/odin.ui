@@ -115,9 +115,11 @@ mod_model_server <- function(input, output, session,
   output$result_plot <- dygraphs::renderDygraph({
     graph_options <- mod_model_getgraph_options(input, control$output_name_map)
     if (is.null(model_output$data$replicates)) {
-      plot_model_output_single(model_output$data$output_expanded, graph_options)
+      plot_model_output_single(model_output$data$output_expanded,
+                               graph_options)
     } else {
-      plot_model_output_replicates(model_output$data, graph_options)
+      plot_model_output_replicates(model_output$data$output_expanded,
+                                   graph_options)
     }
   })
 
