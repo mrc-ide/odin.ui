@@ -11,7 +11,7 @@ mod_parameter_input <- function(id, title) {
       shiny::p(class = "spacer")
     },
     shiny::sidebarLayout(
-      shiny::sidebarPanel(shiny::uiOutput(ns("parameter_control"))),
+      shiny::div(class = "col-sm-4 col-lg-3", tags$form(class = "form-horizontal", shiny::uiOutput(ns("parameter_control")))),
       shiny::mainPanel(dygraphs::dygraphOutput(ns("result_plot")))))
 }
 
@@ -30,7 +30,11 @@ mod_parameter_server <- function(input, output, session,
   control <- mod_parameter_control(graph_data, default_time, parameters,
                                    extra, ns)
 
-  output$parameter_control <- shiny::renderUI(control$tags)
+  path_css <- odin_ui_file("css/styles.css")
+
+  output$parameter_control <- shiny::renderUI({
+    shiny::div(shiny::includeCSS(path_css),control$tags)
+  })
 
   shiny::observeEvent(
     input$go_button, {
@@ -47,6 +51,8 @@ mod_parameter_server <- function(input, output, session,
 
       collect <- parameter_collector(input$report_type, input$report_name)
       replicates <- input$replicates
+
+    str(focal_name)
 
       model_output$data <- shiny::withProgress(
         run_model_parameters(model, focal_name, focal_values, pars, time,
@@ -68,14 +74,14 @@ mod_parameter_control_focal <- function(parameters, ns) {
   p <- parameters[[1]]
   tags <- mod_model_control_section(
     "Focal parameter",
-    shiny::selectInput(
+    horizontal_form_group("Parameter to vary",
+      raw_select_input(
       ns("focal_name"),
-      "Parameter to vary",
       names(parameters),
-      selected = NA_character_),
-    shiny::numericInput(ns("focal_min"), "From", p$range_min %||% p$default),
-    shiny::numericInput(ns("focal_max"), "To", p$range_max %||% p$default),
-    shiny::numericInput(ns("focal_len"), "Number of points", 20),
+      selected = NA_character_)),
+    horizontal_form_group("From", raw_numeric_input(ns("focal_min"), p$range_min %||% p$default)),
+    horizontal_form_group("To", raw_numeric_input(ns("focal_max"), p$range_max %||% p$default)),
+    horizontal_form_group("Number of points", raw_numeric_input(ns("focal_len"), 20)),
     ns = ns)
   list(tags = tags)
 }
@@ -85,9 +91,9 @@ mod_parameter_control_focal <- function(parameters, ns) {
 mod_parameter_control_report <- function(extra, ns) {
   tags <- mod_model_control_section(
     "Report",
-    shiny::selectInput(ns("report_type"), "Summarise",
-                       set_names("last", "Last value")),
-    shiny::selectInput(ns("report_name"), "Variable", names(extra)),
+    horizontal_form_group("Summarise", raw_select_input(ns("report_type"),
+                       set_names("last", "Last value"))),
+    horizontal_form_group("Variable", raw_select_input(ns("report_name"), "Variable", names(extra))),
     ns = ns)
   list(tags = tags)
 }
@@ -101,16 +107,16 @@ mod_parameter_control <- function(graph_data, default_time, parameters, extra,
   focal <- mod_parameter_control_focal(parameters, ns)
 
   tags <- shiny::tagList(
-    shiny::actionButton(ns("go_button"), "Run model",
-                        shiny::icon("play"),
-                        class = "btn-primary"),
-    shiny::hr(),
     shiny::div(
-      class = "panel-group",
+      class = "list-group odin-options",
       pars$tags,
       run_options$tags,
       report$tags,
-      focal$tags))
+      focal$tags),
+    shiny::actionButton(ns("go_button"), "Run model",
+            shiny::icon("play"),
+            class = "btn-purple")
+  )
 
   list(tags = tags,
        parameter_name_map = pars$name_map,

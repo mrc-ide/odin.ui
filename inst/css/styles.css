@@ -281,13 +281,13 @@
     padding-bottom: 3rem !important;
 }
 
-.list-group.options {
+.list-group.odin-options {
     border-right: 1px solid #ddd;
     border-left: 1px solid #ddd;
     border-bottom: 1px solid #ddd;
 }
 
-.options .list-group-item, .options .list-group-item:focus {
+.odin-options .list-group-item, .odin-options .list-group-item:focus {
     border-right: 0;
     border-left: 0;
     border-radius: 0 !important;
@@ -295,13 +295,18 @@
     background-color: #E6E6FA;
 }
 
-.options .list-group-item:hover {
+.odin-options .list-group-item:hover {
     background-color: #7c7ce4;
     color: white;
 }
 
-.options div:first-child {
+.odin-options div:first-child {
     padding-top: 15px;
+}
+
+.odin-options .form-group {
+    margin-left:0;
+    margin-right: 0;
 }
 
 a.text-muted {

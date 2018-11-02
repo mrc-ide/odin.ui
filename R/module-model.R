@@ -17,9 +17,7 @@ mod_model_input <- function(id) {
 ## all-in-one module that includes a sidebar interface
 mod_model_ui <- function(id, title) {
   ns <- shiny::NS(id)
-  path_css <- odin_ui_file("css/styles.css")
   shiny::tagList(
-    shiny::includeCSS(path_css),
     if (!is.null(title)) {
       shiny::titlePanel(title)
     } else {
@@ -49,9 +47,11 @@ mod_model_server <- function(input, output, session,
   control <- mod_model_control(graph_data, default_time, parameters, extra, ns)
 
   output$odin_control <- shiny::renderUI({
+    path_css <- odin_ui_file("css/styles.css")
     times <- input$reset_button
     model_output$data <- NULL
     shiny::div(id = ns(paste0("odin_control_", times)),
+                shiny::includeCSS(path_css),
                 control$tags)
   })
 
@@ -71,7 +71,7 @@ mod_model_server <- function(input, output, session,
             class = "panel-body",
             model_output$data$message)))
     } else {
-      graph_options <- mod_model_control_graph_options(ns)
+      graph_options <- mod_model_control_graph_options(graph_data, extra, ns)
       shiny::tagList(
         shiny::div(class="graph-wrapper", dygraphs::dygraphOutput(ns("result_plot"))),
         shiny::div(class="pull-right",
@@ -154,14 +154,14 @@ mod_model_getoutput <- function(x, map) {
 
 mod_model_getgraph_options <- function(input, name_map) {
   include <- mod_model_getoutput(input, name_map)
-  palette <- odin_ui_palettes(input$choice_palette)
+  palette <- odin_ui_palettes("odin")
   cols <- set_names(palette(length(include)), names(include))
   list(include = include,
        cols = cols,
-       line_width = input$line_width,
-       fill = input$graph_fill,
-       alpha = input$graph_alpha,
-       stack = input$graph_stack)
+       line_width = 1,
+       fill = FALSE,
+       alpha = 1,
+       stack = FALSE)
 }
 
 

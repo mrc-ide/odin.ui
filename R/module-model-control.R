@@ -4,7 +4,7 @@ mod_model_control <- function(graph_data, default_time, parameters, extra,
   run_options <- mod_model_control_run_options(default_time, graph_data, 1L, extra, ns)
 
   tags <- shiny::div(
-    class = "list-group options",
+    class = "list-group odin-options",
     pars$tags,
     run_options$tags)
 
@@ -104,17 +104,17 @@ mod_model_control_run_options <- function(default_time, graph_data, default_reps
     reps <- horizontal_form_group("replicates", raw_numeric_input(ns("replicates"), default_reps))
   }
 
-  output <- mod_model_control_output(graph_data, extra, ns)
-
   tags <- mod_model_control_section(
     "Run options",
-    drop_null(list(time_start, time_end, time_detail, reps, output$tags)),
+    drop_null(list(time_start, time_end, time_detail, reps)),
     ns = ns)
 
-  list(tags = tags, has_start_time = has_start_time, replicates = has_replicates, output_name_map = output$name_map)
+    outputs <- mod_model_control_outputs(graph_data, extra, ns)
+
+  list(tags = tags, has_start_time = has_start_time, replicates = has_replicates, output_name_map = outputs$name_map)
 }
 
-mod_model_control_output <- function(graph_data, extra, ns) {
+mod_model_control_outputs <- function(graph_data, extra, ns) {
   vars <- graph_data$nodes[graph_data$nodes$type %in% c("variable", "output"), ]
 
   if (!is.null(extra)) {
@@ -127,49 +127,21 @@ mod_model_control_output <- function(graph_data, extra, ns) {
 
   name_map <- set_names(paste0("plot_", vars$name_target), vars$name_target)
 
-  tags <- horizontal_form_group("outputs", Map(raw_checkbox_input, ns(name_map), vars$name_target, value = TRUE))
-
-  list(tags = tags, name_map = name_map)
+  list(name_map = name_map, vars = vars)
 }
 
-horizontal_form_group <- function(label_name, input, label_width = 6, label_class = "") {
-  shiny::div(class = "form-group",
-    shiny::tags$label(label_name, class=paste0(label_class, paste0(" control-label col-sm-", label_width))),
-    shiny::div(class=paste0("col-sm-", 12 - label_width), input)
-  )
-}
+mod_model_control_graph_options <- function(graph_data, extra, ns) {
 
-mod_model_control_graph_options <- function(ns) {
-  choices <- names(odin_ui_palettes())
-
-  choice_palette <- shiny::selectInput(ns("choice_palette"),
-                                       "Choose a palette",
-                                       choices,
-                                       selected = "odin")
-
-  width_slider <- shiny::sliderInput(ns("line_width"),
-                               "Indicate line width",
-                               min = 0, max = 10,
-                               value = 1, step = 0.1)
-
-  fill_checkbox <- shiny::checkboxInput(ns("graph_fill"),
-                                        "Fill the graph?",
-                                        value = FALSE)
-
-  stack_checkbox <- shiny::checkboxInput(ns("graph_stack"),
-                                        "Stack the graph?",
-                                        value = FALSE)
-
-  alpha_slider <- shiny::sliderInput(ns("graph_alpha"),
-                                     "Opacity",
-                                     min = 0, max = 1,
-                                     value = 1, step = 0.01)
-
-  title <- "Graph settings"
+    title <- "Graph settings"
 
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
 
-  head <- shiny::a(style="text-align: right; display: block;",
+  outputs <- mod_model_control_outputs(graph_data, extra, ns)
+  tags <- shiny::div(class="form-group",
+                shiny::tags$label("outputs"),
+                Map(raw_checkbox_input, ns(outputs$name_map), outputs$vars$name_target, value = TRUE))
+
+    head <- shiny::a(style="text-align: right; display: block;",
                   "data-toggle" = "collapse",
                   class = "text-muted",
                   "href" = paste0("#", id),
@@ -178,7 +150,7 @@ mod_model_control_graph_options <- function(ns) {
   body <- shiny::div(id = id,
                     class = "collapse box",
                     style="width: 300px;",
-                    list(choice_palette, width_slider, fill_checkbox, stack_checkbox, alpha_slider))
+                    list(tags))
 
   list(tags = shiny::div(class="pull-right mt-3", head, body))
 }

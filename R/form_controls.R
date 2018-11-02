@@ -15,7 +15,7 @@ raw_checkbox_input <- function (inputId, label, value = FALSE)
     shiny::div(class = "checkbox", shiny::tags$label(inputTag, shiny::tags$span(label)))
 }
 
-raw_select_input <- function (inputId, label, choices, selected = NULL, size = NULL)
+raw_select_input <- function (inputId, choices, selected = NULL, size = NULL)
 {
     selected <- restoreInput(id = inputId, default = selected)
     if (is.null(selected)) {
@@ -34,4 +34,11 @@ raw_text_input <- function (inputId, value = "", placeholder = NULL)
 {
     value <- restoreInput(id = inputId, default = value)
     tags$input(id = inputId, type = "text", class = "form-control", value = value, placeholder = placeholder)
+}
+
+horizontal_form_group <- function(label_name, input, label_width = 6, label_class = "") {
+    shiny::div(class = "form-group",
+    shiny::tags$label(label_name, class=paste0(label_class, paste0(" control-label col-sm-", label_width))),
+    shiny::div(class=paste0("col-sm-", 12 - label_width), input)
+    )
 }
