@@ -76,9 +76,10 @@ mod_model_server <- function(input, output, session,
         shiny::div(class="graph-wrapper", dygraphs::dygraphOutput(ns("result_plot"))),
         shiny::div(class="pull-right",
                     shiny::div(class="form-inline mt-5",
-                                  shiny::div(class="form-group", shiny::tags$label("Format:"), raw_select_input(ns("download_format"), choices = list("auto","csv","rds","json"))),
-                                  shiny::div(class="form-group", shiny::tags$label("Filename:"), raw_text_input(ns("download_filename"), value = "")),
-                                  shiny::downloadButton(ns("download_button"), "Download", class="btn-purple")
+                              shiny::div(class="form-group", raw_text_input(ns("download_filename"), placeholder="filename", value = "")),
+                              shiny::span("."),
+                              shiny::div(class="form-group", raw_select_input(ns("download_format"), choices = list("csv","rds","json"))),
+                              shiny::downloadButton(ns("download_button"), "Download", class="btn-purple")
                   ),
                   graph_options$tags
         )
@@ -165,12 +166,12 @@ mod_model_getgraph_options <- function(input, name_map) {
 
 
 mod_model_compute_filename <- function(title, filename, format) {
-  if (nzchar(filename)) {
-    filename
-  } else {
-    ext <- if (format == "auto") "csv" else format
-    sprintf("%s.%s", title, ext)
+
+  if (!nzchar(filename)) {
+    filename <- title
   }
+
+  sprintf("%s.%s", filename, format)
 }
 
 

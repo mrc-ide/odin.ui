@@ -9,19 +9,19 @@
 }
 
 .dygraph-legend {
-    font-size: 12px;
-    font-family: Helvetica, sans-serif;
     box-shadow: 5px 5px 20px #888888;
     border-radius: 20px;
-    padding: 10px;
-    max-width: 100px;
-    margin: 10px;
-    opacity: 0.75;
-    border-color: #0000004D;
-    border-style: solid;
-    border-width: 1px;
+    font-size: 12px !important;
+    font-family: Helvetica, sans-serif;
+    max-width: 150px;
+    left: 600px !important;
+    text-align: center !important;
 }
 
 /* Once there are too many series it all starts looking a bit rubbish */
-.dygraph-legend > span { display: none; }
-.dygraph-legend > span.highlight { display: inline; }
+.dygraph-legend > span:not(.highlight) { display: none; }
+.dygraph-legend > span.highlight {
+    display: inline-block;
+    padding: 5px 10px;
+    margin: 0 auto;
+}

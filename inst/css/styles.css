@@ -320,6 +320,16 @@ a.text-muted {
     color: white;
 }
 
+.irs-from, .irs-to, .irs-single {
+    color: inherit !important;
+    background-color: #87CEFF;
+}
+
+.irs-bar-edge, .irs-bar {
+    background-color: #87CEFF;
+    border-color: #87CEFF;
+}
+
 .graph-wrapper {
     border: 1px solid #ddd;
     padding: 20px 20px 20px 0;
