@@ -18,7 +18,7 @@ mod_model_control <- function(graph_data, default_time, parameters, extra,
 }
 
 
-mod_model_control_section <- function(title, ..., ns) {
+mod_model_control_section <- function(title, ..., ns, collapsed = FALSE) {
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
 
   head <- shiny::a(class="list-group-item",
@@ -26,9 +26,16 @@ mod_model_control_section <- function(title, ..., ns) {
           "href" = paste0("#", id),
           title, shiny::icon("sort", lib="font-awesome", class="pull-right"))
 
+    if (collapsed){
+        cssClass <- ""
+    }
+    else {
+        cssClass <- "in"
+    }
+
   body <- shiny::div(
     id = id,
-    class = "collapse in",
+    class = paste0("collapse ", cssClass),
     ...)
 
   list(head, body)
@@ -71,7 +78,7 @@ mod_model_control_parameters <- function(parameters, ns) {
 ## * critical time
 ## * disable time selector entirely
 ## * solution tolerance
-mod_model_control_run_options <- function(default_time, graph_data, default_reps, extra, ns) {
+mod_model_control_run_options <- function(default_time, graph_data, default_reps, extra, ns, collapsed = FALSE) {
   if (length(default_time) == 1L) {
     default_time <- c(0, default_time)
     has_start_time <- FALSE
@@ -110,7 +117,8 @@ mod_model_control_run_options <- function(default_time, graph_data, default_reps
   tags <- mod_model_control_section(
     "Run options",
     drop_null(list(time_start, time_end, time_detail, reps)),
-    ns = ns)
+    ns = ns,
+    collapsed = collapsed)
 
     outputs <- mod_model_control_outputs(graph_data, extra, ns)
 

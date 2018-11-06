@@ -38,7 +38,7 @@ raw_text_input <- function (inputId, value = "", placeholder = NULL)
 
 horizontal_form_group <- function(label_name, input, label_width = 6, label_class = "") {
     shiny::div(class = "form-group",
-    shiny::tags$label(label_name, class=paste0(label_class, paste0(" control-label col-sm-", label_width))),
-    shiny::div(class=paste0("col-sm-", 12 - label_width), input)
+        shiny::tags$label(label_name, class=paste0(label_class, paste0(" control-label col-sm-", label_width))),
+        shiny::div(class=paste0("col-sm-", 12 - label_width), input)
     )
 }
