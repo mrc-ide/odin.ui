@@ -186,5 +186,5 @@ update_model <- function(model, input, output, control, extra) {
       return()
     }
     run_model(model, pars, time, replicates, extra)
-  }, error = identity)
+  }, error = function (x) str(x))
 }

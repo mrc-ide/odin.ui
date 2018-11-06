@@ -52,8 +52,6 @@ mod_parameter_server <- function(input, output, session,
       collect <- parameter_collector(input$report_type, input$report_name)
       replicates <- input$replicates
 
-    str(focal_name)
-
       model_output$data <- shiny::withProgress(
         run_model_parameters(model, focal_name, focal_values, pars, time,
                              replicates, extra, collect,
@@ -93,7 +91,7 @@ mod_parameter_control_report <- function(extra, ns) {
     "Report",
     horizontal_form_group("Summarise", raw_select_input(ns("report_type"),
                        set_names("last", "Last value"))),
-    horizontal_form_group("Variable", raw_select_input(ns("report_name"), "Variable", names(extra))),
+    horizontal_form_group("Variable", raw_select_input(ns("report_name"), names(extra))),
     ns = ns)
   list(tags = tags)
 }

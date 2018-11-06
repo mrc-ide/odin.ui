@@ -103,6 +103,9 @@ mod_model_control_run_options <- function(default_time, graph_data, default_reps
   if (has_replicates) {
     reps <- horizontal_form_group("replicates", raw_numeric_input(ns("replicates"), default_reps))
   }
+    else {
+      reps <- NULL
+  }
 
   tags <- mod_model_control_section(
     "Run options",

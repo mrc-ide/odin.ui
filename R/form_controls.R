@@ -1,6 +1,6 @@
 raw_numeric_input <- function(inputId, value) {
-    value <- restoreInput(id = inputId, default = value)
-    tags$input(id = inputId, type = "number", class = "form-control", value = value, style = "width: 100px")
+    value <- shiny::restoreInput(id = inputId, default = value)
+    shiny::tags$input(id = inputId, type = "number", class = "form-control", value = value, style = "width: 100px")
 }
 
 raw_checkbox_input <- function (inputId, label, value = FALSE)
@@ -17,7 +17,7 @@ raw_checkbox_input <- function (inputId, label, value = FALSE)
 
 raw_select_input <- function (inputId, choices, selected = NULL, size = NULL)
 {
-    selected <- restoreInput(id = inputId, default = selected)
+    selected <- shiny::restoreInput(id = inputId, default = selected)
     if (is.null(selected)) {
         selected <- choices[[1]][1]
     }
@@ -32,8 +32,8 @@ raw_select_input <- function (inputId, choices, selected = NULL, size = NULL)
 
 raw_text_input <- function (inputId, value = "", placeholder = NULL)
 {
-    value <- restoreInput(id = inputId, default = value)
-    tags$input(id = inputId, type = "text", class = "form-control", value = value, placeholder = placeholder)
+    value <- shiny::restoreInput(id = inputId, default = value)
+    shiny::tags$input(id = inputId, type = "text", class = "form-control", value = value, placeholder = placeholder)
 }
 
 horizontal_form_group <- function(label_name, input, label_width = 6, label_class = "") {
