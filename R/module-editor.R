@@ -4,10 +4,9 @@ mod_editor_ui <- function(id, initial_code) {
   initial_code <- mod_editor_validate_initial_code(initial_code)
   docs <- shiny::includeMarkdown(odin_ui_file("md/editor.md"))
   path_editor_css <- odin_ui_file("css/styles-editor.css")
-  path_css <- odin_ui_file("css/styles.css")
 
   editor <- shiny::tagList(
-    shiny::includeCSS(path_css),
+    odin_css(),
     shiny::includeCSS(path_editor_css),
     shiny::fluidRow(
       shiny::column(6,
