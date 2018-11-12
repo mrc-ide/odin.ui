@@ -6,9 +6,9 @@ mod_model_input <- function(id) {
     shiny::uiOutput(ns("odin_control")),
     ## https://github.com/rstudio/shiny/issues/1675#issuecomment-298398997
     shiny::actionButton(ns("reset_button"), "Reset", shiny::icon("refresh"),
-                        class = "btn-warning pull-right ml-2"),
+                        class = "btn-grey pull-right ml-2"),
     shiny::actionButton(ns("go_button"), "Run model", shiny::icon("play"),
-                        class = "btn-purple pull-right"),
+                        class = "btn-blue pull-right"),
     shiny::div(
       class = "form-group pull-right", style = "clear:both;",
       shiny::div(
@@ -23,19 +23,31 @@ mod_model_ui <- function(id, title) {
   shiny::tagList(
     if (!is.null(title)) {
       shiny::titlePanel(title)
-    } else {
-      ## TODO: This is not really super tidy but I need a little
-      ## spare vertical space here before the panel layout but I
-      ## don't see the cleanest way of adding it.
-      shiny::p(class = "spacer")
     },
-
     shiny::p(class = "mt-5"),
     shiny::sidebarLayout(
       shiny::div(
         class = "col-sm-4 col-lg-3",
         tags$form(class = "form-horizontal", mod_model_input(id))),
-      shiny::mainPanel(shiny::uiOutput(ns("odin_output")))))
+      shiny::mainPanel(
+        shiny::div(class = "graph-wrapper",
+                    shiny::uiOutput(ns("odin_output"))),
+        shiny::uiOutput(ns("graph_settings")))))
+}
+
+
+mod_model_control_graph <- function(graph_data, extra, ns) {
+  graph_options <- mod_model_control_graph_options(graph_data, extra, ns)
+  shiny::tagList(
+  shiny::div(class = "pull-right",
+    shiny::div(class = "form-inline mt-5",
+      shiny::div(class = "form-group",
+        raw_text_input(ns("download_filename"), placeholder = "filename", value = "")),
+      shiny::span("."),
+    shiny::div(class = "form-group",
+      raw_select_input(ns("download_format"), choices = list("csv","rds","json"))),
+      shiny::downloadButton(ns("download_button"), "Download", class = "btn-blue")),
+  graph_options$tags))
 }
 
 mod_model_server <- function(input, output, session,
@@ -59,6 +71,10 @@ mod_model_server <- function(input, output, session,
                 control$tags)
   })
 
+  output$graph_settings <- shiny::renderUI({
+    mod_model_control_graph(graph_data, extra, ns)
+  })
+
   output$odin_output <- shiny::renderUI({
     if (is.null(model_output$data)) {
       shiny::tagList()
@@ -75,26 +91,7 @@ mod_model_server <- function(input, output, session,
             class = "panel-body",
             model_output$data$message)))
     } else {
-      graph_options <- mod_model_control_graph_options(graph_data, extra, ns)
-      shiny::tagList(
-        shiny::div(
-          class = "graph-wrapper", dygraphs::dygraphOutput(ns("result_plot"))),
-        shiny::div(
-          class = "pull-right",
-          shiny::div(
-            class = "form-inline mt-5",
-            shiny::div(
-              class = "form-group",
-              raw_text_input(ns("download_filename"),
-                             placeholder = "filename", value = "")),
-            shiny::span("."),
-            shiny::div(
-              class = "form-group",
-              raw_select_input(ns("download_format"),
-                               choices = list("csv","rds","json"))),
-            shiny::downloadButton(ns("download_button"),
-                                  "Download", class = "btn-purple")),
-          graph_options$tags))
+      dygraphs::dygraphOutput(ns("result_plot"))
     }
   })
 

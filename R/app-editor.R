@@ -38,7 +38,10 @@ odin_ui_editor_ui <- function(initial_code) {
       shiny::tabPanel(
         "Help",
         icon = shiny::icon("question"),
-        shiny::includeMarkdown(odin_ui_file("md/editor.md")))))
+        shiny::includeMarkdown(odin_ui_file("md/editor.md"))),
+        footer = odin_footer()
+    )
+  )
 }
 
 

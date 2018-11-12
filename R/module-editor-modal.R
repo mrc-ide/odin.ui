@@ -86,7 +86,7 @@ editor_metadata_modal <- function(pars, data, success, ns) {
     fade = FALSE,
     footer = shiny::tagList(
       shiny::actionButton(ns("editor_metadata_ok"), "OK",
-                          class = "btn-primary"),
+                          class = "btn-blue"),
       shiny::modalButton("Cancel")))
 }
 

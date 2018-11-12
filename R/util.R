@@ -65,3 +65,20 @@ write_csv <- function(data, filename) {
 callback_shiny_progress <- function(i, n) {
   shiny::incProgress(1, detail = sprintf("%d / %d", i, n))
 }
+
+odin_footer <- function() {
+  addResourcePath('images', system.file('images', package='odin.ui'))
+  shiny::tags$footer(class="navbar-fixed-bottom odin-footer",
+    shiny::fluidPage(
+      shiny::fluidRow(
+        shiny::column(12,
+          shiny::img(src = "images/reside-small.png"),
+          shiny::span(class="logo", "RESIDE@IC"))
+      )
+    )
+  )
+}
+
+odin_css <- function() {
+  shiny::includeCSS(odin_ui_file("css/styles.css"))
+}
