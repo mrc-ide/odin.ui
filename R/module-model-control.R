@@ -1,7 +1,8 @@
 mod_model_control <- function(graph_data, default_time, parameters, extra,
                               ns = identity) {
   pars <- mod_model_control_parameters(parameters, ns)
-  run_options <- mod_model_control_run_options(default_time, graph_data, 1L, extra, ns)
+  run_options <- mod_model_control_run_options(default_time, graph_data,
+                                               1L, extra, ns)
 
   tags <- shiny::div(
     class = "list-group odin-options",
@@ -21,10 +22,11 @@ mod_model_control <- function(graph_data, default_time, parameters, extra,
 mod_model_control_section <- function(title, ..., ns, collapsed = FALSE) {
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
 
-  head <- shiny::a(class="list-group-item",
+  head <- shiny::a(class = "list-group-item",
           "data-toggle" = "collapse",
           "href" = paste0("#", id),
-          title, shiny::icon("sort", lib="font-awesome", class="pull-right"))
+          title,
+          shiny::icon("sort", lib = "font-awesome", class = "pull-right"))
 
     if (collapsed){
         cssClass <- ""
@@ -54,11 +56,15 @@ mod_model_control_parameters <- function(parameters, ns) {
       }
 
       if (x$has_range) {
-        horizontal_form_group(title, shiny::sliderInput(ns(name_map[[x$name]]), label = NULL, min = x$range_min,
-                           max = x$range_max, value = x$default), label_width = 2, label_class="pt-5")
+        horizontal_form_group(
+          title,
+          shiny::sliderInput(ns(name_map[[x$name]]), label = NULL,
+                             min = x$range_min, max = x$range_max,
+                             value = x$default),
+          label_width = 2, label_class = "pt-5")
       } else {
         horizontal_form_group(title, raw_numeric_input(ns(name_map[[x$name]]),
-                                                        value = x$default))
+                                                       value = x$default))
       }
     }
     tags <- mod_model_control_section(
@@ -78,7 +84,9 @@ mod_model_control_parameters <- function(parameters, ns) {
 ## * critical time
 ## * disable time selector entirely
 ## * solution tolerance
-mod_model_control_run_options <- function(default_time, graph_data, default_reps, extra, ns, collapsed = FALSE) {
+mod_model_control_run_options <- function(default_time, graph_data,
+                                          default_reps, extra, ns,
+                                          collapsed = FALSE) {
   if (length(default_time) == 1L) {
     default_time <- c(0, default_time)
     has_start_time <- FALSE
@@ -89,11 +97,13 @@ mod_model_control_run_options <- function(default_time, graph_data, default_reps
   }
 
   if (graph_data$discrete) {
-    time_detail <- horizontal_form_group("reporting interval", raw_numeric_input(
-      ns("time_detail"), 1L))
+    time_detail <- horizontal_form_group(
+      "reporting interval",
+      raw_numeric_input(ns("time_detail"), 1L))
   } else {
-    time_detail <- horizontal_form_group("number of output points", raw_numeric_input(
-      ns("time_detail"), 1000L))
+    time_detail <- horizontal_form_group(
+      "number of output points",
+      raw_numeric_input(ns("time_detail"), 1000L))
   }
   time_end <- horizontal_form_group("end", raw_numeric_input(
     ns("time_end"), default_time[[2L]]))
@@ -108,9 +118,10 @@ mod_model_control_run_options <- function(default_time, graph_data, default_reps
   has_replicates <- graph_data$discrete && graph_data$stochastic
 
   if (has_replicates) {
-    reps <- horizontal_form_group("replicates", raw_numeric_input(ns("replicates"), default_reps))
-  }
-    else {
+    reps <- horizontal_form_group(
+      "replicates",
+      raw_numeric_input(ns("replicates"), default_reps))
+  } else {
       reps <- NULL
   }
 
@@ -122,7 +133,8 @@ mod_model_control_run_options <- function(default_time, graph_data, default_reps
 
     outputs <- mod_model_control_outputs(graph_data, extra, ns)
 
-  list(tags = tags, has_start_time = has_start_time, replicates = has_replicates, output_name_map = outputs$name_map)
+  list(tags = tags, has_start_time = has_start_time,
+       replicates = has_replicates, output_name_map = outputs$name_map)
 }
 
 mod_model_control_outputs <- function(graph_data, extra, ns) {
@@ -142,26 +154,26 @@ mod_model_control_outputs <- function(graph_data, extra, ns) {
 }
 
 mod_model_control_graph_options <- function(graph_data, extra, ns) {
-
-    title <- "Graph settings"
+  title <- "Graph settings"
 
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
 
   outputs <- mod_model_control_outputs(graph_data, extra, ns)
-  tags <- shiny::div(class="form-group",
+  tags <- shiny::div(class = "form-group",
                 shiny::tags$label("outputs"),
-                Map(raw_checkbox_input, ns(outputs$name_map), outputs$vars$name_target, value = TRUE))
+                Map(raw_checkbox_input, ns(outputs$name_map),
+                    outputs$vars$name_target, value = TRUE))
 
-    head <- shiny::a(style="text-align: right; display: block;",
-                  "data-toggle" = "collapse",
-                  class = "text-muted",
-                  "href" = paste0("#", id),
-                  title, shiny::icon("gear", lib="font-awesome"))
+  head <- shiny::a(style = "text-align: right; display: block;",
+                   "data-toggle" = "collapse",
+                   class = "text-muted",
+                   href = paste0("#", id),
+                   title, shiny::icon("gear", lib = "font-awesome"))
 
   body <- shiny::div(id = id,
                     class = "collapse box",
-                    style="width: 300px;",
+                    style = "width: 300px;",
                     list(tags))
 
-  list(tags = shiny::div(class="pull-right mt-3", head, body))
+  list(tags = shiny::div(class = "pull-right mt-3", head, body))
 }

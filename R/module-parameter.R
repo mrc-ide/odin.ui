@@ -11,8 +11,13 @@ mod_parameter_input <- function(id, title) {
       shiny::p(class = "spacer")
     },
     shiny::sidebarLayout(
-      shiny::div(class = "col-sm-4 col-lg-3", shiny::tags$form(class = "form-horizontal mb-5", shiny::uiOutput(ns("parameter_control")))),
-      shiny::mainPanel(shiny::div(class="graph-wrapper",dygraphs::dygraphOutput(ns("result_plot"))))))
+      shiny::div(
+        class = "col-sm-4 col-lg-3",
+        shiny::tags$form(class = "form-horizontal mb-5",
+                         shiny::uiOutput(ns("parameter_control")))),
+      shiny::mainPanel(
+        shiny::div(class = "graph-wrapper",
+                   dygraphs::dygraphOutput(ns("result_plot"))))))
 }
 
 
@@ -77,9 +82,15 @@ mod_parameter_control_focal <- function(parameters, ns) {
       ns("focal_name"),
       names(parameters),
       selected = NA_character_)),
-    horizontal_form_group("From", raw_numeric_input(ns("focal_min"), p$range_min %||% p$default)),
-    horizontal_form_group("To", raw_numeric_input(ns("focal_max"), p$range_max %||% p$default)),
-    horizontal_form_group("Number of points", raw_numeric_input(ns("focal_len"), 20)),
+    horizontal_form_group(
+      "From",
+      raw_numeric_input(ns("focal_min"), p$range_min %||% p$default)),
+    horizontal_form_group(
+      "To",
+      raw_numeric_input(ns("focal_max"), p$range_max %||% p$default)),
+    horizontal_form_group(
+      "Number of points",
+      raw_numeric_input(ns("focal_len"), 20)),
     ns = ns)
   list(tags = tags)
 }
@@ -89,9 +100,12 @@ mod_parameter_control_focal <- function(parameters, ns) {
 mod_parameter_control_report <- function(extra, ns) {
   tags <- mod_model_control_section(
     "Report",
-    horizontal_form_group("Summarise", raw_select_input(ns("report_type"),
-                       set_names("last", "Last value"))),
-    horizontal_form_group("Variable", raw_select_input(ns("report_name"), names(extra))),
+    horizontal_form_group(
+      "Summarise",
+      raw_select_input(ns("report_type"), set_names("last", "Last value"))),
+    horizontal_form_group(
+      "Variable",
+      raw_select_input(ns("report_name"), names(extra))),
     ns = ns,
     collapsed = TRUE)
   list(tags = tags)
@@ -101,7 +115,8 @@ mod_parameter_control_report <- function(extra, ns) {
 mod_parameter_control <- function(graph_data, default_time, parameters, extra,
                                   ns = identity) {
   pars <- mod_model_control_parameters(parameters, ns)
-  run_options <- mod_model_control_run_options(default_time, graph_data, 100L, extra, ns, collapsed = TRUE)
+  run_options <- mod_model_control_run_options(default_time, graph_data, 100L,
+                                               extra, ns, collapsed = TRUE)
   report <- mod_parameter_control_report(extra, ns)
   focal <- mod_parameter_control_focal(parameters, ns)
 

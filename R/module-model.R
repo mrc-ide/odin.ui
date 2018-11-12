@@ -5,12 +5,15 @@ mod_model_input <- function(id) {
   shiny::tagList(
     shiny::uiOutput(ns("odin_control")),
     ## https://github.com/rstudio/shiny/issues/1675#issuecomment-298398997
-    shiny::actionButton(ns("reset_button"), "Reset", shiny::icon("refresh"), class = "btn-warning pull-right ml-2"),
-    shiny::actionButton(ns("go_button"), "Run model", shiny::icon("play"), class = "btn-purple pull-right"),
-    shiny::div(class="form-group pull-right", style="clear:both;",
-      shiny::div(class="col-sm-12", raw_checkbox_input(ns("auto_run"), "Auto run", value = FALSE))
-    )
-  )
+    shiny::actionButton(ns("reset_button"), "Reset", shiny::icon("refresh"),
+                        class = "btn-warning pull-right ml-2"),
+    shiny::actionButton(ns("go_button"), "Run model", shiny::icon("play"),
+                        class = "btn-purple pull-right"),
+    shiny::div(
+      class = "form-group pull-right", style = "clear:both;",
+      shiny::div(
+        class = "col-sm-12",
+        raw_checkbox_input(ns("auto_run"), "Auto run", value = FALSE))))
 }
 
 
@@ -29,9 +32,10 @@ mod_model_ui <- function(id, title) {
 
     shiny::p(class = "mt-5"),
     shiny::sidebarLayout(
-      shiny::div(class = "col-sm-4 col-lg-3", tags$form(class = "form-horizontal", mod_model_input(id))),
-      shiny::mainPanel(shiny::uiOutput(ns("odin_output")))
-    ))
+      shiny::div(
+        class = "col-sm-4 col-lg-3",
+        tags$form(class = "form-horizontal", mod_model_input(id))),
+      shiny::mainPanel(shiny::uiOutput(ns("odin_output")))))
 }
 
 mod_model_server <- function(input, output, session,
@@ -73,17 +77,24 @@ mod_model_server <- function(input, output, session,
     } else {
       graph_options <- mod_model_control_graph_options(graph_data, extra, ns)
       shiny::tagList(
-        shiny::div(class="graph-wrapper", dygraphs::dygraphOutput(ns("result_plot"))),
-        shiny::div(class="pull-right",
-                    shiny::div(class="form-inline mt-5",
-                              shiny::div(class="form-group", raw_text_input(ns("download_filename"), placeholder="filename", value = "")),
-                              shiny::span("."),
-                              shiny::div(class="form-group", raw_select_input(ns("download_format"), choices = list("csv","rds","json"))),
-                              shiny::downloadButton(ns("download_button"), "Download", class="btn-purple")
-                  ),
-                  graph_options$tags
-        )
-      )
+        shiny::div(
+          class = "graph-wrapper", dygraphs::dygraphOutput(ns("result_plot"))),
+        shiny::div(
+          class = "pull-right",
+          shiny::div(
+            class = "form-inline mt-5",
+            shiny::div(
+              class = "form-group",
+              raw_text_input(ns("download_filename"),
+                             placeholder = "filename", value = "")),
+            shiny::span("."),
+            shiny::div(
+              class = "form-group",
+              raw_select_input(ns("download_format"),
+                               choices = list("csv","rds","json"))),
+            shiny::downloadButton(ns("download_button"),
+                                  "Download", class = "btn-purple")),
+          graph_options$tags))
     }
   })
 
