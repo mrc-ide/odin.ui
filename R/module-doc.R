@@ -37,9 +37,8 @@ mod_doc_ui <- function(id, config) {
     shinyAce::aceEditor(ns("code"), mode = "r", readOnly = TRUE,
                         value = config$code))
   docs <- shiny::includeMarkdown(config$path_docs)
-    path_css <- odin_ui_file("css/styles.css")
   shiny::tagList(
-      shiny::includeCSS(path_css),
+    odin_css(),
     shiny::titlePanel(config$title),
     shiny::tabsetPanel(
       shiny::tabPanel(
