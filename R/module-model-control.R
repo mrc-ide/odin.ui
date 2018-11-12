@@ -1,8 +1,8 @@
-mod_model_control <- function(graph_data, default_time, parameters, extra,
-                              ns = identity) {
+mod_model_control <- function(graph_data, default_time, default_reps,
+                              parameters, extra, ns = identity) {
   pars <- mod_model_control_parameters(parameters, ns)
   run_options <- mod_model_control_run_options(default_time, graph_data,
-                                               1L, extra, ns)
+                                               default_reps, extra, ns)
 
   tags <- shiny::div(
     class = "list-group odin-options",

@@ -40,7 +40,7 @@ mod_model_ui <- function(id, title) {
 
 mod_model_server <- function(input, output, session,
                              model, default_time, parameters,
-                             extra = NULL) {
+                             extra = NULL, default_reps = 1L) {
   ns <- session$ns
 
   graph_data <- attr(model, "graph_data")()
@@ -48,7 +48,8 @@ mod_model_server <- function(input, output, session,
 
   parameters <- validate_model_parameters(model, parameters)
   model_output <- shiny::reactiveValues(data = NULL)
-  control <- mod_model_control(graph_data, default_time, parameters, extra, ns)
+  control <- mod_model_control(graph_data, default_time, default_reps,
+                               parameters, extra, ns)
 
   output$odin_control <- shiny::renderUI({
     path_css <- odin_ui_file("css/styles.css")

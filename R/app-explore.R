@@ -10,7 +10,8 @@
 ##' @export
 odin_ui_explore <- function(path_config, env = .GlobalEnv) {
   config <- odin_ui_explore_config(path_config, env)
-  shiny::shinyApp(odin_ui_explore_ui(config), odin_ui_explore_server(config))
+  shiny::shinyApp(odin_ui_explore_ui(config),
+                  odin_ui_explore_server(config))
 }
 
 
@@ -43,12 +44,13 @@ odin_ui_explore_ui <- function(config) {
 odin_ui_explore_server <- function(config) {
   model <- odin::odin_(config$code)
   default_time <- config$default_time
+  default_reps <- config$default_replicates
   parameters <- config$parameters
   extra <- config$extra
 
   function(input, output, session) {
     shiny::callModule(mod_model_server, "model",
-                      model, default_time, parameters, extra)
+                      model, default_time, parameters, extra, default_reps)
     shiny::callModule(mod_parameter_server, "odin_parameter",
                       model, default_time, parameters, extra)
   }
@@ -56,10 +58,12 @@ odin_ui_explore_server <- function(config) {
 
 
 odin_ui_explore_config <- function(path_config, env) {
+  browser()
   config <- yaml_read(path_config)
 
   required <- "default_time"
-  optional <- c("title", "code", "docs", "parameters", "extra")
+  optional <- c("title", "code", "docs", "parameters", "extra",
+                "default_replicates")
   assert_has_fields(config, required, optional, basename(path_config))
 
   base <- tools::file_path_sans_ext(basename(path_config))
@@ -95,6 +99,12 @@ odin_ui_explore_config <- function(path_config, env) {
     assert_named(config$extra, TRUE, f("extra"))
     config$extra <- lapply(config$extra, function(def)
       eval(parse(text = def), env))
+  }
+
+  if (is.null(config$default_replicates)) {
+    config$default_replicates <- 1L
+  } else {
+    assert_scalar_numeric(config$default_replicates, f("default_replicates"))
   }
 
   config
