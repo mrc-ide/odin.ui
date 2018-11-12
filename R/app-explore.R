@@ -58,7 +58,6 @@ odin_ui_explore_server <- function(config) {
 
 
 odin_ui_explore_config <- function(path_config, env) {
-  browser()
   config <- yaml_read(path_config)
 
   required <- "default_time"
