@@ -1,8 +1,8 @@
-mod_model_control <- function(graph_data, default_time, default_reps,
+mod_model_control <- function(graph_data, default_time, default_replicates,
                               parameters, extra, ns = identity) {
   pars <- mod_model_control_parameters(parameters, ns)
   run_options <- mod_model_control_run_options(default_time, graph_data,
-                                               default_reps, extra, ns)
+                                               default_replicates, extra, ns)
 
   tags <- shiny::div(
     class = "list-group odin-options",
@@ -85,7 +85,7 @@ mod_model_control_parameters <- function(parameters, ns) {
 ## * disable time selector entirely
 ## * solution tolerance
 mod_model_control_run_options <- function(default_time, graph_data,
-                                          default_reps, extra, ns,
+                                          default_replicates, extra, ns,
                                           collapsed = FALSE) {
   if (length(default_time) == 1L) {
     default_time <- c(0, default_time)
@@ -120,7 +120,7 @@ mod_model_control_run_options <- function(default_time, graph_data,
   if (has_replicates) {
     reps <- horizontal_form_group(
       "replicates",
-      raw_numeric_input(ns("replicates"), default_reps))
+      raw_numeric_input(ns("replicates"), default_replicates))
   } else {
       reps <- NULL
   }
