@@ -56,7 +56,7 @@ odin_ui_explore_server <- function(config) {
 
 
 odin_ui_explore_config <- function(path_config, env) {
-  config <- yaml::yaml.load_file(path_config)
+  config <- yaml_read(path_config)
 
   required <- "default_time"
   optional <- c("title", "code", "docs", "parameters", "extra")
