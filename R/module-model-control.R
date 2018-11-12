@@ -105,7 +105,7 @@ mod_model_control_run_options <- function(default_time, graph_data, default_reps
     time_start <- NULL
   }
 
-  has_replicates <- graph_data$stochastic
+  has_replicates <- graph_data$discrete && graph_data$stochastic
 
   if (has_replicates) {
     reps <- horizontal_form_group("replicates", raw_numeric_input(ns("replicates"), default_reps))

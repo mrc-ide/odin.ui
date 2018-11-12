@@ -14,8 +14,9 @@ test_that("generated parameter interface includes all parameters", {
   expect_is(p, "list")
   expect_setequal(names(p), c("name_map", "tags"))
 
-  id <- vapply(p$tags$children[[2]]$children[[1]]$children[[1]],
-               function(x) x$children[[2]]$attribs$id, "")
+
+  id <- vapply(p$tags[[2]]$children[[1]], function(x)
+    x$children[[2]]$children[[1]]$attribs$id, "")
   expect_equal(id, unname(p$name_map))
 
   expect_equal(unname(p$name_map), paste0("pars_", names(p$name_map)))
@@ -57,30 +58,34 @@ test_that("models can have no parameters", {
 
 
 test_that("time can be length 1", {
-  res <- mod_model_control_run_options(10, list(discrete = FALSE), identity)
+  res <- mod_model_control_run_options(10, list(discrete = FALSE),
+                                       NA, NULL, identity)
   expect_false(res$has_start_time)
 
-  tags <- res$tags$children[[2]]$children[[1]]$children[[1]]
+  tags <- res$tags[[2]]$children[[1]]
   expect_equal(length(tags), 2L)
 
-  expect_equal(tags[[1]]$children[[2]]$attribs$id, "time_end")
+  expect_equal(tags[[1]]$children[[2]]$children[[1]]$attribs$id, "time_end")
 })
 
 
 test_that("time can be length 2", {
-  res <- mod_model_control_run_options(c(0, 10), list(discrete = FALSE), identity)
+  res <- mod_model_control_run_options(c(0, 10), list(discrete = FALSE),
+                                       NA, NULL, identity)
   expect_true(res$has_start_time)
 
-  tags <- res$tags$children[[2]]$children[[1]]$children[[1]]
+  tags <- res$tags[[2]]$children[[1]]
   expect_equal(length(tags), 3L)
-  expect_equal(tags[[1]]$children[[2]]$attribs$id, "time_start")
-  expect_equal(tags[[2]]$children[[2]]$attribs$id, "time_end")
+  expect_equal(tags[[1]]$children[[2]]$children[[1]]$attribs$id, "time_start")
+  expect_equal(tags[[2]]$children[[2]]$children[[1]]$attribs$id, "time_end")
 })
 
 
 test_that("time must be length 1-2", {
-  expect_error(mod_model_control_run_options(numeric(), identity),
+  expect_error(mod_model_control_run_options(numeric(), list(discrete = FALSE),
+                                             NA, NULL, identity),
                "'default_time' must be length 1 or 2", fixed = TRUE)
-  expect_error(mod_model_control_run_options(1:3, identity),
+  expect_error(mod_model_control_run_options(1:3, list(discrete = FALSE),
+                                             NA, NULL, identity),
                "'default_time' must be length 1 or 2", fixed = TRUE)
 })
