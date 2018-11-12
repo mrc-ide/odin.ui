@@ -34,7 +34,7 @@ mod_model_ui <- function(id, title) {
     shiny::sidebarLayout(
       shiny::div(
         class = "col-sm-4 col-lg-3",
-        tags$form(class = "form-horizontal", mod_model_input(id))),
+        shiny::tags$form(class = "form-horizontal", mod_model_input(id))),
       shiny::mainPanel(shiny::uiOutput(ns("odin_output")))))
 }
 
