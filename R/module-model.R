@@ -52,7 +52,7 @@ mod_model_control_graph <- function(graph_data, extra, ns) {
 
 mod_model_server <- function(input, output, session,
                              model, default_time, parameters,
-                             extra = NULL, default_reps = 1L) {
+                             extra = NULL, default_replicates = 1L) {
   ns <- session$ns
 
   graph_data <- attr(model, "graph_data")()
@@ -60,7 +60,7 @@ mod_model_server <- function(input, output, session,
 
   parameters <- validate_model_parameters(model, parameters)
   model_output <- shiny::reactiveValues(data = NULL)
-  control <- mod_model_control(graph_data, default_time, default_reps,
+  control <- mod_model_control(graph_data, default_time, default_replicates,
                                parameters, extra, ns)
 
   output$odin_control <- shiny::renderUI({

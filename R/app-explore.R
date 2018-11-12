@@ -44,13 +44,13 @@ odin_ui_explore_ui <- function(config) {
 odin_ui_explore_server <- function(config) {
   model <- odin::odin_(config$code)
   default_time <- config$default_time
-  default_reps <- config$default_replicates
+  default_replicates <- config$default_replicates
   parameters <- config$parameters
   extra <- config$extra
 
   function(input, output, session) {
     shiny::callModule(mod_model_server, "model",
-                      model, default_time, parameters, extra, default_reps)
+                      model, default_time, parameters, extra, default_replicates)
     shiny::callModule(mod_parameter_server, "odin_parameter",
                       model, default_time, parameters, extra)
   }
