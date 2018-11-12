@@ -3,12 +3,24 @@ mod_editor_ui <- function(id, initial_code) {
 
   initial_code <- mod_editor_validate_initial_code(initial_code)
   docs <- shiny::includeMarkdown(odin_ui_file("md/editor.md"))
-  path_css <- odin_ui_file("css/styles-editor.css")
+  path_editor_css <- odin_ui_file("css/styles-editor.css")
+  path_css <- odin_ui_file("css/styles.css")
 
   editor <- shiny::tagList(
     shiny::includeCSS(path_css),
-    shiny::textInput(ns("title"), "Model name", "model"),
-
+    shiny::includeCSS(path_editor_css),
+    shiny::fluidRow(
+      shiny::column(6,
+          shiny::div(class="form-group",
+              shiny::tags$label("Model name"), raw_text_input(ns("title"), "model", style="width: 200px"))),
+      shiny::column(6,
+          file_input(ns("uploaded_file"),
+                    "Upload model file",
+                    multiple = FALSE,
+                    accept = c("text/plain", ".R"),
+                    button_class = "btn-grey")
+      )
+    ),
     ## The ace editor setting "showPrintMargin" is the one to control
     ## the 80 char bar but I don't see how to get that through here.
     ## https://github.com/ajaxorg/ace/wiki/Configuring-Ace
@@ -16,17 +28,12 @@ mod_editor_ui <- function(id, initial_code) {
                         debounce = 100),
     shiny::actionButton(ns("go_button"), "Compile",
                         shiny::icon("cogs"),
-                        class = "btn-primary"),
+                        class = "btn-blue"),
     shiny::actionButton(ns("reset_button"), "Reset",
                         shiny::icon("refresh"),
-                        class = "btn-danger"),
+                        class = "btn-grey"),
 
-    ## Ideally these would be aligned further right
-    shiny::downloadButton(ns("download_button"), "Save"),
-    shiny::fileInput(ns("uploaded_file"),
-                     "Upload model file",
-                     multiple = FALSE,
-                     accept = c("text/plain", ".R")),
+    shiny::div(class="pull-right", shiny::downloadButton(ns("download_button"), "Save", class="btn-blue")),
 
     ## And these should go elsewhere too
     shiny::actionButton(ns("validate_button"), "Validate",

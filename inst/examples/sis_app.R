@@ -10,6 +10,7 @@ teaching <- function(path_code, path_docs, default_time,
   docs <- shiny::includeMarkdown(path_docs)
 
   ui <- shiny::shinyUI(
+    list(odin.ui:::odin_css(),
     shiny::navbarPage(
       title,
       id = "odin_ui_navbar",
@@ -24,7 +25,8 @@ teaching <- function(path_code, path_docs, default_time,
         odin.ui:::mod_model_ui("model", NULL)),
       shiny::tabPanel(
         "Parameters",
-        odin.ui:::mod_parameter_input("odin_parameter", NULL))))
+        odin.ui:::mod_parameter_input("odin_parameter", NULL))),
+      footer = odin.ui:::odin_footer()))
 
   server <- function(input, output, session) {
     shiny::callModule(odin.ui:::mod_model_server, "model",

@@ -4,12 +4,8 @@ mod_parameter_input <- function(id, title) {
   shiny::tagList(
     if (!is.null(title)) {
       shiny::titlePanel(title)
-    } else {
-      ## TODO: This is not really super tidy but I need a little
-      ## spare vertical space here before the panel layout but I
-      ## don't see the cleanest way of adding it.
-      shiny::p(class = "spacer")
     },
+    shiny::p(class = "mt-5"),
     shiny::sidebarLayout(
       shiny::div(
         class = "col-sm-4 col-lg-3",
@@ -19,7 +15,6 @@ mod_parameter_input <- function(id, title) {
         shiny::div(class = "graph-wrapper",
                    dygraphs::dygraphOutput(ns("result_plot"))))))
 }
-
 
 mod_parameter_server <- function(input, output, session,
                                  model, default_time, parameters,
@@ -129,7 +124,7 @@ mod_parameter_control <- function(graph_data, default_time, parameters, extra,
       report$tags),
     shiny::actionButton(ns("go_button"), "Run model",
             shiny::icon("play"),
-            class = "btn-purple")
+            class = "btn-blue")
   )
 
   list(tags = tags,

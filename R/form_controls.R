@@ -31,17 +31,51 @@ raw_select_input <- function (inputId, choices, selected = NULL, size = NULL) {
                      options)
 }
 
-raw_text_input <- function (inputId, value = "", placeholder = NULL) {
+raw_text_input <- function (inputId, value = "", placeholder = NULL, ...) {
   value <- shiny::restoreInput(id = inputId, default = value)
   shiny::tags$input(id = inputId, type = "text", class = "form-control",
-                    value = value, placeholder = placeholder)
+                    value = value, placeholder = placeholder, ...)
 }
+
+file_input <- function (inputId, label, multiple = FALSE, accept = NULL,
+                        button_label = "Browse...", button_class = "btn-default", placeholder = "No file selected")
+{
+  restoredValue <- shiny::restoreInput(id = inputId, default = NULL)
+  if (!is.null(restoredValue) && !is.data.frame(restoredValue)) {
+    warning("Restored value for ", inputId, " has incorrect format.")
+    restoredValue <- NULL
+  }
+  if (!is.null(restoredValue)) {
+    restoredValue <- shiny::toJSON(restoredValue, strict_atomic = FALSE)
+  }
+  inputTag <- tags$input(id = inputId, name = inputId, type = "file",
+                          style = "display: none;", `data-restore` = restoredValue)
+  if (multiple){
+    inputTag$attribs$multiple <- "multiple"
+  }
+  if (length(accept) > 0){
+    inputTag$attribs$accept <- paste(accept, collapse = ",")
+  }
+
+  if (!is.null(label)){
+    label <- shiny::tags$label(label)
+  }
+  shiny::div(class = "form-group", label,
+    shiny::div(class = "input-group", shiny::tags$div(class = "input-group-btn",
+        shiny::tags$label(class = paste0("btn ", button_class), style="line-height: 1.5", button_label, inputTag)),
+    shiny::tags$input(type = "text", class = "form-control", placeholder = placeholder, readonly = "readonly")),
+    shiny::tags$div(id = paste(inputId, "_progress", sep = ""),
+            class = "progress progress-striped active shiny-file-input-progress",
+            shiny::tags$div(class = "progress-bar"))
+  )
+}
+
 
 horizontal_form_group <- function(label_name, input, label_width = 6,
                                   label_class = "") {
-  form_class <- sprintf("%s control-label col-sm-%d", label_class, label_width)
+  label_class <- sprintf("%s control-label col-sm-%d", label_class, label_width)
   shiny::div(
     class = "form-group",
-    shiny::tags$label(label_name, class = form_class),
+    shiny::tags$label(label_name, class = label_class),
     shiny::div(class = sprintf("col-sm-%d", 12 - label_width), input))
 }
