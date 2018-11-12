@@ -3,6 +3,7 @@
 export(odin_ui_app)
 export(odin_ui_doc_app)
 export(odin_ui_editor_app)
+export(odin_ui_explore)
 export(odin_ui_parameter_app)
 importFrom(dde,difeq_replicate)
 importFrom(odin,odin)
