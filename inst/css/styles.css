@@ -345,10 +345,6 @@
     color: white;
 }
 
-.odin-options div:first-child {
-    padding-top: 15px;
-}
-
 .odin-options .form-group {
     margin-left:0;
     margin-right: 0;
@@ -415,4 +411,17 @@ a.text-muted {
     margin-bottom: 20px;
     background-color: #f6f7f8;
     border: 1px solid #e3e3e3;
+}
+
+.description {
+    display: block;
+    font-size: 90%;
+}
+
+.progress-bar {
+    background-color: #5699FB !important;
+}
+
+.slider .shiny-input-container {
+    width: 100% !important;
 }
