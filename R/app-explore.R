@@ -50,12 +50,14 @@ odin_ui_explore_server <- function(config) {
   default_replicates <- config$default_replicates
   parameters <- config$parameters
   extra <- config$extra
+  output_control <- config$output
 
   function(input, output, session) {
     shiny::callModule(mod_model_server, "model",
-                      model, default_time, parameters, extra, default_replicates)
+                      model, default_time, parameters, extra, output_control,
+                      default_replicates)
     shiny::callModule(mod_parameter_server, "odin_parameter",
-                      model, default_time, parameters, extra)
+                      model, default_time, parameters, extra, output_control)
   }
 }
 
@@ -64,7 +66,7 @@ odin_ui_explore_config <- function(path_config, env) {
   config <- yaml_read(path_config)
 
   required <- "default_time"
-  optional <- c("title", "code", "docs", "parameters", "extra",
+  optional <- c("title", "code", "docs", "parameters", "extra", "output",
                 "default_replicates")
   assert_has_fields(config, required, optional, basename(path_config))
 

@@ -1,8 +1,10 @@
 mod_model_control <- function(graph_data, default_time, default_replicates,
-                              parameters, extra, ns = identity) {
+                              parameters, extra, output_control,
+                              ns = identity) {
   pars <- mod_model_control_parameters(parameters, ns)
   run_options <- mod_model_control_run_options(default_time, graph_data,
-                                               default_replicates, extra, ns)
+                                               default_replicates, extra,
+                                               output_control, ns)
 
   tags <- shiny::div(
     class = "list-group odin-options",
@@ -85,7 +87,8 @@ mod_model_control_parameters <- function(parameters, ns) {
 ## * disable time selector entirely
 ## * solution tolerance
 mod_model_control_run_options <- function(default_time, graph_data,
-                                          default_replicates, extra, ns,
+                                          default_replicates, extra,
+                                          output_control, ns,
                                           collapsed = FALSE) {
   if (length(default_time) == 1L) {
     default_time <- c(0, default_time)
@@ -131,14 +134,17 @@ mod_model_control_run_options <- function(default_time, graph_data,
     ns = ns,
     collapsed = collapsed)
 
-    outputs <- mod_model_control_outputs(graph_data, extra, ns)
+  outputs <- mod_model_control_outputs(graph_data, extra, output_control, ns)
 
   list(tags = tags, has_start_time = has_start_time,
        replicates = has_replicates, output_name_map = outputs$name_map)
 }
 
-mod_model_control_outputs <- function(graph_data, extra, ns) {
+mod_model_control_outputs <- function(graph_data, extra, output_control, ns) {
   vars <- graph_data$nodes[graph_data$nodes$type %in% c("variable", "output"), ]
+  if (!is.null(output_control$exclude)) {
+    vars <- vars[!(vars$name_target %in% output_control$exclude), ]
+  }
 
   if (!is.null(extra)) {
     extra <- data.frame(id = names(extra), label = names(extra),
@@ -153,12 +159,13 @@ mod_model_control_outputs <- function(graph_data, extra, ns) {
   list(name_map = name_map, vars = vars)
 }
 
-mod_model_control_graph_options <- function(graph_data, extra, ns) {
+mod_model_control_graph_options <- function(graph_data, extra, output_control,
+                                            ns) {
   title <- "Graph settings"
 
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
 
-  outputs <- mod_model_control_outputs(graph_data, extra, ns)
+  outputs <- mod_model_control_outputs(graph_data, extra, output_control, ns)
   tags <- shiny::div(class = "form-group",
                 shiny::tags$label("outputs"),
                 Map(raw_checkbox_input, ns(outputs$name_map),

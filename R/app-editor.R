@@ -65,7 +65,8 @@ odin_ui_editor_server <- function(initial_code) {
           }
           shiny::callModule(
             mod_model_server, m$id,
-            models$data[[m$title]], m$default_time, m$parameters)
+            models$data[[m$title]], m$default_time, m$parameters,
+            NULL, NULL, 1L)
           shiny::updateNavbarPage(session, "odin_ui_navbar", "Interact")
           shiny::updateTabsetPanel(session, "models", m$title)
         }

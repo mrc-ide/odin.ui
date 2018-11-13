@@ -18,7 +18,7 @@ mod_parameter_input <- function(id, title) {
 
 mod_parameter_server <- function(input, output, session,
                                  model, default_time, parameters,
-                                 extra = NULL) {
+                                 extra = NULL, output_control = NULL) {
   ns <- session$ns
   model_output <- shiny::reactiveValues(data = NULL)
 
@@ -28,7 +28,7 @@ mod_parameter_server <- function(input, output, session,
 
   parameters <- validate_model_parameters(model, parameters)
   control <- mod_parameter_control(graph_data, default_time, parameters,
-                                   extra, ns)
+                                   extra, output_control, ns)
 
   path_css <- odin_ui_file("css/styles.css")
 
@@ -107,11 +107,12 @@ mod_parameter_control_report <- function(extra, ns) {
 }
 
 
-mod_parameter_control <- function(graph_data, default_time, parameters, extra,
-                                  ns = identity) {
+mod_parameter_control <- function(graph_data, default_time, parameters,
+                                  extra, output_control, ns = identity) {
   pars <- mod_model_control_parameters(parameters, ns)
   run_options <- mod_model_control_run_options(default_time, graph_data, 100L,
-                                               extra, ns, collapsed = TRUE)
+                                               extra, output_control, ns,
+                                               collapsed = TRUE)
   report <- mod_parameter_control_report(extra, ns)
   focal <- mod_parameter_control_focal(parameters, ns)
 

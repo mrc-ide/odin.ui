@@ -36,8 +36,9 @@ mod_model_ui <- function(id, title) {
 }
 
 
-mod_model_control_graph <- function(graph_data, extra, ns) {
-  graph_options <- mod_model_control_graph_options(graph_data, extra, ns)
+mod_model_control_graph <- function(graph_data, extra, output_control, ns) {
+  graph_options <- mod_model_control_graph_options(graph_data, extra,
+                                                   output_control, ns)
   shiny::tagList(
   shiny::div(class = "pull-right",
     shiny::div(class = "form-inline mt-5",
@@ -52,7 +53,8 @@ mod_model_control_graph <- function(graph_data, extra, ns) {
 
 mod_model_server <- function(input, output, session,
                              model, default_time, parameters,
-                             extra = NULL, default_replicates = 1L) {
+                             extra = NULL, output_control = NULL,
+                             default_replicates = 1L) {
   ns <- session$ns
 
   graph_data <- attr(model, "graph_data")()
@@ -61,7 +63,7 @@ mod_model_server <- function(input, output, session,
   parameters <- validate_model_parameters(model, parameters)
   model_output <- shiny::reactiveValues(data = NULL)
   control <- mod_model_control(graph_data, default_time, default_replicates,
-                               parameters, extra, ns)
+                               parameters, extra, output_control, ns)
 
   output$odin_control <- shiny::renderUI({
     path_css <- odin_ui_file("css/styles.css")
@@ -73,7 +75,7 @@ mod_model_server <- function(input, output, session,
   })
 
   output$graph_settings <- shiny::renderUI({
-    mod_model_control_graph(graph_data, extra, ns)
+    mod_model_control_graph(graph_data, extra, output_control, ns)
   })
 
   output$odin_output <- shiny::renderUI({
