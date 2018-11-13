@@ -439,9 +439,16 @@ a.text-muted {
     border: 1px solid #e3e3e3;
 }
 
-.description {
-    display: block;
+.smallish {
     font-size: 90%;
+}
+
+.form-group:not(.slider-label) .description {
+    display: block;
+}
+
+.form-group.slider-label .description:before {
+    content: "/ ";
 }
 
 .progress-bar {
