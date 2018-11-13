@@ -1,4 +1,5 @@
-dygraph_multi <- function(dat, include, cols, mean, interval, second_y) {
+dygraph_multi <- function(dat, include, cols, mean, interval, second_y,
+                          logscale_y) {
   is_multi <- vapply(dat, is.array, logical(1))
   order <- unique(c(names(interval), include, mean))
 
@@ -67,7 +68,8 @@ dygraph_multi <- function(dat, include, cols, mean, interval, second_y) {
                              strokeWidth = 1,
                              labelsKMB = TRUE,
                              animatedZooms = TRUE,
-                             drawGrid = FALSE)
+                             drawGrid = FALSE,
+                             logscale = logscale_y)
   if (length(second_y) > 0L) {
     out <- dygraphs::dyAxis(out, "y2", independentTicks = TRUE)
   }

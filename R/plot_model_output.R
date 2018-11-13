@@ -69,5 +69,6 @@ plot_model_output_replicates <- function(xy, graph_options) {
   mean <- character(0)
   interval <- list()
   second_y <- graph_options$second_y
-  dygraph_multi(xy, include, cols, mean, interval, second_y)
+  logscale_y <- graph_options$logscale_y
+  dygraph_multi(xy, include, cols, mean, interval, second_y, logscale_y)
 }

@@ -167,9 +167,10 @@ mod_model_control_graph_options <- function(graph_data, extra, output_control,
 
   outputs <- mod_model_control_outputs(graph_data, extra, output_control, ns)
   tags <- shiny::div(class = "form-group",
-                shiny::tags$label("outputs"),
-                Map(raw_checkbox_input, ns(outputs$name_map),
-                    outputs$vars$name_target, value = TRUE))
+                     raw_checkbox_input(ns("logscale_y"), "Log scale y axis"),
+                     shiny::tags$label("outputs"),
+                     Map(raw_checkbox_input, ns(outputs$name_map),
+                         outputs$vars$name_target, value = TRUE))
 
   head <- shiny::a(style = "text-align: right; display: block;",
                    "data-toggle" = "collapse",

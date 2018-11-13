@@ -176,7 +176,8 @@ mod_model_getgraph_options <- function(input, name_map, output_control) {
        fill = FALSE,
        alpha = 1,
        stack = FALSE,
-       second_y = output_control$second_y)
+       second_y = output_control$second_y,
+       logscale_y = input$logscale_y)
 }
 
 
