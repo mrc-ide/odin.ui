@@ -30,7 +30,7 @@ odin.ui::odin_ui_doc_app(system.file("examples/sir.yml", package = "odin.ui"))
 Example for teaching
 
 ```r
-odin.ui::odin_ui_explore("inst/examples/sir.yml")
+odin.ui::odin_ui_explore("inst/examples/sis.yml")
 ```
 
 ## Docker
