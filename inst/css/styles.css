@@ -1,5 +1,47 @@
 @import url('https://fonts.googleapis.com/css?family=Share+Tech+Mono');
 
+html, body {
+    height: 100%;
+}
+
+body > .container-fluid {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: calc(100% - 76px);
+}
+
+body > .container-fluid > .tab-content {
+    flex: 1;
+}
+
+.odin-footer {
+    color: white;
+    text-align: center;
+    background: #AAABBC;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin-bottom: -5px;
+}
+
+.logo-wrapper {
+    height: 60px;
+    width: 160px;
+    margin: 0 auto;
+}
+
+.logo-wrapper > div {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 18px;
+    position: relative;
+    top: 25px;
+}
+
+.logo-wrapper > img {
+    float:left;
+    display: block;
+}
+
 .m-0 {
     margin: 0 !important;
 }
@@ -289,40 +331,24 @@
     border-color: #e3e3e3 !important;
 }
 
-.navbar-inverse .navbar-nav>li>a, .navbar-inverse .navbar-brand, .navbar-inverse .navbar-brand:hover {
+.navbar-inverse .navbar-nav > li > a, .navbar-inverse .navbar-brand, .navbar-inverse .navbar-brand:hover {
     color: #333 !important;
     background: #EFF1F3;
 }
 
-.navbar-inverse .navbar-nav>.active>a, .navbar-inverse .navbar-nav>.active>a:focus,
-.navbar-inverse .navbar-nav>li>a:focus {
+.navbar-inverse .navbar-nav > .active > a, .navbar-inverse .navbar-nav > .active > a:focus,
+.navbar-inverse .navbar-nav > li > a:focus {
     color: white !important;
     background: #AAABBC !important;
 }
 
-.navbar-inverse .navbar-nav>li>a:hover:not(:focus) {
+.navbar-inverse .navbar-nav > li > a:hover:not(:focus) {
     color: #AAABBC !important;
 }
 
-.navbar-inverse .navbar-nav>.active>a:hover:not(:focus){
+.navbar-inverse .navbar-nav > .active > a:hover:not(:focus) {
     background: #9192A3 !important;
     color: white !important;
-}
-
-.odin-footer {
-    color: white;
-    text-align: center;
-    background: #AAABBC;
-    padding-top: 5px;
-    padding-bottom: 5px;
-}
-
-.logo {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 18px;
-    position: relative;
-    top: 10px;
-    padding-left: 10px;
 }
 
 .list-group.odin-options {
@@ -346,7 +372,7 @@
 }
 
 .odin-options .form-group {
-    margin-left:0;
+    margin-left: 0;
     margin-right: 0;
 }
 
