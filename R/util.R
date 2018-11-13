@@ -72,7 +72,7 @@ odin_footer <- function() {
     shiny::fluidPage(
       shiny::fluidRow(
         shiny::column(12,
-          shiny::img(src = "images/reside-small.png"),
+          shiny::img(src = "images/reside-logo-small.png"),
           shiny::span(class="logo", "RESIDE@IC"))
       )
     )

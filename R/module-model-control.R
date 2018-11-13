@@ -39,7 +39,7 @@ mod_model_control_section <- function(title, ..., ns, collapsed = FALSE) {
 
   body <- shiny::div(
     id = id,
-    class = paste0("collapse ", cssClass),
+    class = paste0("pt-4 collapse ", cssClass),
     ...)
 
   list(head, body)
@@ -52,18 +52,23 @@ mod_model_control_parameters <- function(parameters, ns) {
     name_map <- set_names(paste0("pars_", names(parameters)), names(parameters))
     input <- function(x) {
       if (is.null(x$description)) {
-        title <- x$name
+        title <- shiny::span(x$name)
       } else {
-        title <- sprintf("%s: %s", x$name, x$description)
+        title <- list(shiny::span(x$name), shiny::span(class="text-muted description", x$description))
       }
 
       if (x$has_range) {
-        horizontal_form_group(
-          title,
-          shiny::sliderInput(ns(name_map[[x$name]]), label = NULL,
-                             min = x$range_min, max = x$range_max,
-                             value = x$default),
-          label_width = 2, label_class = "pt-5")
+          list(shiny::div(class = "form-group",
+              shiny::div(class = "col-xs-12", shiny::tags$label(title))
+            ),
+          shiny::div(class = "form-group",
+                shiny::div(class = "col-xs-12 slider",
+                    shiny::sliderInput(ns(name_map[[x$name]]),
+                                label = NULL,
+                                min = x$range_min,
+                                max = x$range_max,
+                                value = x$default))
+        ))
       } else {
         horizontal_form_group(title, raw_numeric_input(ns(name_map[[x$name]]),
                                                        value = x$default))
