@@ -1,23 +1,25 @@
-dygraph_multi <- function(dat, include, cols, mean, interval) {
+dygraph_multi <- function(dat, include, cols, mean, interval, second_y) {
   is_multi <- vapply(dat, is.array, logical(1))
   order <- unique(c(names(interval), include, mean))
 
+  axis <- function(nm) {
+    if (nm %in% second_y) "y2" else "y"
+  }
+
   ## I don't think this is the most efficient way of doing this but it
   ## will work at least.
-  use <- data.frame(time = dat[[1L]])
-  series <- list()
 
   ## so, first pull in all the intervals, because these are the
   ## hardest.
   dat_interval <- lapply(names(interval), dygraph_interval, dat, interval)
-  ser_interval <- Map(function(d, c)
-    list(names = colnames(d), col = c, width = 2, n = 3),
-    dat_interval, cols[names(interval)])
+  ser_interval <- Map(function(d, c, v)
+    list(names = colnames(d), col = c, width = 2, n = 3, axis = axis(v)),
+    dat_interval, cols[names(interval)], names(interval))
 
   mean <- setdiff(mean, names(interval))
   dat_mean <- lapply(dat[mean], rowMeans)
   ser_mean <- Map(function(v, c)
-    list(names = v, col = c, width = 2, n = 1),
+    list(names = v, col = c, width = 2, n = 1, axis = axis(v)),
     mean, cols[mean])
 
   ## Then we pull in the direct series too; this is different for
@@ -36,7 +38,7 @@ dygraph_multi <- function(dat, include, cols, mean, interval) {
         list(names = colnames(d), col = transp(cols[[v]], .3),
              width = 1, n = ncol(d))
       } else {
-        list(names = v, col = cols[[v]], width = 2, n = 1)
+        list(names = v, col = cols[[v]], width = 2, n = 1, axis = axis(v))
       }
     })
     if (all(i)) {
@@ -66,18 +68,22 @@ dygraph_multi <- function(dat, include, cols, mean, interval) {
                              labelsKMB = TRUE,
                              animatedZooms = TRUE,
                              drawGrid = FALSE)
+  if (length(second_y) > 0L) {
+    out <- dygraphs::dyAxis(out, "y2", independentTicks = TRUE)
+  }
+
   for (s in ser_interval) {
     out <- dygraphs::dySeries(out, s$names, color = s$col,
-                              strokeWidth = s$width)
+                              strokeWidth = s$width, axis = s$axis)
   }
   for (s in ser_mean) {
     out <- dygraphs::dySeries(out, s$names, color = s$col,
-                              strokeWidth = s$width)
+                              strokeWidth = s$width, axis = s$axis)
   }
   for (s in ser_individual) {
     if (length(s$names) == 1L && s$names %in% include) {
       out <- dygraphs::dySeries(out, s$names, color = s$col,
-                                strokeWidth = s$width)
+                                strokeWidth = s$width, axis = s$axis)
     }
   }
 

@@ -14,6 +14,7 @@ parameters:
 
 output:
   exclude: time
+  second_y: extinct
 
 extra:
   extinct: function(x) rowMeans(x$I == 0)

@@ -113,7 +113,8 @@ mod_model_server <- function(input, output, session,
     })
 
   output$result_plot <- dygraphs::renderDygraph({
-    graph_options <- mod_model_getgraph_options(input, control$output_name_map)
+    graph_options <- mod_model_getgraph_options(input, control$output_name_map,
+                                                output_control)
     if (is.null(model_output$data$replicates)) {
       plot_model_output_single(model_output$data$output_expanded,
                                graph_options)
@@ -165,7 +166,7 @@ mod_model_getoutput <- function(x, map) {
 }
 
 
-mod_model_getgraph_options <- function(input, name_map) {
+mod_model_getgraph_options <- function(input, name_map, output_control) {
   include <- mod_model_getoutput(input, name_map)
   palette <- odin_ui_palettes("odin")
   cols <- set_names(palette(length(include)), names(include))
@@ -174,7 +175,8 @@ mod_model_getgraph_options <- function(input, name_map) {
        line_width = 1,
        fill = FALSE,
        alpha = 1,
-       stack = FALSE)
+       stack = FALSE,
+       second_y = output_control$second_y)
 }
 
 
