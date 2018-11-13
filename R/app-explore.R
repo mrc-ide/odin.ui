@@ -19,25 +19,28 @@ odin_ui_explore_ui <- function(config) {
   code <- shiny::tagList(
     shiny::h2("Code"),
     shinyAce::aceEditor("code", mode = "r", readOnly = TRUE,
-                        value = odin.ui:::read_text(config$code)))
+                        value = read_text(config$code)))
   docs <- shiny::includeMarkdown(config$docs)
   title <- config$title
   ui <- shiny::shinyUI(
-    shiny::navbarPage(
-      title,
-      id = "odin_ui_navbar",
-      inverse = TRUE,
-      shiny::tabPanel(
-        "Code & documentation",
-        shiny::fluidRow(
-          shiny::column(6, code),
-          shiny::column(6, docs))),
-      shiny::tabPanel(
-        "Run",
-        odin.ui:::mod_model_ui("model", NULL)),
-      shiny::tabPanel(
-        "Parameters",
-        odin.ui:::mod_parameter_input("odin_parameter", NULL))))
+    shiny::tagList(
+      odin_css(),
+      shiny::navbarPage(
+        title,
+        id = "odin_ui_navbar",
+        inverse = TRUE,
+        shiny::tabPanel(
+          "Code & documentation",
+          shiny::fluidRow(
+            shiny::column(6, code),
+            shiny::column(6, docs))),
+        shiny::tabPanel(
+          "Run",
+          mod_model_ui("model", NULL)),
+        shiny::tabPanel(
+          "Parameters",
+          mod_parameter_input("odin_parameter", NULL)),
+        footer = odin_footer())))
 }
 
 
