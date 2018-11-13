@@ -18,3 +18,5 @@ output:
 
 extra:
   extinct: function(x) rowMeans(x$I == 0)
+
+explore_tab: true

@@ -22,6 +22,16 @@ odin_ui_explore_ui <- function(config) {
                         value = read_text(config$code)))
   docs <- shiny::withMathJax(shiny::includeMarkdown(config$docs))
   title <- config$title
+
+  if (config$explore_tab) {
+    explore <- shiny::tabPanel(
+      "Explore",
+      icon = shiny::icon("cogs"),
+      mod_parameter_input("odin_parameter", NULL))
+  } else {
+    explore <- NULL
+  }
+
   ui <- shiny::shinyUI(
     shiny::tagList(
       odin_css(),
@@ -39,10 +49,7 @@ odin_ui_explore_ui <- function(config) {
           "Run",
           icon = shiny::icon("play"),
           mod_model_ui("model", NULL)),
-        shiny::tabPanel(
-          "Parameters",
-          icon = shiny::icon("cogs"),
-          mod_parameter_input("odin_parameter", NULL)),
+        explore,
         footer = odin_footer())))
 }
 
@@ -70,7 +77,7 @@ odin_ui_explore_config <- function(path_config, env) {
 
   required <- "default_time"
   optional <- c("title", "code", "docs", "parameters", "extra", "output",
-                "default_replicates")
+                "default_replicates", "explore_tab")
   assert_has_fields(config, required, optional, basename(path_config))
 
   base <- tools::file_path_sans_ext(basename(path_config))
@@ -112,6 +119,12 @@ odin_ui_explore_config <- function(path_config, env) {
     config$default_replicates <- 1L
   } else {
     assert_scalar_numeric(config$default_replicates, f("default_replicates"))
+  }
+
+  if (is.null(config$explore_tab)) {
+    config$explore_tab <- TRUE
+  } else {
+    assert_scalar_logical(config$explore_tab, f("explore_tab"))
   }
 
   config
