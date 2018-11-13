@@ -125,7 +125,7 @@ mod_parameter_control <- function(graph_data, default_time, parameters,
       report$tags),
     shiny::actionButton(ns("go_button"), "Run model",
             shiny::icon("play"),
-            class = "btn-blue")
+            class = "btn-blue pull-right")
   )
 
   list(tags = tags,
