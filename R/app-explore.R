@@ -31,14 +31,17 @@ odin_ui_explore_ui <- function(config) {
         inverse = TRUE,
         shiny::tabPanel(
           "Code & documentation",
+          icon = shiny::icon("edit"),
           shiny::fluidRow(
             shiny::column(6, code),
             shiny::column(6, docs))),
         shiny::tabPanel(
           "Run",
+          icon = shiny::icon("play"),
           mod_model_ui("model", NULL)),
         shiny::tabPanel(
           "Parameters",
+          icon = shiny::icon("cogs"),
           mod_parameter_input("odin_parameter", NULL)),
         footer = odin_footer())))
 }
