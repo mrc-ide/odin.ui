@@ -67,7 +67,7 @@ callback_shiny_progress <- function(i, n) {
 }
 
 odin_footer <- function() {
-  addResourcePath('images', system.file('images', package='odin.ui'))
+  shiny::addResourcePath('images', system.file('images', package='odin.ui'))
   shiny::tags$footer(class="navbar-fixed-bottom odin-footer",
     shiny::fluidPage(
       shiny::fluidRow(
