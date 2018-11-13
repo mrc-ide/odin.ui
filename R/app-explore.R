@@ -20,7 +20,7 @@ odin_ui_explore_ui <- function(config) {
     shiny::h2("Code"),
     shinyAce::aceEditor("code", mode = "r", readOnly = TRUE,
                         value = read_text(config$code)))
-  docs <- shiny::includeMarkdown(config$docs)
+  docs <- shiny::withMathJax(shiny::includeMarkdown(config$docs))
   title <- config$title
   ui <- shiny::shinyUI(
     shiny::tagList(
