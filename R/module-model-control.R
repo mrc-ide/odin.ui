@@ -171,11 +171,22 @@ mod_model_control_graph_options <- function(graph_data, extra, output_control,
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
 
   outputs <- mod_model_control_outputs(graph_data, extra, output_control, ns)
+
+  ## TODO: this is duplicated from the graphing code and needs pulling
+  ## in somewhere better once we decide on the right course of action
+  ## for graph options.
+  palette <- odin_ui_palettes("odin")
+  cols <- palette(length(outputs$name_map))
+  labels <- Map(function(lab, col)
+    shiny::span(lab, style = paste0("color:", col)),
+    outputs$vars$name_target,
+    palette(length(outputs$name_map)))
+
   tags <- shiny::div(class = "form-group",
                      raw_checkbox_input(ns("logscale_y"), "Log scale y axis"),
                      shiny::tags$label("Outputs to display"),
                      Map(raw_checkbox_input, ns(outputs$name_map),
-                         outputs$vars$name_target, value = TRUE))
+                         labels, value = TRUE))
 
   head <- shiny::a(style = "text-align: right; display: block;",
                    "data-toggle" = "collapse",
