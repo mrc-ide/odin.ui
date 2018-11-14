@@ -41,6 +41,7 @@ plot_model_output_single <- function(xy, options) {
                              labelsKMB = TRUE,
                              stackedGraph = options$stack,
                              digitsAfterDecimal = 0,
+                             logscale = options$logscale_y,
                              animatedZooms = TRUE)
   out <- dygraphs::dyAxis(out, "x", label = "Time", drawGrid = FALSE)
   out <- dygraphs::dyAxis(out, "y", label = NULL, drawGrid = FALSE)
