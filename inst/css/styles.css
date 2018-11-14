@@ -447,10 +447,6 @@ a.text-muted {
     display: block;
 }
 
-.form-group.slider-label .description:before {
-    content: "/ ";
-}
-
 .progress-bar {
     background-color: #5699FB !important;
 }
