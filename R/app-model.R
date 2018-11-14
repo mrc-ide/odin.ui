@@ -52,9 +52,10 @@ odin_ui_app_ui <- function(title) {
 odin_ui_app_server <- function(model, default_time, parameters, extra) {
   output_control <- NULL
   default_replicates <- 1L
+  time_scale <- NULL
   function(input, output, session) {
     shiny::callModule(mod_model_server, "odin_ui",
                       model, default_time, parameters, extra,
-                      output_control, default_replicates)
+                      output_control, default_replicates, time_scale)
   }
 }

@@ -55,5 +55,5 @@ mod_doc_ui <- function(id, config) {
 mod_doc_server <- function(input, output, session, config) {
   shiny::callModule(mod_model_server, "model",
                     config$model, config$default_time, config$parameters,
-                    NULL, NULL, 1L)
+                    NULL, NULL, 1L, NULL)
 }
