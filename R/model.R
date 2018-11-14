@@ -180,6 +180,9 @@ validate_extra <- function(extra, graph_data) {
 
 
 validate_time_scale <- function(time_scale, graph_data) {
+  if (is.null(time_scale)) {
+    return(NULL)
+  }
   nodes <- graph_data$nodes
   if (!(time_scale %in% nodes$id)) {
     stop(sprintf("'time_scale' value '%s' is not in model", time_scale),
