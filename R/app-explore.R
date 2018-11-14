@@ -8,7 +8,7 @@
 ##'   safely ignored.
 ##'
 ##' @export
-odin_ui_explore <- function(path_config, env = .GlobalEnv) {
+odin_ui_explore_app <- function(path_config, env = .GlobalEnv) {
   config <- odin_ui_explore_config(path_config, env)
   shiny::shinyApp(odin_ui_explore_ui(config),
                   odin_ui_explore_server(config))

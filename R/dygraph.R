@@ -71,7 +71,9 @@ dygraph_multi <- function(dat, include, cols, mean, interval, second_y,
                              drawGrid = FALSE,
                              logscale = logscale_y)
   if (length(second_y) > 0L) {
-    out <- dygraphs::dyAxis(out, "y2", independentTicks = TRUE)
+    out <- dygraphs::dyAxis(out, "y2",
+                            label = paste(second_y, collapse = ", "),
+                            independentTicks = TRUE)
   }
 
   for (s in ser_interval) {
