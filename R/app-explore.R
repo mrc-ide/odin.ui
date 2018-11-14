@@ -61,11 +61,12 @@ odin_ui_explore_server <- function(config) {
   parameters <- config$parameters
   extra <- config$extra
   output_control <- config$output
+  time_scale <- config$time_scale
 
   function(input, output, session) {
     shiny::callModule(mod_model_server, "model",
                       model, default_time, parameters, extra, output_control,
-                      default_replicates)
+                      default_replicates, time_scale)
     shiny::callModule(mod_parameter_server, "odin_parameter",
                       model, default_time, parameters, extra, output_control)
   }
@@ -77,7 +78,7 @@ odin_ui_explore_config <- function(path_config, env) {
 
   required <- "default_time"
   optional <- c("title", "code", "docs", "parameters", "extra", "output",
-                "default_replicates", "explore_tab")
+                "default_replicates", "explore_tab", "time_scale")
   assert_has_fields(config, required, optional, basename(path_config))
 
   base <- tools::file_path_sans_ext(basename(path_config))
@@ -125,6 +126,10 @@ odin_ui_explore_config <- function(path_config, env) {
     config$explore_tab <- TRUE
   } else {
     assert_scalar_logical(config$explore_tab, f("explore_tab"))
+  }
+
+  if (!is.null(config$time_scale)) {
+    assert_scalar_character(config$time_scale, f("time_scale"))
   }
 
   config

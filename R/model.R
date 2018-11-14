@@ -34,24 +34,51 @@ compile_model <- function(code, dest = NULL, safe = FALSE, skip_cache = FALSE) {
 }
 
 
-run_model <- function(generator, pars, time, replicates, extra) {
+run_model <- function(generator, pars, time, replicates, extra, time_scale) {
   if (length(pars) > 0L) {
     model <- generator(user = pars)
   } else {
     model <- generator()
   }
-  if (is.null(replicates)) {
-    output <- model$run(time)
-  } else {
-    output <- model$run(time, replicate = replicates)
+
+  if (!is.null(time_scale)) {
+    dt <- model$contents()[[time_scale]]
+    time$start <- time$start / dt
+    time$end   <- time$end / dt
   }
+
+  if (time$discrete) {
+    t <- seq(time$start, time$end, by = round(time$detail))
+    if (t[[length(t)]] < time$end) {
+      t <- c(t, time$end)
+    }
+  } else {
+    t <- seq(time$start, time$end, length.out = round(time$detail))
+  }
+
+  if (is.null(replicates)) {
+    output <- model$run(t)
+  } else {
+    output <- model$run(t, replicate = replicates)
+  }
+
+  ## Rescale time
+  if (!is.null(time_scale)) {
+    t <- t * dt
+    if (is.null(replicates)) {
+      output[, 1] <- t
+    } else {
+      output[, 1, ] <- t
+    }
+  }
+
   output_expanded <- model$transform_variables(output)
   if (!is.null(extra)) {
     for (i in names(extra)) {
       output_expanded[[i]] <- extra[[i]](output_expanded)
     }
   }
-  list(model = model, pars = pars, time = time, replicates = replicates,
+  list(model = model, pars = pars, time = t, replicates = replicates,
        output = output, output_expanded = output_expanded)
 }
 
@@ -148,4 +175,20 @@ validate_extra <- function(extra, graph_data) {
     }
   }
   extra
+}
+
+
+validate_time_scale <- function(time_scale, graph_data) {
+  nodes <- graph_data$nodes
+  if (!(time_scale %in% nodes$id)) {
+    stop(sprintf("'time_scale' value '%s' is not in model", time_scale),
+         call. = FALSE)
+  }
+  time_scale_stage <- nodes$stage[nodes$id == time_scale]
+  if (!(time_scale_stage %in% c("constant", "user"))) {
+    stop(sprintf("'time_scale' value '%s' is not constant or user-supplied",
+                 time_scale),
+         call. = FALSE)
+  }
+  time_scale
 }

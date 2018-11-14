@@ -54,11 +54,12 @@ mod_model_control_graph <- function(graph_data, extra, output_control, ns) {
 mod_model_server <- function(input, output, session,
                              model, default_time, parameters,
                              extra = NULL, output_control = NULL,
-                             default_replicates = 1L) {
+                             default_replicates = 1L, time_scale = NULL) {
   ns <- session$ns
 
   graph_data <- attr(model, "graph_data")()
   extra <- validate_extra(extra, graph_data)
+  time_scale <- validate_time_scale(time_scale, graph_data)
 
   parameters <- validate_model_parameters(model, parameters)
   model_output <- shiny::reactiveValues(data = NULL)
@@ -103,13 +104,13 @@ mod_model_server <- function(input, output, session,
     ## into the editor app at least; otherwise it fails to start up
     ## somehow!
     if (isTRUE(input$auto_run)) {
-      update_model(model, input, model_output, control, extra)
+      update_model(model, input, model_output, control, extra, time_scale)
     }
   })
 
   shiny::observeEvent(
     input$go_button, {
-      update_model(model, input, model_output, control, extra)
+      update_model(model, input, model_output, control, extra, time_scale)
     })
 
   output$result_plot <- dygraphs::renderDygraph({
@@ -153,11 +154,8 @@ mod_model_gettime <- function(x, has_start_time, discrete) {
     msg <- if (has_start_time) "Start and end" else "End"
     stop(sprintf("%s must be given", msg))
   }
-  if (discrete) {
-    seq(time_start, time_end, by = round(x$time_detail))
-  } else {
-    seq(time_start, time_end, length.out = round(x$time_detail))
-  }
+  list(start = time_start, end = time_end, detail = x$time_detail,
+       discrete = discrete)
 }
 
 
@@ -191,7 +189,7 @@ mod_model_compute_filename <- function(title, filename, format) {
 }
 
 
-update_model <- function(model, input, output, control, extra) {
+update_model <- function(model, input, output, control, extra, time_scale) {
   output$data <- tryCatch({
     pars <- mod_model_getpars(input, control$parameter_name_map)
     time <- mod_model_gettime(input, control$has_start_time, control$discrete)
@@ -201,6 +199,6 @@ update_model <- function(model, input, output, control, extra) {
       message("Skipping")
       return()
     }
-    run_model(model, pars, time, replicates, extra)
+    run_model(model, pars, time, replicates, extra, time_scale)
   }, error = function (x) str(x))
 }
