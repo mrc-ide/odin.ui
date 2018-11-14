@@ -195,7 +195,7 @@ update_model <- function(model, input, output, control, extra) {
   output$data <- tryCatch({
     pars <- mod_model_getpars(input, control$parameter_name_map)
     time <- mod_model_gettime(input, control$has_start_time, control$discrete)
-    replicates <- input$replicates
+    replicates <- min(MAX_REPLICATES_MODEL, input$replicates)
     if (identical(pars, output$pars) && identical(time, output$time)) {
       ## I think that this should *not* be possible for stochastic models!
       message("Skipping")

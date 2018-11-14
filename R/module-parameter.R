@@ -50,7 +50,7 @@ mod_parameter_server <- function(input, output, session,
       }
 
       collect <- parameter_collector(input$report_type, input$report_name)
-      replicates <- input$replicates
+      replicates <- min(MAX_REPLICATES_PARAMETER_PLOT, input$replicates)
 
       model_output$data <- shiny::withProgress(
         run_model_parameters(model, focal_name, focal_values, pars, time,
