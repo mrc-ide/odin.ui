@@ -191,5 +191,9 @@ validate_time_scale <- function(time_scale, graph_data) {
                  time_scale),
          call. = FALSE)
   }
+  if (nodes$rank[nodes$id == time_scale] > 0L) {
+    stop(sprintf("'time_scale' value '%s' is not scalar", time_scale),
+         call. = FALSE)
+  }
   time_scale
 }
