@@ -18,7 +18,8 @@ mod_parameter_input <- function(id, title) {
 
 mod_parameter_server <- function(input, output, session,
                                  model, default_time, parameters,
-                                 extra = NULL, output_control = NULL) {
+                                 extra = NULL, output_control = NULL,
+                                 time_scale = NULL) {
   ns <- session$ns
   model_output <- shiny::reactiveValues(data = NULL)
 
@@ -54,7 +55,7 @@ mod_parameter_server <- function(input, output, session,
 
       model_output$data <- shiny::withProgress(
         run_model_parameters(model, focal_name, focal_values, pars, time,
-                             replicates, extra, collect,
+                             replicates, extra, time_scale, collect,
                              callback_shiny_progress),
         max = length(focal_values), value = 0, message = "Running simulations")
     })

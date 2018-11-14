@@ -142,13 +142,14 @@ validate_model_parameters <- function(model, parameters) {
 ## This requires quite a lot of work really; there are lots of moving
 ## parts here.
 run_model_parameters <- function(generator, target, values, common, time,
-                                 replicates, extra, collect, callback = NULL) {
+                                 replicates, extra, time_scale, collect,
+                                 callback = NULL) {
   n <- length(values)
   ret <- vector("list", n)
   pars <- common
   for (i in seq_len(n)) {
     pars[[target]] <- values[[i]]
-    res <- run_model(generator, pars, time, replicates, extra)
+    res <- run_model(generator, pars, time, replicates, extra, time_scale)
     ret[[i]] <- collect(res$output_expanded)
     if (!is.null(callback)) {
       callback(i, n)

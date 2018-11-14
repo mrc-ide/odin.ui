@@ -68,7 +68,8 @@ odin_ui_explore_server <- function(config) {
                       model, default_time, parameters, extra, output_control,
                       default_replicates, time_scale)
     shiny::callModule(mod_parameter_server, "odin_parameter",
-                      model, default_time, parameters, extra, output_control)
+                      model, default_time, parameters, extra, output_control,
+                      time_scale)
   }
 }
 
