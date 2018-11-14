@@ -31,26 +31,44 @@ odin_ui_explore_ui <- function(config) {
   } else {
     explore <- NULL
   }
+  code <- shiny::tabPanel(
+    "Code & documentation",
+    icon = shiny::icon("edit"),
+    shiny::fluidRow(
+      shiny::column(6, code),
+      shiny::column(6, docs)))
+  run <- shiny::tabPanel(
+    "Run",
+    icon = shiny::icon("play"),
+    mod_model_ui("model", NULL))
+  id <- "odin_ui_navbar"
+
+  ## TODO: shiny won't allow a NULL tab and we get some ugly
+  ## placeholder in the page, so doing this in a roundabout way for
+  ## now.
+  if (config$explore_tab) {
+    page <- shiny::navbarPage(
+      title,
+      id = id,
+      inverse = TRUE,
+      code,
+      run,
+      explore,
+      footer = odin_footer())
+  } else {
+    page <- shiny::navbarPage(
+      title,
+      id = id,
+      inverse = TRUE,
+      code,
+      run,
+      footer = odin_footer())
+  }
 
   ui <- shiny::shinyUI(
     shiny::tagList(
       odin_css(),
-      shiny::navbarPage(
-        title,
-        id = "odin_ui_navbar",
-        inverse = TRUE,
-        shiny::tabPanel(
-          "Code & documentation",
-          icon = shiny::icon("edit"),
-          shiny::fluidRow(
-            shiny::column(6, code),
-            shiny::column(6, docs))),
-        shiny::tabPanel(
-          "Run",
-          icon = shiny::icon("play"),
-          mod_model_ui("model", NULL)),
-        explore,
-        footer = odin_footer())))
+      page))
 }
 
 
