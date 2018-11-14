@@ -8,9 +8,13 @@ parameters:
     range: [10, 1000]
     description: Population size
   beta:
-    description: contact_rate
+    description: Contact rate
   nu:
-    description: recovery rate
+    description: Recovery rate
+  I0:
+    description: Initial no. of infecteds
+  I0_at_steady_state:
+    description: (Set to 1 to start at equilibrium)
 
 output:
   exclude: time
