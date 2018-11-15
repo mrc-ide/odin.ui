@@ -447,6 +447,11 @@ a.text-muted {
     display: block;
 }
 
+.form-group:not(.slider-label) .short-name {
+    margin-top: -7px;
+    display: block;
+}
+
 .progress-bar {
     background-color: #5699FB !important;
 }

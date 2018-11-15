@@ -54,7 +54,7 @@ mod_model_control_parameters <- function(parameters, ns) {
       if (is.null(x$description)) {
         title <- shiny::span(x$name)
       } else {
-        title <- list(shiny::span(x$name), shiny::span(class="text-muted description smallish", x$description))
+        title <- list(shiny::span(x$name, class="short-name"), shiny::span(class="text-muted description smallish", x$description))
       }
 
       if (x$has_range) {
