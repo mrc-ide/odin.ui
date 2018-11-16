@@ -1,3 +1,7 @@
+## 0.1.3
+
+* UI tweaks for better automated layout
+
 ## 0.1.2
 
 * Allow time scaling ([#16](https://github.com/mrc-ide/odin.ui/issues/16))
