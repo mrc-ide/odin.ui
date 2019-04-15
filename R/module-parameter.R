@@ -23,12 +23,12 @@ mod_parameter_server <- function(input, output, session,
   ns <- session$ns
   model_output <- shiny::reactiveValues(data = NULL)
 
-  graph_data <- attr(model, "graph_data")()
-  extra <- validate_extra(extra, graph_data)
+  metadata <- model_metadata(model)
+  extra <- validate_extra(extra, metadata)
   user <- coef(model)
 
   parameters <- validate_model_parameters(model, parameters)
-  control <- mod_parameter_control(graph_data, default_time, parameters,
+  control <- mod_parameter_control(metadata, default_time, parameters,
                                    extra, output_control, ns)
 
   path_css <- odin_ui_file("css/styles.css")
@@ -108,10 +108,10 @@ mod_parameter_control_report <- function(extra, ns) {
 }
 
 
-mod_parameter_control <- function(graph_data, default_time, parameters,
+mod_parameter_control <- function(metadata, default_time, parameters,
                                   extra, output_control, ns = identity) {
   pars <- mod_model_control_parameters(parameters, ns)
-  run_options <- mod_model_control_run_options(default_time, graph_data, 100L,
+  run_options <- mod_model_control_run_options(default_time, metadata, 100L,
                                                extra, output_control, ns,
                                                collapsed = TRUE)
   report <- mod_parameter_control_report(extra, ns)
@@ -132,8 +132,8 @@ mod_parameter_control <- function(graph_data, default_time, parameters,
   list(tags = tags,
        parameter_name_map = pars$name_map,
        has_start_time = run_options$has_start_time,
-       discrete = graph_data$discrete,
-       stochastic = graph_data$stochastic,
+       discrete = metadata$features$discrete,
+       stochastic = metadata$features$stochastic,
        replicates = run_options$replicates)
 }
 

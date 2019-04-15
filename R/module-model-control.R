@@ -1,8 +1,8 @@
-mod_model_control <- function(graph_data, default_time, default_replicates,
+mod_model_control <- function(metadata, default_time, default_replicates,
                               parameters, extra, output_control,
                               ns = identity) {
   pars <- mod_model_control_parameters(parameters, ns)
-  run_options <- mod_model_control_run_options(default_time, graph_data,
+  run_options <- mod_model_control_run_options(default_time, metadata,
                                                default_replicates, extra,
                                                output_control, ns)
 
@@ -15,8 +15,8 @@ mod_model_control <- function(graph_data, default_time, default_replicates,
        parameter_name_map = pars$name_map,
        has_start_time = run_options$has_start_time,
        output_name_map = run_options$output_name_map,
-       discrete = graph_data$discrete,
-       stochastic = graph_data$stochastic,
+       discrete = metadata$features$discrete,
+       stochastic = metadata$features$stochastic,
        replicates = run_options$replicates)
 }
 
@@ -91,7 +91,7 @@ mod_model_control_parameters <- function(parameters, ns) {
 ## * critical time
 ## * disable time selector entirely
 ## * solution tolerance
-mod_model_control_run_options <- function(default_time, graph_data,
+mod_model_control_run_options <- function(default_time, metadata,
                                           default_replicates, extra,
                                           output_control, ns,
                                           collapsed = FALSE) {
@@ -104,7 +104,7 @@ mod_model_control_run_options <- function(default_time, graph_data,
     stop("'default_time' must be length 1 or 2")
   }
 
-  if (graph_data$discrete) {
+  if (metadata$features$discrete) {
     time_detail <- horizontal_form_group(
       "reporting interval",
       raw_numeric_input(ns("time_detail"), 1L))
@@ -123,7 +123,7 @@ mod_model_control_run_options <- function(default_time, graph_data,
     time_start <- NULL
   }
 
-  has_replicates <- graph_data$discrete && graph_data$stochastic
+  has_replicates <- metadata$features$discrete && metadata$features$stochastic
 
   if (has_replicates) {
     reps <- horizontal_form_group(
@@ -139,38 +139,43 @@ mod_model_control_run_options <- function(default_time, graph_data,
     ns = ns,
     collapsed = collapsed)
 
-  outputs <- mod_model_control_outputs(graph_data, extra, output_control, ns)
+  outputs <- mod_model_control_outputs(metadata, extra, output_control, ns)
 
   list(tags = tags, has_start_time = has_start_time,
        replicates = has_replicates, output_name_map = outputs$name_map)
 }
 
-mod_model_control_outputs <- function(graph_data, extra, output_control, ns) {
-  vars <- graph_data$nodes[graph_data$nodes$type %in% c("variable", "output"), ]
+mod_model_control_outputs <- function(metadata, extra, output_control, ns) {
+  variables <- names(metadata$data$variable$contents)
+  output <- names(metadata$data$output$contents)
+  d <- metadata$data$elements[c(variables, output)]
+  rank <- vapply(d, "[[", integer(1), "rank", USE.NAMES = FALSE)
+  type <- vapply(d, "[[", character(1), "location", USE.NAMES = FALSE)
+  vars <- data.frame(name = names(d), rank = rank, type = type,
+                     stringsAsFactors = FALSE, check.names = FALSE)
+
   if (!is.null(output_control$exclude)) {
-    vars <- vars[!(vars$name_target %in% output_control$exclude), ]
+    vars <- vars[!(vars$name %in% output_control$exclude), ]
   }
 
   if (!is.null(extra)) {
-    extra <- data.frame(id = names(extra), label = names(extra),
-                        name_target = names(extra), rank = NA_integer_,
-                        type = "extra", stage = "time",
+    extra <- data.frame(name = extra, rank = NA_integer_, type = "extra",
                         stringsAsFactors = FALSE, check.names = FALSE)
     vars <- rbind(vars, extra)
   }
 
-  name_map <- set_names(paste0("plot_", vars$name_target), vars$name_target)
+  name_map <- set_names(paste0("plot_", vars$name), vars$name)
 
   list(name_map = name_map, vars = vars)
 }
 
-mod_model_control_graph_options <- function(graph_data, extra, output_control,
+mod_model_control_graph_options <- function(metadata, extra, output_control,
                                             ns) {
   title <- "Graph settings"
 
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
 
-  outputs <- mod_model_control_outputs(graph_data, extra, output_control, ns)
+  outputs <- mod_model_control_outputs(metadata, extra, output_control, ns)
 
   ## TODO: this is duplicated from the graphing code and needs pulling
   ## in somewhere better once we decide on the right course of action
@@ -179,7 +184,7 @@ mod_model_control_graph_options <- function(graph_data, extra, output_control,
   cols <- palette(length(outputs$name_map))
   labels <- Map(function(lab, col)
     shiny::span(lab, style = paste0("color:", col)),
-    outputs$vars$name_target,
+    outputs$vars$name,
     palette(length(outputs$name_map)))
 
   tags <- shiny::div(class = "form-group",

@@ -165,13 +165,14 @@ run_model_parameters <- function(generator, target, values, common, time,
 }
 
 
-validate_extra <- function(extra, graph_data) {
+validate_extra <- function(extra, metadata) {
   if (!is.null(extra)) {
     assert_named(extra)
     if (!all(vlapply(extra, is.function))) {
       stop("All elements of 'extra' must be functions", call. = FALSE)
     }
-    if (any(names(extra) %in% graph_data$nodes$name_target)) {
+    ## This is possibly not ideal but it's easy and will do for now:
+    if (any(names(extra) %in% names(metadata$data$elements))) {
       stop("Names in 'extra' collide with model names")
     }
   }
@@ -179,16 +180,18 @@ validate_extra <- function(extra, graph_data) {
 }
 
 
-validate_time_scale <- function(time_scale, graph_data) {
+validate_time_scale <- function(time_scale, metadata) {
   if (is.null(time_scale)) {
     return(NULL)
   }
-  nodes <- graph_data$nodes
+  stop("fix metadata handling in validate_time_scale")
+  ## Here, look to the the components to sort this out
+  nodes <- metadata$nodes
   if (!(time_scale %in% nodes$id)) {
     stop(sprintf("'time_scale' value '%s' is not in model", time_scale),
          call. = FALSE)
   }
-  time_scale_stage <- nodes$stage[nodes$id == time_scale]
+  ## time_scale_stage <- nodes$stage[nodes$id == time_scale]
   if (!(time_scale_stage %in% c("constant", "user"))) {
     stop(sprintf("'time_scale' value '%s' is not constant or user-supplied",
                  time_scale),
@@ -199,4 +202,11 @@ validate_time_scale <- function(time_scale, graph_data) {
          call. = FALSE)
   }
   time_scale
+}
+
+
+## organise the model metadata that we'll use all over the show
+model_metadata <- function(model) {
+  ir <- odin::odin_ir(model, TRUE)
+  ir
 }

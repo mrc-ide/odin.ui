@@ -36,8 +36,8 @@ mod_model_ui <- function(id, title) {
 }
 
 
-mod_model_control_graph <- function(graph_data, extra, output_control, ns) {
-  graph_options <- mod_model_control_graph_options(graph_data, extra,
+mod_model_control_graph <- function(metadata, extra, output_control, ns) {
+  graph_options <- mod_model_control_graph_options(metadata, extra,
                                                    output_control, ns)
   shiny::tagList(
   shiny::div(class = "pull-right",
@@ -57,13 +57,13 @@ mod_model_server <- function(input, output, session,
                              default_replicates = 1L, time_scale = NULL) {
   ns <- session$ns
 
-  graph_data <- attr(model, "graph_data")()
-  extra <- validate_extra(extra, graph_data)
-  time_scale <- validate_time_scale(time_scale, graph_data)
+  metadata <- model_metadata(model)
+  extra <- validate_extra(extra, metadata)
+  time_scale <- validate_time_scale(time_scale, metadata)
 
   parameters <- validate_model_parameters(model, parameters)
   model_output <- shiny::reactiveValues(data = NULL)
-  control <- mod_model_control(graph_data, default_time, default_replicates,
+  control <- mod_model_control(metadata, default_time, default_replicates,
                                parameters, extra, output_control, ns)
 
   output$odin_control <- shiny::renderUI({
@@ -76,7 +76,7 @@ mod_model_server <- function(input, output, session,
   })
 
   output$graph_settings <- shiny::renderUI({
-    mod_model_control_graph(graph_data, extra, output_control, ns)
+    mod_model_control_graph(metadata, extra, output_control, ns)
   })
 
   output$odin_output <- shiny::renderUI({
@@ -193,7 +193,11 @@ update_model <- function(model, input, output, control, extra, time_scale) {
   output$data <- tryCatch({
     pars <- mod_model_getpars(input, control$parameter_name_map)
     time <- mod_model_gettime(input, control$has_start_time, control$discrete)
-    replicates <- min(MAX_REPLICATES_MODEL, input$replicates)
+    if (is.null(input$replicates)) {
+      replicates <- NULL
+    } else {
+      replicates <- min(MAX_REPLICATES_MODEL, input$replicates)
+    }
     if (identical(pars, output$pars) && identical(time, output$time)) {
       ## I think that this should *not* be possible for stochastic models!
       message("Skipping")
