@@ -73,3 +73,38 @@ plot_model_output_replicates <- function(xy, graph_options) {
   logscale_y <- graph_options$logscale_y
   dygraph_multi(xy, include, cols, mean, interval, second_y, logscale_y)
 }
+
+
+plot_model_output_single_plotly <- function(xy, graph_options) {
+  p <- plotly::plot_ly()
+  p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
+
+  include <- graph_options$include
+  vars <- names(include)[include]
+
+  second_y <- graph_options$second_y
+
+  for (i in vars) {
+    yaxis <- if (second_y[[i]]) "y2" else NULL
+    p <- plotly::add_lines(p, x = xy$t, y = xy[[i]],
+                           name = i, yaxis = yaxis,
+                           line = list(color = graph_options$cols[[i]]))
+  }
+
+  if (any(second_y)) {
+    ## NOTE: we could probably use html styling for the labels easily
+    ## enough.
+    opts <- list(overlaying = "y",
+                 side = "right",
+                 showgrid = FALSE,
+                 title = paste(names(second_y)[second_y], collapse = ", "))
+    p <- plotly::layout(p, yaxis2 = opts)
+  }
+
+  p
+}
+
+
+plot_model_output_replicates_plotly <- function(...) {
+  .NotYetImplemented()
+}

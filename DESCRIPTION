@@ -12,6 +12,7 @@ Imports:
     dde (>= 0.0.6),
     dygraphs,
     jsonlite,
+    plotly,
     markdown,
     odin (>= 0.2.0),
     shiny (>= 1.0.4),
