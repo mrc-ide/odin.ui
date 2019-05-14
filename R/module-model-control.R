@@ -16,7 +16,7 @@ mod_model_control <- function(metadata, default_time, default_replicates,
        has_start_time = run_options$has_start_time,
        output_name_map = run_options$output_name_map,
        discrete = metadata$features$discrete,
-       stochastic = metadata$features$stochastic,
+       stochastic = metadata$features$has_stochastic,
        replicates = run_options$replicates)
 }
 
@@ -123,7 +123,8 @@ mod_model_control_run_options <- function(default_time, metadata,
     time_start <- NULL
   }
 
-  has_replicates <- metadata$features$discrete && metadata$features$stochastic
+  has_replicates <- metadata$features$discrete &&
+    metadata$features$has_stochastic
 
   if (has_replicates) {
     reps <- horizontal_form_group(

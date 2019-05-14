@@ -133,7 +133,7 @@ mod_parameter_control <- function(metadata, default_time, parameters,
        parameter_name_map = pars$name_map,
        has_start_time = run_options$has_start_time,
        discrete = metadata$features$discrete,
-       stochastic = metadata$features$stochastic,
+       stochastic = metadata$features$has_stochastic,
        replicates = run_options$replicates)
 }
 
