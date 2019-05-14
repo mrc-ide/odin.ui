@@ -10,6 +10,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:
     dde (>= 0.0.6),
+    dfoptim,
     dygraphs,
     jsonlite,
     plotly,
@@ -17,6 +18,7 @@ Imports:
     odin (>= 0.2.0),
     shiny (>= 1.0.4),
     shinyAce,
+    subplex,
     yaml
 RoxygenNote: 6.0.1
 Suggests:
