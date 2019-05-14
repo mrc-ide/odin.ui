@@ -432,6 +432,13 @@ a.text-muted {
     min-height: 420px;
 }
 
+.plotly-graph-wrapper {
+    border: 1px solid #ddd;
+    padding: 0;
+    background: #f6f7f8;
+    min-height: 400px;
+}
+
 .box {
     padding: 19px;
     margin-bottom: 20px;
