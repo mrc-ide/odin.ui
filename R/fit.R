@@ -115,3 +115,24 @@ print_every <- function(every) {
     i <<- i + 1L
   }
 }
+
+
+plot_fit <- function(data, name_time, model, map, cols) {
+  data_time <- data[[name_time]]
+  t <- seq(0, max(data_time), length.out = 501)
+  xy <- model$run(t)
+
+  p <- plotly::plot_ly()
+  p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
+  for (i in names(map)) {
+    p <- plotly::add_lines(p, x = xy[, "t"], y = xy[, i], name = i,
+                           line = list(color = cols[[i]]))
+  }
+  for (i in unname(map)) {
+    j <- !is.na(data[[i]])
+    p <- plotly::add_markers(p, x = data_time[j], y = data[[i]][j], name = i,
+                             marker = list(color = cols[[i]]))
+  }
+
+  p
+}

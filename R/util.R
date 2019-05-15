@@ -100,3 +100,10 @@ yaml_read <- function(filename) {
   tryCatch(yaml_load(read_text(filename)),
            error = catch_yaml)
 }
+
+
+read_csv <- function(path) {
+  data <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  stopifnot(!any(duplicated(names(data))))
+  data
+}
