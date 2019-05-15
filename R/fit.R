@@ -32,8 +32,8 @@ make_compare <- function(data, name_time, name_data, name_modelled, compare) {
 ##
 ## @callback a callback function (e.g., print_every)
 make_target <- function(model, coef, time, compare, callback = NULL) {
-  user <- setNames(coef$value %||% coef$default_vaule, coef$name)
-  mod <- model(user = user)
+  user <- setNames(coef$value %||% coef$default_value, coef$name)
+  mod <- model(user = as.list(user))
   nms <- coef$name[coef$vary]
 
   function(p) {
