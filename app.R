@@ -10,9 +10,11 @@ pars$par_id <- sprintf("par_%s", pars$name)
 pars$var_id <- sprintf("var_%s", pars$name)
 
 pars$vary <- pars$name %in% c("I0", "cfr", "R0_before", "R0_after")
+map <- c(weekly_death_h = "deaths", weekly_onset = "cases")
+
 ## pars$vary <- FALSE
 
-fitter_ui <- function(model, pars, data) {
+fitter_ui <- function(model, pars, data, map) {
   ## Start with a bunch of rows:
 
   f <- function(i) {
@@ -27,6 +29,7 @@ fitter_ui <- function(model, pars, data) {
           pars$var_id[[i]], "", pars$vary[[i]])))
   }
 
+  target <- setNames(names(map), paste(unname(map), names(map), sep = " ~ "))
   pars_ui <- shiny::tagList(lapply(seq_len(nrow(pars)), f))
 
   shiny::shinyUI(
@@ -36,6 +39,7 @@ fitter_ui <- function(model, pars, data) {
         shiny::sidebarPanel(
           shiny::actionButton("fit", "Fit model"),
           shiny::actionButton("reset", "Reset"),
+          shiny::selectInput("target", "Target to fit", target),
           pars_ui),
         shiny::mainPanel(
           shiny::h2("Plot"),
@@ -45,18 +49,14 @@ fitter_ui <- function(model, pars, data) {
 
 
 
-fitter_server <- function(model, pars, data) {
+fitter_server <- function(model, pars, data, map) {
   ## This needs to be more generalisable:
   compare_sse <- function(modelled, real) {
     sum((modelled - real)^2, na.rm = TRUE)
   }
   name_time <- "day"
-  map <- c(weekly_death_h = "deaths", weekly_onset = "cases")
   pal <- odin_ui_palettes("odin")(2)
   cols <- setNames(c(pal, pal), c(unname(map), names(map)))
-  compare <- make_compare(data, "day", "deaths", "weekly_death_h",
-                          compare_sse)
-
 
   function(input, output, session) {
     output$results_plot <- plotly::renderPlotly({
@@ -67,6 +67,9 @@ fitter_server <- function(model, pars, data) {
     output$goodness_of_fit <- shiny::renderText({
       pars$value <- vnapply(pars$par_id, function(x) input[[x]])
       pars$vary <- TRUE
+      target <- input$target
+      compare <- make_compare(data, name_time, map[[target]], target,
+                              compare_sse)
       value <- make_target(model, pars, data$day, compare)(pars$value)
       paste("Sum of squares:", value)
     })
@@ -91,6 +94,9 @@ fitter_server <- function(model, pars, data) {
           }
           pars$name[pars$vary]
           pars$value <- vnapply(pars$par_id, function(x) input[[x]])
+          target <- input$target
+          compare <- make_compare(data, name_time, map[[target]], target,
+                                  compare_sse)
           target <- make_target(model, pars, data$day, compare)
           message("Starting fit")
           fit <- shiny::withProgress(
@@ -109,10 +115,10 @@ update_pars <- function(session, pars, field = "value") {
   for (i in seq_len(nrow(pars))) {
     id <- pars$par_id[[i]]
     value <- pars$value[[i]]
-    message(sprintf("Setting %s => %s", id, value))
     shiny::updateNumericInput(session, id, value = value)
   }
 }
 
 
-shiny::shinyApp(fitter_ui(model, pars, data), fitter_server(model, pars, data))
+shiny::shinyApp(fitter_ui(model, pars, data, map),
+                fitter_server(model, pars, data, map))
