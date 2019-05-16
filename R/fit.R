@@ -10,6 +10,7 @@
 make_compare <- function(data, name_time, name_data, name_modelled, compare) {
   real <- data[[name_data]]
   compare <- match.fun(compare)
+  force(name_modelled)
   function(modelled) {
     compare(modelled[, name_modelled], real)
   }
