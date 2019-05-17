@@ -30,6 +30,7 @@ validate_csv <- function(filename) {
 csv_ui <- function() {
   shiny::shinyUI(
     shiny::fluidPage(
+      shinyjs::useShinyjs(),
       shiny::titlePanel("Upload data"),
       shiny::sidebarLayout(
         shiny::sidebarPanel(
@@ -43,7 +44,8 @@ csv_ui <- function() {
             accept = c("text/csv",
                        "text/comma-separated-values,text/plain",
                        ".csv")),
-          shiny::textOutput("summary")),
+          shiny::textOutput("summary"),
+          shiny::actionButton("clear", "Clear")),
         shiny::mainPanel(
           plotly::plotlyOutput("data_plot"),
           shiny::dataTableOutput("data_table")))))
@@ -52,36 +54,44 @@ csv_ui <- function() {
 
 csv_server <- function() {
   function(input, output, session) {
-    user_data <- shiny::reactive({
+    rv <- reactiveValues(data = NULL)
+
+    shiny::observeEvent(
+      input$clear, {
+        shinyjs::reset("filename")
+        rv$data <- NULL
+      })
+
+    shiny::observe({
       if (!is.null(input$filename)) {
-        validate_csv(input$filename$datapath)
+        rv$data <- validate_csv(input$filename$datapath)
       }
     })
 
     output$summary <- shiny::renderText({
-      if (is.null(user_data())) {
+      if (is.null(rv$data)) {
         NULL
       } else {
-        if (user_data()$success) {
-          data <- user_data()$data
+        if (rv$data$success) {
+          data <- rv$data$data
           sprintf("Uploaded %d x %d observations", nrow(data), ncol(data))
         } else {
-          paste("Error:", user_data()$error)
+          paste("Error:", rv$data$error)
         }
       }
     })
 
     output$data_plot <- plotly::renderPlotly({
-      if (!is.null(user_data()$data)) {
-        data <- user_data()$data
+      if (!is.null(rv$data$data)) {
+        data <- rv$data$data
         cols <- odin_ui_palettes("odin")(ncol(data) - 1L)
         plot_data(data, cols)
       }
     })
 
     output$data_table <- shiny::renderDataTable({
-      if (!is.null(user_data()$data)) {
-        data <- user_data()$data
+      if (!is.null(rv$data$data)) {
+        rv$data$data
       }
     }, options = list(paging = FALSE, dom = "t", searching = FALSE))
   }
