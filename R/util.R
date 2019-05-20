@@ -107,8 +107,6 @@ yaml_read <- function(filename) {
 }
 
 
-read_csv <- function(path) {
-  data <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
-  stopifnot(!any(duplicated(names(data))))
-  data
+read_csv <- function(filename) {
+  read.csv(filename, stringsAsFactors = FALSE, check.names = FALSE)
 }

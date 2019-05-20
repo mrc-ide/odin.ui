@@ -137,3 +137,18 @@ plot_fit <- function(data, name_time, model, map, cols) {
 
   p
 }
+
+
+plot_data <- function(data, cols) {
+  vars <- setdiff(names(data), names(data)[[1]])
+  p <- plotly::plot_ly()
+  p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
+  for (i in seq_along(vars)) {
+    nm <- vars[[i]]
+    y <- data[[nm]]
+    j <- !is.na(y)
+    p <- plotly::add_markers(p, x = data[[1]][j], y = y[j], name = nm,
+                             marker = list(color = cols[[i]]))
+  }
+  p
+}
