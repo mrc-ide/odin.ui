@@ -92,7 +92,7 @@ mod_editor_server <- function(input, output, session, initial_code) {
   ## Manual validation
   shiny::observeEvent(
     input$validate_button, {
-      data$validation <- odin::odin_validate_model(input$editor, "text")
+      data$validation <- odin::odin_validate(input$editor, "text")
     })
 
   ## Realtime validation
@@ -102,7 +102,7 @@ mod_editor_server <- function(input, output, session, initial_code) {
       data$compilation$is_current <- FALSE
     }
     if (input$auto_validate) {
-      data$validation <- odin::odin_validate_model(input$editor, "text")
+      data$validation <- odin::odin_validate(input$editor, "text")
     }
   })
 
@@ -125,7 +125,7 @@ mod_editor_server <- function(input, output, session, initial_code) {
       res <- shiny::withProgress(
         message = "Compiling model...",
         detail = "some detail", value = 1, {
-          compile_model(code, tempfile(), skip_cache = TRUE)
+          odin::odin_build(odin::odin_parse_(code))
         })
 
       data$compilation <- list(code = code, result = res, is_current = TRUE)
