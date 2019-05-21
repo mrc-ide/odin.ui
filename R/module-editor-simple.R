@@ -56,8 +56,7 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
 
 mod_editor_simple_server <- function(input, output, session, initial_code) {
   ns <- session$ns
-  data <- shiny::reactiveValues(model = NULL,
-                                validation = NULL,
+  data <- shiny::reactiveValues(validation = NULL,
                                 compilation = NULL)
 
   initial_code <- mod_editor_validate_initial_code(initial_code)
@@ -126,8 +125,7 @@ mod_editor_simple_server <- function(input, output, session, initial_code) {
         })
 
       data$compilation <- list(code = code, result = res, is_current = TRUE)
-      data$result <- list(generator = res$model, ir = res$ir)
     })
 
-  return(shiny::reactive(data$result))
+  return(shiny::reactive(data$compilation))
 }

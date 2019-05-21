@@ -24,4 +24,13 @@ mod_configure_server <- function(input, output, session, data, model) {
     }
     msg
   })
+
+  shiny::observe({
+    res <- model()
+    if (!is.null(res)) {
+      pars <- coef(res$generator)
+      msg <- sprintf("Model with %d parameters", ncol(pars))
+      output$model_status <- shiny::renderText(msg)
+    }
+  })
 }

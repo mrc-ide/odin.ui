@@ -26,7 +26,11 @@ odin_fit_ui <- function(initial_code) {
       shiny::tabPanel(
         "Fit",
         icon = shiny::icon("calculator"),
-        shiny::h2("VISUALISE"))))
+        shiny::h2("VISUALISE")),
+      shiny::tabPanel(
+        shiny::uiOutput("status", inline = TRUE),
+        icon = shiny::icon("list"),
+        shiny::h2("STATUS"))))
 }
 
 
@@ -37,6 +41,36 @@ odin_fit_server <- function(initial_code) {
       mod_editor_simple_server, "odin_editor", initial_code)
     configure <- shiny::callModule(
       mod_configure_server, "odin_configure", data, model)
+
+    rv <- shiny::reactiveValues(status = NULL)
+    shiny::observe({
+      if (is.null(data())) {
+        status_data <- "missing"
+      } else {
+        status_data <- "ok"
+      }
+
+      dat <- model()
+      if (is.null(dat)) {
+        status_model <- "missing"
+      } else if (dat$is_current) {
+        status_model <- "ok"
+      } else {
+        status_model <- "outofdate"
+      }
+
+      rv$status <- list(data = status_data, model = status_model)
+    })
+
+    output$status <- shiny::renderUI({
+      map <- c(missing = "text-danger",
+               outofdate = "text-warning",
+               ok = "text-success")
+      shiny::tagList(
+        "Status",
+        shiny::icon("table", class = map[[rv$status$data]]),
+        shiny::icon("edit", class = map[[rv$status$model]]))
+    })
   }
 }
 
