@@ -9,7 +9,10 @@ mod_configure_ui <- function(id) {
                        character(0)),
     shiny::h3("Model"),
     shiny::uiOutput(ns("model_status")),
-    shiny::textOutput(ns("model_summary")))
+    shiny::textOutput(ns("model_summary")),
+    shiny::h3("Link"),
+    shiny::uiOutput(ns("link")),
+    shiny::textOutput(ns("link_status")))
 }
 
 
@@ -24,13 +27,19 @@ mod_configure_server <- function(input, output, session, data, model) {
       msg <- sprintf("%d rows of data have been uploaded", nrow(data()))
       vars <- names(data())
       prev <- input$data_time_variable
-      selected <- if (!is.null(prev) && prev %in% vars) prev else NULL
       shiny::updateSelectInput(session, "data_time_variable",
-                               choices = vars, selected = selected)
+                               choices = vars,
+                               selected = selected(prev, vars))
     }
     msg
   })
 
+  rv <- shiny::reactiveValues(link = NULL)
+
+  ## Doing parameter tuning here will be really hard to do while
+  ## preserving changes across model versions.  Not sure what do to
+  ## really.  Perhaps we should just enforce this all at the level of
+  ## the model compiler?
   shiny::observe({
     res <- model()
     status <- NULL
@@ -56,4 +65,55 @@ mod_configure_server <- function(input, output, session, data, model) {
     output$model_status <- shiny::renderUI(status)
     output$model_summary <- shiny::renderText(msg)
   })
+
+  output$link <- shiny::renderUI({
+    d <- data()
+    m <- model()
+    time <- input$data_time_variable
+    if (is.null(d) || is.null(m) || !nzchar(time)) {
+      rv$map <- NULL
+    } else {
+      vars_data <- setdiff(names(d), time)
+      ## TODO: push this into the editor module
+      metadata <- model_metadata(m$result$model)
+      vars_model <- c(
+        names(metadata$data$variable$contents),
+        names(metadata$data$output$contents))
+
+      ns <- session$ns
+      fmt <- "link_data_%s"
+      rv$map <- setNames(sprintf(fmt, vars_data), vars_data)
+      opts <- list(
+        placeholder = "Select variable",
+        onInitialize = I('function() { this.setValue(""); }'))
+      lapply(vars_data, function(x)
+        shiny::selectizeInput(
+          ns(sprintf(fmt, x)), x, choices = vars_model, options = opts))
+    }
+  })
+
+  shiny::observe({
+    if (is.null(rv$map)) {
+      rv$link <- NULL
+    } else {
+      link <- lapply(rv$map, function(x) input[[x]])
+      rv$link <- link[vlapply(link, function(x) !is.null(x) && nzchar(x))]
+    }
+  })
+
+  output$link_status <- shiny::renderText({
+    if (length(rv$link) == 0L) {
+      "No linked variables"
+    } else {
+      paste(sprintf("%s ~ %s", names(rv$link), vcapply(rv$link, identity)),
+            collapse = " & ")
+    }
+  })
+
+  return(shiny::reactive(rv$link))
+}
+
+
+selected <- function(prev, choices) {
+  if (!is.null(prev) && prev %in% choices) prev else NA
 }

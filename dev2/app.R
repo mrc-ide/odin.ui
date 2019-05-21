@@ -59,7 +59,15 @@ odin_fit_server <- function(initial_code) {
         status_model <- "outofdate"
       }
 
-      rv$status <- list(data = status_data, model = status_model)
+      if (length(configure()) == 0) {
+        status_link <- "missing"
+      } else {
+        status_link <- "ok"
+      }
+
+      rv$status <- list(data = status_data,
+                        model = status_model,
+                        link = status_link)
     })
 
     output$status <- shiny::renderUI({
@@ -69,7 +77,8 @@ odin_fit_server <- function(initial_code) {
       shiny::tagList(
         "Status",
         shiny::icon("table", class = map[[rv$status$data]]),
-        shiny::icon("edit", class = map[[rv$status$model]]))
+        shiny::icon("edit", class = map[[rv$status$model]]),
+        shiny::icon("random", class = map[[rv$status$link]]))
     })
   }
 }
