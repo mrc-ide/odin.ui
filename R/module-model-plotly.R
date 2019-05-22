@@ -57,11 +57,11 @@ mod_plotly_control_graph <- function(metadata, extra, output_control, ns) {
       graph_options$tags))
 }
 
-mod_plotly_server <- function(input, output, session,
-                              model, default_time, parameters,
-                              extra = NULL, output_control = NULL,
-                              default_replicates = 1L, time_scale = NULL) {
-  ns <- session$ns
+mod_plotly_server <- function(input, output, session, model,
+                              default_time, parameters, extra = NULL,
+                              output_control = NULL,
+                              default_replicates = 1L, time_scale =
+                              NULL) { ns <- session$ns
 
   metadata <- model_metadata(model)
   extra <- validate_extra(extra, metadata)
@@ -110,13 +110,15 @@ mod_plotly_server <- function(input, output, session,
     ## into the editor app at least; otherwise it fails to start up
     ## somehow!
     if (isTRUE(input$auto_run)) {
-      update_model(model, input, model_output, control, extra, time_scale)
+      mod_plotly_update_model(
+        model, input, model_output, control, extra, time_scale)
     }
   })
 
   shiny::observeEvent(
     input$go_button, {
-      update_model(model, input, model_output, control, extra, time_scale)
+      mod_plotly_update_model(
+        model, input, model_output, control, extra, time_scale)
     })
 
   output$result_plot <- plotly::renderPlotly({
@@ -196,7 +198,7 @@ mod_plotly_compute_filename <- function(title, filename, format) {
 }
 
 
-update_model <- function(model, input, output, control, extra, time_scale) {
+mod_plotly_update_model <- function(model, input, output, control, extra, time_scale) {
   output$data <- tryCatch({
     pars <- mod_plotly_getpars(input, control$parameter_name_map)
     time <- mod_plotly_gettime(input, control$has_start_time, control$discrete)

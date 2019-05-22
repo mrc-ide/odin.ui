@@ -9,6 +9,7 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
   editor <- shiny::tagList(
     odin_css(),
     shiny::includeCSS(path_editor_css),
+    shiny::titlePanel("Editor"),
     shiny::fluidRow(
       shiny::column(6),
       shiny::column(6,

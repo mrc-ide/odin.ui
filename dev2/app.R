@@ -22,7 +22,7 @@ odin_fit_ui <- function(initial_code) {
       shiny::tabPanel(
         "Visualise",
         icon = shiny::icon("search"),
-        shiny::h2("VISUALISE")),
+        mod_vis_ui("odin_vis")),
       shiny::tabPanel(
         "Fit",
         icon = shiny::icon("calculator"),
@@ -41,6 +41,8 @@ odin_fit_server <- function(initial_code) {
       mod_editor_simple_server, "odin_editor", initial_code)
     configure <- shiny::callModule(
       mod_configure_server, "odin_configure", data, model)
+    vis <- shiny::callModule(
+      mod_vis_server, "odin_vis", data, model, configure)
     fit <- shiny::callModule(
       mod_fit_server, "odin_fit", data, model, configure)
 

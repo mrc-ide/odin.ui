@@ -40,11 +40,15 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
 
   output$pars <- shiny::renderUI({
     m <- model()
-    if (!is.null(m)) {
+    if (is.null(m)) {
+      rv$pars <- NULL
+      ui <- NULL
+    } else {
       dat <- mod_fit_pars(coef(m$result$model), session$ns)
       rv$pars <- dat$pars
-      dat$ui
+      ui <- dat$ui
     }
+    ui
   })
 
   ## There's quite a bit that could be hardmonised here with getting
