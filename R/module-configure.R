@@ -110,7 +110,9 @@ mod_configure_server <- function(input, output, session, data, model) {
     }
   })
 
-  return(shiny::reactive(rv$link))
+  return(shiny::reactive(list(link = rv$link,
+                              time = input$data_time_variable,
+                              configured = length(rv$link) > 0)))
 }
 
 

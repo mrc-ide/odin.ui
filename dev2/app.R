@@ -26,7 +26,7 @@ odin_fit_ui <- function(initial_code) {
       shiny::tabPanel(
         "Fit",
         icon = shiny::icon("calculator"),
-        shiny::h2("VISUALISE")),
+        mod_fit_ui("odin_fit")),
       shiny::tabPanel(
         shiny::uiOutput("status", inline = TRUE),
         icon = shiny::icon("list"),
@@ -41,6 +41,8 @@ odin_fit_server <- function(initial_code) {
       mod_editor_simple_server, "odin_editor", initial_code)
     configure <- shiny::callModule(
       mod_configure_server, "odin_configure", data, model)
+    fit <- shiny::callModule(
+      mod_fit_server, "odin_fit", data, model, configure)
 
     rv <- shiny::reactiveValues(status = NULL)
     shiny::observe({
@@ -59,10 +61,10 @@ odin_fit_server <- function(initial_code) {
         status_model <- "outofdate"
       }
 
-      if (length(configure()) == 0) {
+      if (!configure()$configured) {
         status_link <- "missing"
       } else {
-        status_link <- "ok"
+        status_link <- status_model
       }
 
       rv$status <- list(data = status_data,
