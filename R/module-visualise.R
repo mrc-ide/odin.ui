@@ -20,7 +20,7 @@ mod_vis_ui <- function(id) {
         class = "col-sm-4 col-lg-3",
         shiny::tags$form(
           class = "form-horizontal",
-          shiny::uiOutput(ns("odin_asdfa")),
+          shiny::uiOutput(ns("odin_control")),
           ## https://github.com/rstudio/shiny/issues/1675#issuecomment-298398997
           shiny::actionButton(ns("reset_button"), "Reset",
                               shiny::icon("refresh"),
@@ -64,7 +64,7 @@ mod_vis_server <- function(input, output, session, data, model, configure) {
     }
   })
 
-  output$odin_asdfa <- shiny::renderUI({
+  output$odin_control <- shiny::renderUI({
     if (!is.null(rv$pars)) {
       ns <- session$ns
       input <- function(name, id, value) {
@@ -102,13 +102,11 @@ mod_vis_server <- function(input, output, session, data, model, configure) {
                           data = d,
                           info = info,
                           modelled = m$result$model(user = user)$run(t))
-        message("reran model")
       }
     })
 
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result)) {
-      message("plotting")
       plot_vis(rv$result, input)
     }
   })
