@@ -27,6 +27,13 @@ mod_configure_server <- function(input, output, session, data, model) {
       msg <- sprintf("%d rows of data have been uploaded", nrow(data()))
       vars <- names(data())
       prev <- input$data_time_variable
+      if (is.null(prev) || !nzchar(prev)) {
+        time_names <- c("t", "time", "day", "week", "year")
+        i <- which(tolower(vars) %in% time_names)
+        if (length(i) == 1L) {
+          prev <- vars[[i]]
+        }
+      }
       shiny::updateSelectInput(session, "data_time_variable",
                                choices = vars,
                                selected = selected(prev, vars))
@@ -36,10 +43,6 @@ mod_configure_server <- function(input, output, session, data, model) {
 
   rv <- shiny::reactiveValues(link = NULL)
 
-  ## Doing parameter tuning here will be really hard to do while
-  ## preserving changes across model versions.  Not sure what do to
-  ## really.  Perhaps we should just enforce this all at the level of
-  ## the model compiler?
   shiny::observe({
     res <- model()
     status <- NULL
@@ -73,22 +76,35 @@ mod_configure_server <- function(input, output, session, data, model) {
     if (is.null(d) || is.null(m) || !nzchar(time)) {
       rv$map <- NULL
     } else {
-      vars_data <- setdiff(names(d), time)
-      ## TODO: push this into the editor module
-      metadata <- model_metadata(m$result$model)
-      vars_model <- c(
-        names(metadata$data$variable$contents),
-        names(metadata$data$output$contents))
+      shiny::isolate({
+        prev <- lapply(rv$map, function(x) input[[x]])
 
-      ns <- session$ns
-      fmt <- "link_data_%s"
-      rv$map <- setNames(sprintf(fmt, vars_data), vars_data)
-      opts <- list(
-        placeholder = "Select variable",
-        onInitialize = I('function() { this.setValue(""); }'))
-      lapply(vars_data, function(x)
-        shiny::selectizeInput(
-          ns(sprintf(fmt, x)), x, choices = vars_model, options = opts))
+        vars_data <- setdiff(names(d), time)
+        ## TODO: push this into the editor module so that we always have
+        ## this alongside the model
+        metadata <- model_metadata(m$result$model)
+        vars_model <- c(
+          names(metadata$data$variable$contents),
+          names(metadata$data$output$contents))
+
+        ## Are any of these still current?
+        fmt <- "link_data_%s"
+        rv$map <- setNames(sprintf(fmt, vars_data), vars_data)
+        opts <- list(
+          placeholder = "Select variable",
+          onInitialize = I('function() { this.setValue(""); }'))
+
+        selected <- set_names(rep(list(NULL), length(vars_data)), vars_data)
+        i <- names(prev) %in% vars_data &
+          unlist(prev, FALSE, FALSE) %in% vars_model
+        selected[names(prev)[i]] <- prev[i]
+
+        ns <- session$ns
+        lapply(vars_data, function(x)
+          shiny::selectizeInput(
+            ns(sprintf(fmt, x)), x, selected = selected[[x]],
+            choices = vars_model, options = if (is.null(selected[[x]])) opts))
+      })
     }
   })
 
