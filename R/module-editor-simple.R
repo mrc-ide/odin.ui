@@ -93,9 +93,9 @@ mod_editor_simple_server <- function(input, output, session, initial_code) {
 
   ## Realtime validation
   shiny::observe({
-    if (isTRUE(data$compilation$is_current) &&
-        !identical(data$compilation$code, input$editor)) {
-      data$compilation$is_current <- FALSE
+    if (!is.null(data$compilation)) {
+      data$compilation$is_current <-
+        identical(data$compilation$code, input$editor)
     }
     if (input$auto_validate) {
       data$validation <- odin::odin_validate(input$editor, "text")
