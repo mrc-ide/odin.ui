@@ -92,6 +92,14 @@ mod_configure_server <- function(input, output, session, data, model) {
     }
   })
 
+  shiny::observe({
+    if (nzchar(input$data_time_variable)) {
+      rv$time <- input$data_time_variable
+    } else {
+      rv$time <- NULL
+    }
+  })
+
   get_state <- function() {
     list(link = rv$link,
          time = input$data_time_variable)
@@ -99,14 +107,16 @@ mod_configure_server <- function(input, output, session, data, model) {
 
   set_state <- function(state) {
     shiny::updateSelectInput(session, "data_time_variable", state$time)
+    rv$time <- state$time
     output$link <- shiny::renderUI(
       mod_configure_link_ui(input, session, rv, data, model, state$time,
                             state$link))
-    rv$link <- state$link
   }
 
+  shiny::outputOptions(output, "link", suspendWhenHidden = FALSE)
+
   list(result = shiny::reactive(list(link = rv$link,
-                                     time = input$data_time_variable,
+                                     time = rv$time,
                                      configured = length(rv$link) > 0)),
        get_state = get_state,
        set_state = set_state)

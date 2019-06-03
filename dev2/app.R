@@ -116,7 +116,8 @@ odin_fit_server <- function(initial_code) {
       content = function(con) {
         dat <- list(data = data$get_state(),
                     model = model$get_state(),
-                    configure = configure$get_state())
+                    configure = configure$get_state(),
+                    fit = fit$get_state())
         saveRDS(dat, con)
       })
 

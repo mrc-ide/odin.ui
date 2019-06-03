@@ -101,8 +101,19 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
         message("done")
       }
     })
-}
 
+  get_state <- function() {
+    browser()
+  }
+
+  set_state <- function() {
+    browser()
+  }
+
+  list(result = shiny::reactive(rv$fit),
+       get_state = get_state,
+       set_state = set_state)
+}
 
 
 mod_fit_pars <- function(pars, ns) {
