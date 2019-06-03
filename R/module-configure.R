@@ -70,42 +70,8 @@ mod_configure_server <- function(input, output, session, data, model) {
   })
 
   output$link <- shiny::renderUI({
-    d <- data()
-    m <- model()
-    time <- input$data_time_variable
-    if (is.null(d) || is.null(m) || !nzchar(time)) {
-      rv$map <- NULL
-    } else {
-      shiny::isolate({
-        prev <- lapply(rv$map, function(x) input[[x]])
-
-        vars_data <- setdiff(names(d), time)
-        ## TODO: push this into the editor module so that we always have
-        ## this alongside the model
-        metadata <- model_metadata(m$result$model)
-        vars_model <- c(
-          names(metadata$data$variable$contents),
-          names(metadata$data$output$contents))
-
-        ## Are any of these still current?
-        fmt <- "link_data_%s"
-        rv$map <- setNames(sprintf(fmt, vars_data), vars_data)
-        opts <- list(
-          placeholder = "Select variable",
-          onInitialize = I('function() { this.setValue(""); }'))
-
-        selected <- set_names(rep(list(NULL), length(vars_data)), vars_data)
-        i <- names(prev) %in% vars_data &
-          unlist(prev, FALSE, FALSE) %in% vars_model
-        selected[names(prev)[i]] <- prev[i]
-
-        ns <- session$ns
-        lapply(vars_data, function(x)
-          shiny::selectizeInput(
-            ns(sprintf(fmt, x)), x, selected = selected[[x]],
-            choices = vars_model, options = if (is.null(selected[[x]])) opts))
-      })
-    }
+    mod_configure_link_ui(input, session, rv, data, model,
+                          input$data_time_variable, NULL)
   })
 
   shiny::observe({
@@ -126,12 +92,71 @@ mod_configure_server <- function(input, output, session, data, model) {
     }
   })
 
-  return(shiny::reactive(list(link = rv$link,
-                              time = input$data_time_variable,
-                              configured = length(rv$link) > 0)))
+  get_state <- function() {
+    list(link = rv$link,
+         time = input$data_time_variable)
+  }
+
+  set_state <- function(state) {
+    shiny::updateSelectInput(session, "data_time_variable", state$time)
+    output$link <- shiny::renderUI(
+      mod_configure_link_ui(input, session, rv, data, model, state$time,
+                            state$link))
+    rv$link <- state$link
+  }
+
+  list(result = shiny::reactive(list(link = rv$link,
+                                     time = input$data_time_variable,
+                                     configured = length(rv$link) > 0)),
+       get_state = get_state,
+       set_state = set_state)
 }
 
 
 selected <- function(prev, choices) {
   if (!is.null(prev) && prev %in% choices) prev else NA
+}
+
+
+mod_configure_link_ui <- function(input, session, rv, data, model, time,
+                                  restore) {
+  d <- data()
+  m <- model()
+  if (is.null(d) || is.null(m) || !nzchar(time)) {
+    rv$map <- NULL
+  } else {
+    shiny::isolate({
+      if (is.null(restore)) {
+        prev <- lapply(rv$map, function(x) input[[x]])
+      } else {
+        prev <- restore
+      }
+
+      vars_data <- setdiff(names(d), time)
+      ## TODO: push this into the editor module so that we always have
+      ## this alongside the model
+      metadata <- model_metadata(m$result$model)
+      vars_model <- c(
+        names(metadata$data$variable$contents),
+        names(metadata$data$output$contents))
+
+      ## Are any of these still current?
+      fmt <- "link_data_%s"
+      rv$map <- setNames(sprintf(fmt, vars_data), vars_data)
+      opts <- list(
+        placeholder = "Select variable",
+        onInitialize = I('function() { this.setValue(""); }'))
+
+      selected <- set_names(rep(list(NULL), length(vars_data)), vars_data)
+      i <- names(prev) %in% vars_data &
+        unlist(prev, FALSE, FALSE) %in% vars_model
+      selected[names(prev)[i]] <- prev[i]
+
+      ns <- session$ns
+      lapply(vars_data, function(x)
+        shiny::selectizeInput(
+          ns(sprintf(fmt, x)), x, selected = selected[[x]],
+          choices = vars_model, options = if (is.null(selected[[x]])) opts))
+    })
+  }
 }

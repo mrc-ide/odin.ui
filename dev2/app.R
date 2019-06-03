@@ -66,9 +66,9 @@ odin_fit_server <- function(initial_code) {
     configure <- shiny::callModule(
       mod_configure_server, "odin_configure", data$result, model$result)
     vis <- shiny::callModule(
-      mod_vis_server, "odin_vis", data$result, model$result, configure)
+      mod_vis_server, "odin_vis", data$result, model$result, configure$result)
     fit <- shiny::callModule(
-      mod_fit_server, "odin_fit", data$result, model$result, configure)
+      mod_fit_server, "odin_fit", data$result, model$result, configure$result)
 
 
     shiny::observe({
@@ -87,7 +87,7 @@ odin_fit_server <- function(initial_code) {
         status_model <- "outofdate"
       }
 
-      if (!configure()$configured) {
+      if (!configure$result()$configured) {
         status_link <- "missing"
       } else {
         status_link <- status_model
@@ -115,15 +115,19 @@ odin_fit_server <- function(initial_code) {
       },
       content = function(con) {
         dat <- list(data = data$get_state(),
-                    model = model$get_state())
+                    model = model$get_state(),
+                    configure = configure$get_state())
         saveRDS(dat, con)
       })
 
     shiny::observeEvent(
       input$restore, {
         state <- readRDS(input$restore$datapath)
-        data$set_state(state$data)
-        model$set_state(state$model)
+        shiny::isolate({
+          data$set_state(state$data)
+          model$set_state(state$model)
+          configure$set_state(state$configure)
+        })
       })
   }
 }
