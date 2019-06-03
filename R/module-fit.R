@@ -59,7 +59,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
     m <- model()
     info <- configure()
     if (!is.null(d) && !is.null(m) && info$configured && !is.null(rv$pars)) {
-      user <- set_names(lapply(rv$pars$par_id, function(x) input[[x]]),
+      user <- set_names(mod_fit_read_inputs(rv$pars$par_id, input),
                         rv$pars$name)
       if (!any(vlapply(user, is.null))) {
         name_data <- names(info$link)
@@ -103,12 +103,31 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
     })
 
   get_state <- function() {
-    browser()
+    inputs <- list(value = mod_fit_read_inputs(rv$pars$par_id, input),
+                   vary = mod_fit_read_inputs(rv$pars$var_id, input))
+    list(fit = rv$fit,
+         pars = rv$pars,
+         inputs = inputs)
   }
 
-  set_state <- function() {
-    browser()
+  set_state <- function(state) {
+    m <- model()
+    output$pars <- shiny::renderUI({
+      if (is.null(m)) {
+        rv$pars <- NULL
+        ui <- NULL
+      } else {
+        dat <- mod_fit_pars(coef(m$result$model), session$ns)
+        rv$pars <- dat$pars
+        ui <- dat$ui
+      }
+    })
+    rv$fit <- state$fit
+    mod_fit_set_inputs(state$inputs$value, session, shiny::updateNumericInput)
+    mod_fit_set_inputs(state$inputs$vary, session, shiny::updateCheckboxInput)
   }
+
+  shiny::outputOptions(output, "pars", suspendWhenHidden = FALSE)
 
   list(result = shiny::reactive(rv$fit),
        get_state = get_state,
@@ -141,10 +160,24 @@ mod_fit_pars <- function(pars, ns) {
 }
 
 
-mod_fit_pars_update <- function(session, pars, field = "value") {
+mod_fit_pars_update <- function(session, pars) {
+  ## data <- set_names(pars$value, pars$par_id)
+  ## mod_fit_set_inputs(data, session, shiny::updateNumericInput)
   for (i in seq_len(nrow(pars))) {
     id <- pars$par_id[[i]]
     value <- pars$value[[i]]
     shiny::updateNumericInput(session, id, value = value)
+  }
+}
+
+
+mod_fit_read_inputs <- function(names, input) {
+  set_names(lapply(names, function(x) input[[x]]), names)
+}
+
+
+mod_fit_set_inputs <- function(data, session, update_fn) {
+  for (i in seq_along(data)) {
+    update_fn(session, names(data)[[i]], value = data[[i]])
   }
 }

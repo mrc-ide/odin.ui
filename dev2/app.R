@@ -128,6 +128,7 @@ odin_fit_server <- function(initial_code) {
           data$set_state(state$data)
           model$set_state(state$model)
           configure$set_state(state$configure)
+          fit$set_state(state$fit)
         })
       })
   }
