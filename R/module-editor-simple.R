@@ -123,7 +123,9 @@ mod_editor_simple_server <- function(input, output, session, initial_code) {
         message = "Compiling model...",
         detail = "some detail", value = 1, {
           data$validation <- odin::odin_validate(code, "text")
-          odin::odin_build(data$validation$result)
+          if (data$validation$success) {
+            odin::odin_build(data$validation$result)
+          }
         })
 
       data$compilation <- list(code = code, result = res, is_current = TRUE)

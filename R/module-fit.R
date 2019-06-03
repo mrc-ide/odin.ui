@@ -40,7 +40,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
 
   output$pars <- shiny::renderUI({
     m <- model()
-    if (is.null(m)) {
+    if (is.null(m$result)) {
       rv$pars <- NULL
       ui <- NULL
     } else {

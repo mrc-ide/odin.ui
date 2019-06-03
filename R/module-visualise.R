@@ -45,7 +45,7 @@ mod_vis_server <- function(input, output, session, data, model, configure) {
 
   shiny::observe({
     m <- model()
-    if (is.null(m)) {
+    if (is.null(m$result)) {
       rv$pars <- NULL
       rv$outputs <- NULL
     } else {

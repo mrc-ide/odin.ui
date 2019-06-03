@@ -230,18 +230,18 @@ mod_editor_validation_info <- function(status) {
 
 
 mod_editor_compilation_info <- function(data) {
-  if (is.null(data)) {
+  if (is.null(data$result)) {
     panel <- shiny::renderUI(NULL)
     border <- "normal"
   } else {
     x <- data$result
     is_current <- data$is_current
 
-    success <- x$success
+    success <- isTRUE(x$success)
     border <- if (success) "normal" else "alert"
 
     result <- sprintf("%s, %.2f s elapsed",
-                      if (x$success) "success" else "error",
+                      if (success) "success" else "error",
                       x$elapsed[["elapsed"]])
     if (!is_current) {
       result <- paste(result, "(code has changed since this was run)")
@@ -263,7 +263,7 @@ mod_editor_compilation_info <- function(data) {
 
 
 mod_editor_status_panel <- function(header, result, info, class, icon) {
-  if (nzchar(info)) {
+  if (!is.null(info) && nzchar(info)) {
     body <- shiny::div(class = "panel-body", shiny::pre(info))
   } else {
     body <- NULL
