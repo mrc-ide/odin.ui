@@ -65,7 +65,19 @@ mod_csv_server <- function(input, output, session) {
     }
   }, options = list(paging = FALSE, dom = "t", searching = FALSE))
 
-  shiny::reactive(rv$data$data)
+  get_state <- function() {
+    list(filename = input$filename$name,
+         data = rv$data)
+  }
+
+  set_state <- function(state) {
+    ## TODO: can't yet set the filename in the upload widget
+    rv$data <- state$data
+  }
+
+  list(result = shiny::reactive(rv$data$data),
+       get_state = get_state,
+       set_state = set_state)
 }
 
 

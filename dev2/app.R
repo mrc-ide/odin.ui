@@ -64,15 +64,15 @@ odin_fit_server <- function(initial_code) {
     model <- shiny::callModule(
       mod_editor_simple_server, "odin_editor", initial_code)
     configure <- shiny::callModule(
-      mod_configure_server, "odin_configure", data, model$result)
+      mod_configure_server, "odin_configure", data$result, model$result)
     vis <- shiny::callModule(
-      mod_vis_server, "odin_vis", data, model$result, configure)
+      mod_vis_server, "odin_vis", data$result, model$result, configure)
     fit <- shiny::callModule(
-      mod_fit_server, "odin_fit", data, model$result, configure)
+      mod_fit_server, "odin_fit", data$result, model$result, configure)
 
 
     shiny::observe({
-      if (is.null(data())) {
+      if (is.null(data$result())) {
         status_data <- "missing"
       } else {
         status_data <- "ok"
@@ -114,13 +114,15 @@ odin_fit_server <- function(initial_code) {
         state_filename(input$download_filename)
       },
       content = function(con) {
-        dat <- list(model = model$get_state())
+        dat <- list(data = data$get_state(),
+                    model = model$get_state())
         saveRDS(dat, con)
       })
 
     shiny::observeEvent(
       input$restore, {
         state <- readRDS(input$restore$datapath)
+        data$set_state(state$data)
         model$set_state(state$model)
       })
   }
