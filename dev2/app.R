@@ -30,23 +30,47 @@ odin_fit_ui <- function(initial_code) {
       shiny::tabPanel(
         shiny::uiOutput("status", inline = TRUE),
         icon = shiny::icon("list"),
-        shiny::h2("STATUS"))))
+        shiny::tagList(
+          shiny::h2("Status"),
+          shiny::hr(),
+
+          shiny::div(
+            class = "pull-right",
+            shiny::div(
+              class = "form-inline mt-5",
+              shiny::div(
+                class = "form-group",
+                raw_text_input("download_filename", placeholder = "filename",
+                               value = "")),
+              shiny::downloadButton("download_everything", "Download",
+                                    class = "btn-blue"))),
+          shiny::column(
+            6,
+            file_input("restore",
+                       "Load",
+                       multiple = FALSE,
+                       accept = c("application/octet-stream", ".rds"),
+                       button_class = "btn-grey"))))))
 }
 
 
 odin_fit_server <- function(initial_code) {
   function(input, output, session) {
+    state <- shiny::reactiveValues(state = NULL)
+
+    rv <- shiny::reactiveValues(status = NULL)
+
     data <- shiny::callModule(mod_csv_server, "odin_csv")
     model <- shiny::callModule(
       mod_editor_simple_server, "odin_editor", initial_code)
     configure <- shiny::callModule(
-      mod_configure_server, "odin_configure", data, model)
+      mod_configure_server, "odin_configure", data, model$result)
     vis <- shiny::callModule(
-      mod_vis_server, "odin_vis", data, model, configure)
+      mod_vis_server, "odin_vis", data, model$result, configure)
     fit <- shiny::callModule(
-      mod_fit_server, "odin_fit", data, model, configure)
+      mod_fit_server, "odin_fit", data, model$result, configure)
 
-    rv <- shiny::reactiveValues(status = NULL)
+
     shiny::observe({
       if (is.null(data())) {
         status_data <- "missing"
@@ -54,7 +78,7 @@ odin_fit_server <- function(initial_code) {
         status_data <- "ok"
       }
 
-      dat <- model()
+      dat <- model$result()
       if (is.null(dat)) {
         status_model <- "missing"
       } else if (dat$is_current) {
@@ -84,9 +108,35 @@ odin_fit_server <- function(initial_code) {
         shiny::icon("edit", class = map[[rv$status$model]]),
         shiny::icon("random", class = map[[rv$status$link]]))
     })
+
+    output$download_everything <- shiny::downloadHandler(
+      filename = function() {
+        state_filename(input$download_filename)
+      },
+      content = function(con) {
+        dat <- list(model = model$get_state())
+        saveRDS(dat, con)
+      })
+
+    shiny::observeEvent(
+      input$restore, {
+        state <- readRDS(input$restore$datapath)
+        model$set_state(state$model)
+      })
   }
 }
 
+
+state_filename <- function(filename) {
+  if (!is.null(filename) && nzchar(filename)) {
+    if (!grepl("\\.rds$", filename, ignore.case = TRUE)) {
+      filename <- paste0(filename, ".rds")
+    }
+  } else {
+    filename <- format(Sys.time(), "odin-%Y%m%d-%H%M%S.rds")
+  }
+  filename
+}
 
 code <- readLines("../anne/model/model1.R")
 shiny::shinyApp(ui = odin_fit_ui(code),

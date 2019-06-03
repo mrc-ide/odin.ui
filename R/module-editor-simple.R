@@ -122,12 +122,39 @@ mod_editor_simple_server <- function(input, output, session, initial_code) {
       res <- shiny::withProgress(
         message = "Compiling model...",
         detail = "some detail", value = 1, {
-          data$validation <- odin::odin_validate(input$editor, "text")
+          data$validation <- odin::odin_validate(code, "text")
           odin::odin_build(data$validation$result)
         })
 
       data$compilation <- list(code = code, result = res, is_current = TRUE)
     })
 
-  return(shiny::reactive(data$compilation))
+  get_state <- function() {
+    shiny::isolate({
+      ## TODO: for completeness, it might be worth getting the model
+      ## filename and the auto_validate state too, but for now we don't.
+      list(code = input$editor,
+           is_current = isTRUE(data$compilation$is_current))
+    })
+  }
+
+  set_state <- function(state) {
+    code <- state$code
+    shinyAce::updateAceEditor(session, ns("editor"), value = code)
+    if (state$is_current) {
+      ## Then trigger the compilation here too (note that this
+      ## duplicates code in the go_button observer)
+      res <- shiny::withProgress(
+        message = "Compiling model...",
+        detail = "some detail", value = 1, {
+          data$validation <- odin::odin_validate(code, "text")
+          odin::odin_build(data$validation$result)
+        })
+      data$compilation <- list(code = code, result = res, is_current = TRUE)
+    }
+  }
+
+  return(list(result = shiny::reactive(data$compilation),
+              get_state = get_state,
+              set_state = set_state))
 }
