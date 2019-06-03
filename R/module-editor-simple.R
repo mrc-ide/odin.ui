@@ -78,9 +78,10 @@ mod_editor_simple_server <- function(input, output, session, initial_code) {
   shiny::observeEvent(
     input$uploaded_file, {
       if (!is.null(input$uploaded_file)) {
-        code <- read_text(input$uploaded_file$datapath)
+        code <- readLines(input$uploaded_file$datapath)
+        code_str <- paste0(code, "\n", collapse = "")
         ## TODO: This probably needs considerable santisation!
-        shinyAce::updateAceEditor(session, ns("editor"), value = code)
+        shinyAce::updateAceEditor(session, ns("editor"), value = code_str)
         data$validation <- odin::odin_validate(code, "text")
       }
     })
