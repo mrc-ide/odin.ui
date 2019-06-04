@@ -96,7 +96,7 @@ mod_vis_server <- function(input, output, session, data, model, configure) {
       y2 <- set_names(vlapply(rv$outputs$y2, function(el) input[[el]]),
                       rv$outputs$name)
       cols <- set_names(rv$outputs$col, rv$outputs$name)
-      plot_vis(rv$result, input, y2, cols)
+      plot_vis(rv$result, input, y2, cols, input$logscale_y)
     }
   })
 
@@ -186,9 +186,13 @@ mod_vis_graph_settings <- function(outputs, ns) {
 
 
 ## Just punting on this:
-plot_vis <- function(result, input, y2, cols) {
+plot_vis <- function(result, input, y2, cols, logy) {
   p <- plotly::plot_ly()
   p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
+
+  if (logy) {
+    p <- plotly::layout(p, yaxis = list(type = "log"))
+  }
 
   xy <- result$smooth
   for (i in result$name_vars) {
@@ -202,7 +206,7 @@ plot_vis <- function(result, input, y2, cols) {
     opts <- list(overlaying = "y",
                  side = "right",
                  showgrid = FALSE,
-                 title = paste(names(y2)[y2], collapse = ", "))
+                 type = if (logy) "log" else "linear")
     p <- plotly::layout(p, yaxis2 = opts)
   }
 
