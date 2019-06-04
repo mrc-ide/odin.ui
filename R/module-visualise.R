@@ -85,29 +85,18 @@ mod_vis_server <- function(input, output, session, data, model, configure) {
 
   shiny::observeEvent(
     input$go_button, {
-      m <- model()
-      d <- data()
-      info <- configure()
-
-      if (!is.null(m) && !is.null(d) && info$configured && !is.null(rv$pars)) {
-        user <- set_names(lapply(rv$pars$par_id, function(x) input[[x]]),
-                          rv$pars$name)
-        n <- 501
-        t <- seq(0, max(d[[info$time]]), length.out = 501)
-        ## Put the parameters used and outputs into the result so
-        ## we're always completely consistent, regardness of shiny's
-        ## order of evaluation
-        rv$result <- list(pars = rv$pars,
-                          outputs = rv$outputs,
-                          data = d,
-                          info = info,
-                          modelled = m$result$model(user = user)$run(t))
-      }
+      user <- set_names(lapply(rv$pars$par_id, function(x) input[[x]]),
+                        rv$pars$name)
+      rv$result <- run_model_data(data(), model(), configure(), user,
+                                  list(pars = rv$pars, link = rv$link))
     })
 
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result)) {
-      plot_vis(rv$result, input)
+      y2 <- set_names(vlapply(rv$outputs$y2, function(el) input[[el]]),
+                      rv$outputs$name)
+      cols <- set_names(rv$outputs$col, rv$outputs$name)
+      plot_vis(rv$result, input, y2, cols)
     }
   })
 }
@@ -185,21 +174,14 @@ mod_vis_graph_settings <- function(outputs, ns) {
 
 
 ## Just punting on this:
-plot_vis <- function(result, input) {
-  outputs <- result$outputs
-  link <- result$info$link
-
-  cols <- set_names(outputs$col, outputs$name)
-  y2 <- set_names(vlapply(outputs$y2, function(el) input[[el]]),
-                  outputs$name)
-
+plot_vis <- function(result, input, y2, cols) {
   p <- plotly::plot_ly()
   p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
 
-  xy <- result$modelled
-  for (i in outputs$name) {
+  xy <- result$smooth
+  for (i in result$name_vars) {
     yaxis <- if (y2[[i]]) "y2" else NULL
-    p <- plotly::add_lines(p, x = xy[, "t"], y = xy[, i], name = i,
+    p <- plotly::add_lines(p, x = xy[, 1], y = xy[, i], name = i,
                            line = list(color = cols[[i]]),
                            yaxis = yaxis)
   }
@@ -212,14 +194,16 @@ plot_vis <- function(result, input) {
     p <- plotly::layout(p, yaxis2 = opts)
   }
 
-  data_time <- result$data[[result$info$time]]
+  link <- result$link
+  data_time <- result$data[[result$name_time]]
   for (i in seq_along(link)) {
     nm <- names(link)[[i]]
+    nm_modelled <- link[[i]]
     y <- result$data[[nm]]
     j <- !is.na(y)
-    yaxis <- if (y2[[link[[i]]]]) "y2" else NULL
+    yaxis <- if (y2[[nm_modelled]]) "y2" else NULL
     p <- plotly::add_markers(p, x = data_time[j], y = y[j], name = nm,
-                             marker = list(color = cols[[link[[i]]]]),
+                             marker = list(color = cols[[nm_modelled]]),
                              yaxis = yaxis)
   }
 

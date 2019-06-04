@@ -119,6 +119,7 @@ mod_configure_link_ui <- function(input, session, rv, data, model, restore) {
 
       ## TODO: push this into the editor module so that we always have
       ## this alongside the model as we use it in a couple of places
+      ## (see also fit.R's run_model_data)
       metadata <- model_metadata(m$result$model)
       vars_model <- c(
         names(metadata$data$variable$contents),

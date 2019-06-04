@@ -156,3 +156,32 @@ plot_data <- function(data, name_time, name_vars, cols) {
 compare_sse <- function(modelled, real) {
   sum((modelled - real)^2, na.rm = TRUE)
 }
+
+
+run_model_data <- function(d, m, info, user, extra) {
+  if (isTRUE(d$configured) && !is.null(m) && info$configured) {
+    name_time <- d$name_time
+    mod <- m$result$model(user = user)
+    ## Result aligned with the data
+    result_combined <- cbind(mod$run(d$data[[name_time]]), d$data)
+
+    ## Result smoothly plotted
+    t <- seq(0, max(d$data[[name_time]]), length.out = 501)
+    result_smooth <- mod$run(t)
+
+    ## Big whack of data to use later on:
+    c(list(data = d$data,
+           combined = result_combined,
+           smooth = result_smooth,
+           name_time = name_time,
+           ## TODO: can do this through metadata on the model - see
+           ## module-configure.R link_ui
+           name_vars = colnames(result_smooth)[-1],
+           name_data = names(info$link),
+           name_model = list_to_character(info$link),
+           link = info$link),
+      extra)
+  } else {
+    NULL
+  }
+}
