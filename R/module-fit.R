@@ -55,23 +55,23 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
     d <- data()
     m <- model()
     info <- configure()
-    if (!is.null(d) && !is.null(m) && info$configured &&
+    if (isTRUE(d$configured) && !is.null(m) && info$configured &&
          nzchar(input$target) && !is.null(rv$pars)) {
       user <- set_names(mod_fit_read_inputs(rv$pars$par_id, input),
                         rv$pars$name)
-      name_time <- info$time
+      name_time <- d$name_time
       target_data <- input$target
       target_model <- info$link[[target_data]]
       mod <- m$result$model(user = user)
       ## Result aligned with the data
-      result_data <- cbind(mod$run(d[[name_time]]), d)
+      result_data <- cbind(mod$run(d$data[[name_time]]), d$data)
 
       ## Result smoothly plotted
-      t <- seq(0, max(d[[name_time]]), length.out = 501)
+      t <- seq(0, max(d$data[[name_time]]), length.out = 501)
       result_smooth <- mod$run(t)
 
       ## Goodness of fit:
-      compare <- make_compare(d, name_time, target_data, target_model,
+      compare <- make_compare(d$data, name_time, target_data, target_model,
                               compare_sse)
 
       ## Big whack of data to use later on:
@@ -114,18 +114,20 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
       pars$vary <- vlapply(rv$pars$var_id, function(x) input[[x]],
                            USE.NAMES = FALSE)
       if (any(pars$vary)) {
+        ## TODO: I am not sure this is robust to partially configured
+        ## datasets?
         pars$value <- vnapply(pars$par_id, function(x) input[[x]],
                               USE.NAMES = FALSE)
         info <- configure()
         d <- data()
 
-        name_time <- info$time
+        name_time <- d$name_time
         target_data <- input$target
         target_model <- info$link[[target_data]]
-        compare <- make_compare(d, name_time, target_data, target_model,
+        compare <- make_compare(d$data, name_time, target_data, target_model,
                                 compare_sse)
         generator <- model()$result$model
-        target <- make_target(generator, pars, d[[name_time]], compare)
+        target <- make_target(generator, pars, d$data[[name_time]], compare)
         message("Starting fit")
         rv$fit <- shiny::withProgress(
           message = "model fit in progress",

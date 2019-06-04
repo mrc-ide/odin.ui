@@ -4,9 +4,6 @@ mod_configure_ui <- function(id) {
     shiny::titlePanel("Configure"),
     shiny::h3("Data"),
     shiny::textOutput(ns("data_summary")),
-    shiny::selectInput(ns("data_time_variable"),
-                       "Select time variable",
-                       character(0)),
     shiny::h3("Model"),
     shiny::uiOutput(ns("model_status")),
     shiny::textOutput(ns("model_summary")),
@@ -18,25 +15,16 @@ mod_configure_ui <- function(id) {
 
 mod_configure_server <- function(input, output, session, data, model) {
   output$data_summary <- shiny::renderText({
-    if (is.null(data())) {
+    d <- data()
+    if (is.null(d)) {
       ## Ideally this would point us back to the data tab with a link
       ## but that requires passing in the parent session:
       ## https://stackoverflow.com/a/54751068
       msg <- "Please upload data"
+    } else if (!isTRUE(d$configured)) {
+      msg <- "Please select time variable for your data"
     } else {
-      msg <- sprintf("%d rows of data have been uploaded", nrow(data()))
-      vars <- names(data())
-      prev <- input$data_time_variable
-      if (is.null(prev) || !nzchar(prev)) {
-        time_names <- c("t", "time", "day", "week", "year")
-        i <- which(tolower(vars) %in% time_names)
-        if (length(i) == 1L) {
-          prev <- vars[[i]]
-        }
-      }
-      shiny::updateSelectInput(session, "data_time_variable",
-                               choices = vars,
-                               selected = selected(prev, vars))
+      msg <- sprintf("%d rows of data have been uploaded", nrow(d$data))
     }
     msg
   })
@@ -70,8 +58,7 @@ mod_configure_server <- function(input, output, session, data, model) {
   })
 
   output$link <- shiny::renderUI({
-    mod_configure_link_ui(input, session, rv, data, model,
-                          input$data_time_variable, NULL)
+    mod_configure_link_ui(input, session, rv, data, model, NULL)
   })
 
   shiny::observe({
@@ -92,31 +79,18 @@ mod_configure_server <- function(input, output, session, data, model) {
     }
   })
 
-  shiny::observe({
-    if (nzchar(input$data_time_variable)) {
-      rv$time <- input$data_time_variable
-    } else {
-      rv$time <- NULL
-    }
-  })
-
   get_state <- function() {
-    list(link = rv$link,
-         time = input$data_time_variable)
+    list(link = rv$link)
   }
 
   set_state <- function(state) {
-    shiny::updateSelectInput(session, "data_time_variable", state$time)
-    rv$time <- state$time
     output$link <- shiny::renderUI(
-      mod_configure_link_ui(input, session, rv, data, model, state$time,
-                            state$link))
+      mod_configure_link_ui(input, session, rv, data, model, state$link))
   }
 
   shiny::outputOptions(output, "link", suspendWhenHidden = FALSE)
 
   list(result = shiny::reactive(list(link = rv$link,
-                                     time = rv$time,
                                      configured = length(rv$link) > 0)),
        get_state = get_state,
        set_state = set_state)
@@ -128,11 +102,10 @@ selected <- function(prev, choices) {
 }
 
 
-mod_configure_link_ui <- function(input, session, rv, data, model, time,
-                                  restore) {
+mod_configure_link_ui <- function(input, session, rv, data, model, restore) {
   d <- data()
   m <- model()
-  if (is.null(d) || is.null(m) || !nzchar(time)) {
+  if (!isTRUE(d$configured) || is.null(m)) {
     rv$map <- NULL
   } else {
     shiny::isolate({
@@ -142,9 +115,10 @@ mod_configure_link_ui <- function(input, session, rv, data, model, time,
         prev <- restore
       }
 
-      vars_data <- setdiff(names(d), time)
+      vars_data <- d$name_vars
+
       ## TODO: push this into the editor module so that we always have
-      ## this alongside the model
+      ## this alongside the model as we use it in a couple of places
       metadata <- model_metadata(m$result$model)
       vars_model <- c(
         names(metadata$data$variable$contents),
