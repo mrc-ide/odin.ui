@@ -137,11 +137,9 @@ odin_fit_server <- function(initial_code) {
 
 state_filename <- function(filename) {
   if (!is.null(filename) && nzchar(filename)) {
-    if (!grepl("\\.rds$", filename, ignore.case = TRUE)) {
-      filename <- paste0(filename, ".rds")
-    }
+    filename <- ensure_extension(filename, "rds")
   } else {
-    filename <- format(Sys.time(), "odin-%Y%m%d-%H%M%S.rds")
+    filename <- sprintf("odin-%s.rds", date_string())
   }
   filename
 }

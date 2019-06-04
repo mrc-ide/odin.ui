@@ -179,6 +179,7 @@ run_model_data <- function(d, m, info, user, extra) {
            name_vars = colnames(result_smooth)[-1],
            name_data = names(info$link),
            name_model = list_to_character(info$link),
+           user = user,
            link = info$link),
       extra)
   } else {

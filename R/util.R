@@ -115,3 +115,27 @@ read_csv <- function(filename) {
 list_to_character <- function(x, named = FALSE) {
   vcapply(x, identity, USE.NAMES = named)
 }
+
+
+list_to_numeric <- function(x, named = FALSE) {
+  vnapply(x, identity, USE.NAMES = named)
+}
+
+
+date_string <- function(time = Sys.time()) {
+  format(time, "%Y%m%d-%H%M%S")
+}
+
+
+ensure_extension <- function(path, ext) {
+  re <- paste0("\\.", ext, "$")
+  if (!grepl(re, path, ignore.case = TRUE)) {
+    path <- paste0(path, ".", ext)
+  }
+  path
+}
+
+
+list_to_df <- function(x) {
+  data_frame(name = names(x), value = list_to_numeric(x))
+}

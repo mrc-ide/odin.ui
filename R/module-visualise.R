@@ -99,6 +99,18 @@ mod_vis_server <- function(input, output, session, data, model, configure) {
       plot_vis(rv$result, input, y2, cols)
     }
   })
+
+  output$download_button <- shiny::downloadHandler(
+    filename = function() {
+      mod_vis_download_filename(input$download_filename, input$download_type)
+    },
+    content = function(filename) {
+      data <- switch(input$download_type,
+                     modelled = rv$result$smooth,
+                     combined = rv$result$combined,
+                     parameters = list_to_df(rv$result$user))
+      write.csv(data, filename, row.names = FALSE)
+    })
 }
 
 
@@ -131,11 +143,11 @@ mod_vis_graph_control <- function(outputs, ns) {
           class = "form-group",
           raw_text_input(ns("download_filename"), placeholder = "filename",
                          value = "")),
-        shiny::span("."),
         shiny::div(
           class = "form-group",
-          raw_select_input(ns("download_format"),
-                           choices = list("csv","rds","json"))),
+          raw_select_input(ns("download_type"),
+                           choices = list("modelled", "combined",
+                                          "parameters"))),
         shiny::downloadButton(ns("download_button"), "Download",
                               class = "btn-blue")),
       graph_settings))
@@ -208,4 +220,14 @@ plot_vis <- function(result, input, y2, cols) {
   }
 
   p
+}
+
+
+mod_vis_download_filename <- function(filename, type) {
+  if (!is.null(filename) && nzchar(filename)) {
+    filename <- ensure_extension(filename, "csv")
+  } else {
+    filename <- sprintf("odin-visusalise-%s-%s.csv", type, date_string())
+  }
+  filename
 }
