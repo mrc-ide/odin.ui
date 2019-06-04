@@ -111,6 +111,9 @@ mod_csv_server <- function(input, output, session) {
   set_state <- function(state) {
     ## TODO: can't yet set the filename in the upload widget
     rv$data <- state$data
+    shiny::updateSelectInput(session, "name_time",
+                             choices = names(state$data$data),
+                             selected = state$data$name_time)
   }
 
   ## TODO: Can drop success and error here, but they don't hurt
