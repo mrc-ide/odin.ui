@@ -72,7 +72,7 @@ odin_fit_server <- function(initial_code) {
 
 
     shiny::observe({
-      if (is.null(data$result())) {
+      if (!isTRUE(data$result()$configured)) {
         status_data <- "missing"
       } else {
         status_data <- "ok"

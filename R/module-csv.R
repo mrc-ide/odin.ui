@@ -15,7 +15,11 @@ mod_csv_ui <- function(id) {
           accept = c("text/csv",
                      "text/comma-separated-values,text/plain",
                      ".csv")),
+        shiny::selectInput(ns("name_time"),
+                           "Select time variable",
+                           character(0)),
         shiny::textOutput(ns("summary")),
+        shiny::hr(),
         shiny::actionButton(ns("clear"), "Clear")),
       shiny::mainPanel(
         plotly::plotlyOutput(ns("data_plot")),
@@ -29,22 +33,62 @@ mod_csv_server <- function(input, output, session) {
   shiny::observeEvent(
     input$clear, {
       shinyjs::reset("filename")
+      shiny::updateSelectInput(session, "name_time", choices = character(0))
       rv$data <- NULL
     })
 
   shiny::observe({
     if (!is.null(input$filename)) {
-      rv$data <- validate_csv(input$filename$datapath)
+      shiny::isolate({
+        rv$data <- validate_csv(input$filename$datapath)
+        if (rv$data$success) {
+          vars <- names(rv$data$data)
+          prev <- input$name_time
+          selected <- NA
+          if (!is.null(prev) && prev %in% vars) {
+            selected <- prev
+          } else {
+            name_times <- c("t", "time", "day", "date", "week", "year")
+            i <- which(tolower(vars) %in% name_times)
+            if (length(i) == 1L) {
+              selected <- vars[[i]]
+            }
+          }
+          message(sprintf("updating with %s choices", length(vars)))
+          shiny::updateSelectInput(session, "name_time",
+                                   choices = vars, selected = selected)
+        }
+      })
     }
   })
 
+  ## NOTE: this triggers far too often, but I think it's a tolerable
+  ## load.
+  shiny::observe({
+    name_time <- input$name_time
+    if (is.null(name_time) || !nzchar(name_time)) {
+      name_time <- NULL
+    }
+    rv$data$name_time <- name_time
+    rv$data$name_vars <- setdiff(names(rv$data$data), name_time)
+    rv$data$configured <- !is.null(rv$data$data) && !is.null(name_time)
+  })
+
   output$summary <- shiny::renderText({
-    if (is.null(rv$data)) {
+    if (is.null(rv$data$success)) {
       NULL
     } else {
       if (rv$data$success) {
         data <- rv$data$data
-        sprintf("Uploaded %d x %d observations", nrow(data), ncol(data))
+        txt1 <- sprintf("Uploaded %d rows and %d columns.",
+                        nrow(data), ncol(data))
+        if (isTRUE(rv$data$configured)) {
+          txt2 <- sprintf("Response variables: %s",
+                          paste(rv$data$name_vars, collapse = ", "))
+        } else {
+          txt2 <- "Select a time variable to view plot"
+        }
+        paste(txt1, txt2, sep = "\n\n")
       } else {
         paste("Error:", rv$data$error)
       }
@@ -52,10 +96,9 @@ mod_csv_server <- function(input, output, session) {
   })
 
   output$data_plot <- plotly::renderPlotly({
-    if (!is.null(rv$data$data)) {
-      data <- rv$data$data
-      cols <- odin_ui_palettes("odin")(ncol(data) - 1L)
-      plot_data(data, cols)
+    if (isTRUE(rv$data$configured)) {
+      cols <- odin_ui_palettes("odin")(length(rv$data$name_vars))
+      plot_data(rv$data$data, rv$data$name_time, rv$data$name_vars, cols)
     }
   })
 
@@ -75,7 +118,8 @@ mod_csv_server <- function(input, output, session) {
     rv$data <- state$data
   }
 
-  list(result = shiny::reactive(rv$data$data),
+  ## TODO: Can drop success and error here, but they don't hurt
+  list(result = shiny::reactive(rv$data),
        get_state = get_state,
        set_state = set_state)
 }
