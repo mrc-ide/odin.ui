@@ -43,18 +43,13 @@ mod_csv_server <- function(input, output, session) {
         rv$data <- validate_csv(input$filename$datapath)
         if (rv$data$success) {
           vars <- names(rv$data$data)
-          prev <- input$name_time
-          selected <- NA
-          if (!is.null(prev) && prev %in% vars) {
-            selected <- prev
+          name_times <- c("t", "time", "day", "date", "week", "year")
+          i <- which(tolower(vars) %in% name_times)
+          if (length(i) == 1L) {
+            selected <- vars[[i]]
           } else {
-            name_times <- c("t", "time", "day", "date", "week", "year")
-            i <- which(tolower(vars) %in% name_times)
-            if (length(i) == 1L) {
-              selected <- vars[[i]]
-            }
+            selected <- NA
           }
-          message(sprintf("updating with %s choices", length(vars)))
           shiny::updateSelectInput(session, "name_time",
                                    choices = vars, selected = selected)
         }
