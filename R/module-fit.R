@@ -169,6 +169,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
   shiny::outputOptions(output, "pars", suspendWhenHidden = FALSE)
 
   list(result = shiny::reactive(rv$fit),
+       pars = shiny::reactive(rv$fit$pars),
        get_state = get_state,
        set_state = set_state)
 }

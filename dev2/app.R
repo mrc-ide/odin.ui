@@ -65,11 +65,11 @@ odin_fit_server <- function(initial_code) {
       mod_editor_simple_server, "odin_editor", initial_code)
     configure <- shiny::callModule(
       mod_configure_server, "odin_configure", data$result, model$result)
-    vis <- shiny::callModule(
-      mod_vis_server, "odin_vis", data$result, model$result, configure$result)
     fit <- shiny::callModule(
       mod_fit_server, "odin_fit", data$result, model$result, configure$result)
-
+    vis <- shiny::callModule(
+      mod_vis_server, "odin_vis", data$result, model$result, configure$result,
+      fit$pars)
 
     shiny::observe({
       if (!isTRUE(data$result()$configured)) {

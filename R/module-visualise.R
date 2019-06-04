@@ -22,6 +22,8 @@ mod_vis_ui <- function(id) {
           class = "form-horizontal",
           shiny::uiOutput(ns("odin_control")),
           ## https://github.com/rstudio/shiny/issues/1675#issuecomment-298398997
+          shiny::actionButton(ns("import"), "Import",
+                              shiny::icon("calculator")),
           shiny::actionButton(ns("reset_button"), "Reset",
                               shiny::icon("refresh"),
                               class = "btn-grey pull-right ml-2"),
@@ -40,7 +42,8 @@ mod_vis_ui <- function(id) {
 }
 
 
-mod_vis_server <- function(input, output, session, data, model, configure) {
+mod_vis_server <- function(input, output, session, data, model, configure,
+                           import) {
   rv <- shiny::reactiveValues(pars = NULL)
 
   shiny::observe({
@@ -89,6 +92,24 @@ mod_vis_server <- function(input, output, session, data, model, configure) {
                         rv$pars$name)
       rv$result <- run_model_data(data(), model(), configure(), user,
                                   list(pars = rv$pars, link = rv$link))
+    })
+
+  shiny::observeEvent(
+    input$import, {
+      user <- import()
+      if (!is.null(user)) {
+        browser()
+        shiny::isolate({
+          id <- rv$pars$par_id[match(names(user), rv$pars$name)]
+          if (!any(is.na(id))) {
+            for (i in seq_along(id)) {
+              shiny::updateNumericInput(session, id[[i]], value = user[[i]])
+            }
+            rv$result <- run_model_data(data(), model(), configure(), user,
+                                        list(pars = rv$pars, link = rv$link))
+          }
+        })
+      }
     })
 
   output$odin_output <- plotly::renderPlotly({

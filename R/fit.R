@@ -71,6 +71,7 @@ fit_model <- function(target, coef, tolerance = 1e-4, method = "optim") {
 
   coef$value[i] <- fit$par
   fit$coef <- coef
+  fit$pars <- set_names(as.list(coef$value), coef$name)
   fit
 }
 
