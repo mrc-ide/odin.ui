@@ -22,8 +22,7 @@ mod_vis_ui <- function(id) {
           class = "form-horizontal",
           shiny::uiOutput(ns("odin_control")),
           ## https://github.com/rstudio/shiny/issues/1675#issuecomment-298398997
-          shiny::actionButton(ns("import"), "Import",
-                              shiny::icon("calculator")),
+          shiny::uiOutput(ns("import_button"), inline = TRUE),
           shiny::actionButton(ns("reset_button"), "Reset",
                               shiny::icon("refresh"),
                               class = "btn-grey pull-right ml-2"),
@@ -43,7 +42,7 @@ mod_vis_ui <- function(id) {
 
 
 mod_vis_server <- function(input, output, session, data, model, configure,
-                           import) {
+                           import = NULL) {
   rv <- shiny::reactiveValues(pars = NULL)
 
   shiny::observe({
@@ -94,11 +93,17 @@ mod_vis_server <- function(input, output, session, data, model, configure,
                                   list(pars = rv$pars, link = rv$link))
     })
 
+  output$import_button <- shiny::renderUI({
+    if (!is.null(import) && !is.null(import())) {
+      shiny::actionButton(session$ns("import"), "Import",
+                          shiny::icon("calculator"))
+    }
+  })
+
   shiny::observeEvent(
     input$import, {
       user <- import()
       if (!is.null(user)) {
-        browser()
         shiny::isolate({
           id <- rv$pars$par_id[match(names(user), rv$pars$name)]
           if (!any(is.na(id))) {
