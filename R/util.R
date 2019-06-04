@@ -110,3 +110,8 @@ yaml_read <- function(filename) {
 read_csv <- function(filename) {
   read.csv(filename, stringsAsFactors = FALSE, check.names = FALSE)
 }
+
+
+list_to_character <- function(x, named = FALSE) {
+  vcapply(x, identity, USE.NAMES = named)
+}

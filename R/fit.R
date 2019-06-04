@@ -118,17 +118,16 @@ print_every <- function(every) {
 }
 
 
-plot_fit <- function(data, name_time, name_data, model, name_model, cols) {
-  data_time <- data[[name_time]]
-  t <- seq(0, max(data_time), length.out = 501)
-  xy <- model$run(t)
-
+plot_fit <- function(data, name_time, name_data, model_output, name_model,
+                     cols) {
   p <- plotly::plot_ly()
   p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
   for (i in name_model) {
-    p <- plotly::add_lines(p, x = xy[, "t"], y = xy[, i], name = i,
-                           line = list(color = cols[[i]]))
+    p <- plotly::add_lines(p, x = model_output[, "t"], y = model_output[, i],
+                           name = i, line = list(color = cols[[i]]))
   }
+
+  data_time <- data[[name_time]]
   for (i in name_data) {
     j <- !is.na(data[[i]])
     p <- plotly::add_markers(p, x = data_time[j], y = data[[i]][j], name = i,

@@ -51,25 +51,60 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
     ui
   })
 
+  shiny::observe({
+    d <- data()
+    m <- model()
+    info <- configure()
+    if (!is.null(d) && !is.null(m) && info$configured &&
+         nzchar(input$target) && !is.null(rv$pars)) {
+      user <- set_names(mod_fit_read_inputs(rv$pars$par_id, input),
+                        rv$pars$name)
+      name_time <- info$time
+      target_data <- input$target
+      target_model <- info$link[[target_data]]
+      mod <- m$result$model(user = user)
+      ## Result aligned with the data
+      result_data <- cbind(mod$run(d[[name_time]]), d)
+
+      ## Result smoothly plotted
+      t <- seq(0, max(d[[name_time]]), length.out = 501)
+      result_smooth <- mod$run(t)
+
+      ## Goodness of fit:
+      compare <- make_compare(d, name_time, target_data, target_model,
+                              compare_sse)
+
+      ## Big whack of data to use later on:
+      rv$result <- list(data = result_data,
+                        smooth = result_smooth,
+                        goodness_of_fit = compare(result_data),
+                        name_time = name_time,
+                        name_data = names(info$link),
+                        name_model = list_to_character(info$link))
+    } else {
+      rv$result <- NULL
+    }
+  })
+
   ## There's quite a bit that could be hardmonised here with getting
   ## the inputs arranged that is duplicated among the next few
   ## targets.
   output$results_plot <- plotly::renderPlotly({
-    d <- data()
-    m <- model()
-    info <- configure()
-    if (!is.null(d) && !is.null(m) && info$configured && !is.null(rv$pars)) {
-      user <- set_names(mod_fit_read_inputs(rv$pars$par_id, input),
-                        rv$pars$name)
-      if (!any(vlapply(user, is.null))) {
-        name_data <- names(info$link)
-        name_model <- vcapply(info$link, identity, USE.NAMES = FALSE)
-        cols <- pal(length(name_data))
-        cols <- set_names(c(cols, cols), c(name_data, name_model))
-        plot_fit(d, info$time, name_data,
-                 m$result$model(user = user), name_model,
-                 cols)
-      }
+    if (!is.null(rv$result)) {
+      name_time <- rv$result$name_time
+      name_data <- rv$result$name_data
+      name_model <- rv$result$name_model
+      cols <- pal(length(name_data))
+      cols <- set_names(c(cols, cols), c(name_data, name_model))
+      plot_fit(rv$result$data, name_time, name_data, rv$result$smooth,
+               name_model, cols)
+    }
+  })
+
+  output$goodness_of_fit <- shiny::renderText({
+    if (!is.null(rv$result)) {
+      sprintf("Sum of squares: %s",
+              format(rv$result$goodness_of_fit, big.mark = ","))
     }
   })
 
@@ -107,6 +142,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
                    vary = mod_fit_read_inputs(rv$pars$var_id, input))
     list(fit = rv$fit,
          pars = rv$pars,
+         target = input$target,
          inputs = inputs)
   }
 
@@ -123,6 +159,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
       }
     })
     rv$fit <- state$fit
+    shiny::updateSelectInput(session, "target", selected = state$target)
     mod_fit_set_inputs(state$inputs$value, session, shiny::updateNumericInput)
     mod_fit_set_inputs(state$inputs$vary, session, shiny::updateCheckboxInput)
   }
