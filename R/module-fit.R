@@ -29,13 +29,16 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
     if (!info$configured) {
       target <- character(0)
     } else {
-      ## TODO: this could be done by the configure module
-      link <- info$link
-      label <- paste(vcapply(link, identity), names(link), sep = " ~ ")
-      target <- setNames(names(link), label)
+      target <- set_names(names(info$link), info$label)
     }
-    ## TODO: retain previous choice if it's here
-    shiny::updateSelectInput(session, "target", choices = target)
+    prev <- input$target
+    if (!is.null(prev) && nzchar(prev) && prev %in% target) {
+      selected <- prev
+    } else {
+      selected <- NULL
+    }
+    shiny::updateSelectInput(session, "target", choices = target,
+                             selected = selected)
   })
 
   output$pars <- shiny::renderUI({
@@ -78,6 +81,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
       rv$result <- list(data = result_data,
                         smooth = result_smooth,
                         goodness_of_fit = compare(result_data),
+                        info = info,
                         name_time = name_time,
                         name_data = names(info$link),
                         name_target_data = target_data,
@@ -146,8 +150,10 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
   get_state <- function() {
     inputs <- list(value = mod_fit_read_inputs(rv$pars$par_id, input),
                    vary = mod_fit_read_inputs(rv$pars$var_id, input))
+    ## information for the control:
     list(fit = rv$fit,
          pars = rv$pars,
+         info = rv$result$info,
          target = input$target,
          inputs = inputs)
   }
@@ -165,7 +171,9 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
       }
     })
     rv$fit <- state$fit
-    shiny::updateSelectInput(session, "target", selected = state$target)
+    choices <- set_names(names(state$info$link), state$info$label)
+    shiny::updateSelectInput(session, "target", choices = choices,
+                             selected = state$target)
     mod_fit_set_inputs(state$inputs$value, session, shiny::updateNumericInput)
     mod_fit_set_inputs(state$inputs$vary, session, shiny::updateCheckboxInput)
   }

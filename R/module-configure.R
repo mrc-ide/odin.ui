@@ -64,9 +64,12 @@ mod_configure_server <- function(input, output, session, data, model) {
   shiny::observe({
     if (is.null(rv$map)) {
       rv$link <- NULL
+      rv$label <- character(0)
     } else {
       link <- lapply(rv$map, function(x) input[[x]])
       rv$link <- link[vlapply(link, function(x) !is.null(x) && nzchar(x))]
+      rv$label <- sprintf("%s ~ %s",
+                          names(rv$link), vcapply(rv$link, identity))
     }
   })
 
@@ -74,8 +77,7 @@ mod_configure_server <- function(input, output, session, data, model) {
     if (length(rv$link) == 0L) {
       "No linked variables"
     } else {
-      paste(sprintf("%s ~ %s", names(rv$link), vcapply(rv$link, identity)),
-            collapse = " & ")
+      paste(rv$label, collapse = " & ")
     }
   })
 
@@ -90,8 +92,10 @@ mod_configure_server <- function(input, output, session, data, model) {
 
   shiny::outputOptions(output, "link", suspendWhenHidden = FALSE)
 
-  list(result = shiny::reactive(list(link = rv$link,
-                                     configured = length(rv$link) > 0)),
+  list(result = shiny::reactive(list(
+         link = rv$link,
+         label = rv$label,
+         configured = length(rv$link) > 0)),
        get_state = get_state,
        set_state = set_state)
 }
