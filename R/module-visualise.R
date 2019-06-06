@@ -20,6 +20,8 @@ mod_vis_ui <- function(id) {
         class = "col-sm-4 col-lg-3",
         shiny::tags$form(
           class = "form-horizontal",
+          shiny::uiOutput(ns("status_data")),
+          shiny::uiOutput(ns("status_model")),
           shiny::uiOutput(ns("odin_control")),
           ## https://github.com/rstudio/shiny/issues/1675#issuecomment-298398997
           shiny::uiOutput(ns("import_button"), inline = TRUE),
@@ -63,6 +65,28 @@ mod_vis_server <- function(input, output, session, data, model, configure,
 
       outputs$vars$col <- odin_ui_palettes("odin")(nrow(outputs$vars))
       rv$outputs <- outputs$vars
+    }
+  })
+
+  ## TODO: this is not ideal because the module should be able to cope
+  ## with different ways of the data not being visible.  So the caller
+  ## should provide something here that generates the *body* of the
+  ## warning.
+  output$status_data <- shiny::renderUI({
+    if (!isTRUE(data()$configured)) {
+      simple_panel("danger", "Data not present",
+                   "Please upload data using the data tab")
+    }
+  })
+
+  output$status_model <- shiny::renderUI({
+    m <- model()
+    if (is.null(m)) {
+      simple_panel("danger", "Model not present",
+                   "Please create a model using the editor tab")
+    } else if (!m$is_current) {
+      simple_panel("warning", "Model out of date",
+                   "You may need to recompile your model")
     }
   })
 
