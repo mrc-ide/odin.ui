@@ -244,11 +244,11 @@ mod_vis_graph_settings <- function(outputs, cols, ns) {
 
 
 ## Just punting on this:
-plot_vis <- function(result, input, y2, cols, logy) {
+plot_vis <- function(result, input, y2, cols, logscale_y) {
   p <- plotly::plot_ly()
   p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
 
-  if (logy) {
+  if (logscale_y) {
     p <- plotly::layout(p, yaxis = list(type = "log"))
   }
 
@@ -274,7 +274,7 @@ plot_vis <- function(result, input, y2, cols, logy) {
     opts <- list(overlaying = "y",
                  side = "right",
                  showgrid = FALSE,
-                 type = if (logy) "log" else "linear")
+                 type = if (logscale_y) "log" else "linear")
     p <- plotly::layout(p, yaxis2 = opts)
   }
 

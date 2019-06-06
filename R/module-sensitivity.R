@@ -22,7 +22,8 @@ mod_batch_ui <- function(id) {
                               class = "btn-blue pull-right"))),
       shiny::mainPanel(
         shiny::div(class = "plotly-graph-wrapper",
-                   plotly::plotlyOutput(ns("odin_output"))))))
+                   plotly::plotlyOutput(ns("odin_output"))),
+        shiny::uiOutput(ns("graph_control")))))
 }
 
 
@@ -45,7 +46,7 @@ mod_batch_server <- function(input, output, session, model, data,
       metadata <- model_metadata(m$result$model)
       outputs <- mod_model_control_outputs(metadata, NULL, NULL, ns)
       outputs$vars$id <- outputs$name_map
-      outputs$vars$y2 <- sprintf("y2_%s", outputs$vars$name)
+      outputs$vars$include <- sprintf("include_%s", outputs$vars$name)
       rv$outputs <- outputs$vars
       rv$cols <- odin_colours_model(outputs$vars$name)
     }
@@ -84,6 +85,10 @@ mod_batch_server <- function(input, output, session, model, data,
         unname(Map(input, rv$pars$name, rv$pars$par_id, rv$pars$value)),
         ns = ns)
     }
+  })
+
+  output$graph_control <- shiny::renderUI({
+    mod_batch_graph_control(rv$outputs, rv$cols, session$ns)
   })
 
   output$focal_parameter <- shiny::renderUI({
@@ -164,10 +169,14 @@ mod_batch_server <- function(input, output, session, model, data,
 
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result)) {
-      ## Hard code in some variables for now:
-      vars <- c("weekly_onset", "weekly_death_h")
-      cols <- odin_colours_model(rv$outputs$name)
-      plot_batch(rv$result, vars, cols)
+      include <- set_names(
+        vlapply(rv$outputs$include, function(el) input[[el]]),
+        rv$outputs$name)
+      if (any(include)) {
+        vars <- names(include)[include]
+        cols <- odin_colours_model(rv$outputs$name)
+        plot_batch(rv$result, vars, cols, input$logscale_y)
+      }
     }
   })
 }
@@ -213,7 +222,7 @@ batch_focal <- function(name, pct, n, pars, input) {
 }
 
 
-plot_batch <- function(output, vars, cols) {
+plot_batch <- function(output, vars, cols, logscale_y) {
   p <- plotly::plot_ly()
   p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
   for (i in vars) {
@@ -228,5 +237,50 @@ plot_batch <- function(output, vars, cols) {
                            name = i, legendgroup = i,
                            line = list(color = cols[[i]]))
   }
+
+  if (logscale_y) {
+    p <- plotly::layout(p, yaxis = list(type = "log"))
+  }
+
   p
+}
+
+
+mod_batch_graph_control <- function(outputs, cols, ns) {
+  graph_settings <- mod_batch_graph_settings(outputs, cols, ns)
+  shiny::tagList(
+    shiny::div(
+      class = "pull-right",
+      graph_settings))
+}
+
+
+mod_batch_graph_settings <- function(outputs, cols, ns) {
+  if (is.null(outputs)) {
+    return(NULL)
+  }
+  title <- "Graph settings"
+  id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
+  labels <- Map(function(lab, col)
+    shiny::span(lab, style = paste0("color:", col)),
+    outputs$name, cols[outputs$name])
+
+  tags <- shiny::div(class = "form-group",
+                     raw_checkbox_input(ns("logscale_y"), "Log scale y axis"),
+                     shiny::tags$label("Include in plot"),
+                     Map(raw_checkbox_input, ns(outputs$include),
+                         labels, value = FALSE))
+
+  head <- shiny::a(style = "text-align: right; display: block;",
+                   "data-toggle" = "collapse",
+                   class = "text-muted",
+                   href = paste0("#", id),
+                   title, shiny::icon("gear", lib = "font-awesome"))
+
+  body <- shiny::div(id = id,
+                    class = "collapse box",
+                    style = "width: 300px;",
+                    list(tags))
+
+  shiny::div(class = "pull-right mt-3", head, body)
 }
