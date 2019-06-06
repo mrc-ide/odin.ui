@@ -28,6 +28,10 @@ odin_fit_ui <- function(initial_code) {
         icon = shiny::icon("calculator"),
         mod_fit_ui("odin_fit")),
       shiny::tabPanel(
+        "Sensitivity",
+        icon = shiny::icon("bars"),
+        mod_batch_ui("odin_batch")),
+      shiny::tabPanel(
         shiny::uiOutput("status", inline = TRUE),
         icon = shiny::icon("list"),
         shiny::tagList(
@@ -70,6 +74,8 @@ odin_fit_server <- function(initial_code) {
     vis <- shiny::callModule(
       mod_vis_server, "odin_vis", data$result, model$result, configure$result,
       fit$pars)
+    batch <- shiny::callModule(
+      mod_batch_server, "odin_batch", model$result, data$result, fit$pars)
 
     shiny::observe({
       if (!isTRUE(data$result()$configured)) {

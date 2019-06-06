@@ -135,8 +135,9 @@ mod_vis_server <- function(input, output, session, data, model, configure,
             for (i in seq_along(id)) {
               shiny::updateNumericInput(session, id[[i]], value = user[[i]])
             }
-            rv$result <- run_model_data(data(), model(), configure(), user,
-                                        list(pars = rv$pars, link = rv$link))
+            ## Disabling this for now for consistency with the batch plot
+            ## rv$result <- run_model_data(data(), model(), configure(), user,
+            ##                             list(pars = rv$pars, link = rv$link))
           }
         })
       }

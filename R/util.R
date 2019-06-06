@@ -139,3 +139,8 @@ ensure_extension <- function(path, ext) {
 list_to_df <- function(x) {
   data_frame(name = names(x), value = list_to_numeric(x))
 }
+
+
+constrain <- function(x, min, max) {
+  min(max(x, min), max)
+}
