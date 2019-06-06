@@ -163,7 +163,7 @@ compare_sse <- function(modelled, real) {
 
 
 run_model_data <- function(d, m, info, user, extra) {
-  if (isTRUE(d$configured) && !is.null(m) && info$configured) {
+  if (isTRUE(d$configured) && !is.null(m)) {
     name_time <- d$name_time
     mod <- m$result$model(user = user)
     ## Result aligned with the data
@@ -181,12 +181,24 @@ run_model_data <- function(d, m, info, user, extra) {
            ## TODO: can do this through metadata on the model - see
            ## module-configure.R link_ui
            name_vars = colnames(result_smooth)[-1],
-           name_data = names(info$link),
-           name_model = list_to_character(info$link),
+           name_data = d$name_vars,
            user = user,
            link = info$link),
       extra)
   } else {
     NULL
   }
+}
+
+
+odin_colours <- function(model, data, link) {
+  col_model <- set_names(odin_ui_palettes("odin")(length(model)), model)
+  col_data <- set_names(odin_ui_palettes("brewer_set1")(length(data)), data)
+
+  if (length(link) > 0L) {
+    link <- list_to_character(link, TRUE)
+    col_model[link] <- col_data[names(link)]
+  }
+
+  list(model = col_model, data = col_data)
 }

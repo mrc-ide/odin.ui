@@ -49,7 +49,8 @@ mod_vis_server <- function(input, output, session, data, model, configure,
 
   shiny::observe({
     m <- model()
-    if (is.null(m$result)) {
+    d <- data()
+    if (is.null(m$result) || !isTRUE(d$configured)) {
       rv$pars <- NULL
       rv$outputs <- NULL
     } else {
@@ -62,9 +63,9 @@ mod_vis_server <- function(input, output, session, data, model, configure,
       outputs <- mod_model_control_outputs(metadata, NULL, NULL, ns)
       outputs$vars$id <- outputs$name_map
       outputs$vars$y2 <- sprintf("y2_%s", outputs$vars$name)
-
-      outputs$vars$col <- odin_ui_palettes("odin")(nrow(outputs$vars))
       rv$outputs <- outputs$vars
+      rv$cols <- odin_colours(
+        outputs$vars$name, d$name_vars, configure()$link)
     }
   })
 
@@ -106,7 +107,7 @@ mod_vis_server <- function(input, output, session, data, model, configure,
   })
 
   output$graph_control <- shiny::renderUI({
-    mod_vis_graph_control(rv$outputs, session$ns)
+    mod_vis_graph_control(rv$outputs, rv$cols, session$ns)
   })
 
   shiny::observeEvent(
@@ -143,10 +144,16 @@ mod_vis_server <- function(input, output, session, data, model, configure,
 
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result)) {
-      y2 <- set_names(vlapply(rv$outputs$y2, function(el) input[[el]]),
-                      rv$outputs$name)
-      cols <- set_names(rv$outputs$col, rv$outputs$name)
-      plot_vis(rv$result, input, y2, cols, input$logscale_y)
+      y2_model <- set_names(vlapply(rv$outputs$y2, function(el) input[[el]]),
+                            rv$outputs$name)
+      y2_data <- set_names(rep(FALSE, length(rv$result$name_data)),
+                           rv$result$name_data)
+      info <- configure()
+      if (info$configured) {
+        y2_data[names(info$link)] <- y2_model[list_to_character(info$link)]
+      }
+      y2 <- list(model = y2_model, data = y2_data)
+      plot_vis(rv$result, input, y2, rv$cols, input$logscale_y)
     }
   })
 
@@ -182,8 +189,8 @@ mod_vis_pars <- function(pars, ns) {
 }
 
 
-mod_vis_graph_control <- function(outputs, ns) {
-  graph_settings <- mod_vis_graph_settings(outputs, ns)
+mod_vis_graph_control <- function(outputs, cols, ns) {
+  graph_settings <- mod_vis_graph_settings(outputs, cols, ns)
   shiny::tagList(
     shiny::div(
       class = "pull-right",
@@ -204,7 +211,7 @@ mod_vis_graph_control <- function(outputs, ns) {
 }
 
 
-mod_vis_graph_settings <- function(outputs, ns) {
+mod_vis_graph_settings <- function(outputs, cols, ns) {
   if (is.null(outputs)) {
     return(NULL)
   }
@@ -212,7 +219,7 @@ mod_vis_graph_settings <- function(outputs, ns) {
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
   labels <- Map(function(lab, col)
     shiny::span(lab, style = paste0("color:", col)),
-    outputs$name, outputs$col)
+    outputs$name, cols$model[outputs$name])
 
   tags <- shiny::div(class = "form-group",
                      raw_checkbox_input(ns("logscale_y"), "Log scale y axis"),
@@ -246,31 +253,28 @@ plot_vis <- function(result, input, y2, cols, logy) {
 
   xy <- result$smooth
   for (i in result$name_vars) {
-    yaxis <- if (y2[[i]]) "y2" else NULL
+    yaxis <- if (y2$model[[i]]) "y2" else NULL
     p <- plotly::add_lines(p, x = xy[, 1], y = xy[, i], name = i,
-                           line = list(color = cols[[i]]),
+                           line = list(color = cols$model[[i]]),
                            yaxis = yaxis)
   }
 
-  if (any(y2)) {
+  data_time <- result$data[[result$name_time]]
+  for (i in result$name_data) {
+    y <- result$data[[i]]
+    j <- !is.na(y)
+    yaxis <- if (y2$data[[i]]) "y2" else NULL
+    p <- plotly::add_markers(p, x = data_time[j], y = y[j], name = i,
+                             marker = list(color = cols$data[[i]]),
+                             yaxis = yaxis)
+  }
+
+  if (any(y2$modelled)) {
     opts <- list(overlaying = "y",
                  side = "right",
                  showgrid = FALSE,
                  type = if (logy) "log" else "linear")
     p <- plotly::layout(p, yaxis2 = opts)
-  }
-
-  link <- result$link
-  data_time <- result$data[[result$name_time]]
-  for (i in seq_along(link)) {
-    nm <- names(link)[[i]]
-    nm_modelled <- link[[i]]
-    y <- result$data[[nm]]
-    j <- !is.na(y)
-    yaxis <- if (y2[[nm_modelled]]) "y2" else NULL
-    p <- plotly::add_markers(p, x = data_time[j], y = y[j], name = nm,
-                             marker = list(color = cols[[nm_modelled]]),
-                             yaxis = yaxis)
   }
 
   p
