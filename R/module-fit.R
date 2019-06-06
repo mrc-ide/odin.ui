@@ -80,6 +80,8 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
                         goodness_of_fit = compare(result_data),
                         name_time = name_time,
                         name_data = names(info$link),
+                        name_target_data = target_data,
+                        name_target_model = target_model,
                         name_model = list_to_character(info$link))
     } else {
       rv$result <- NULL
@@ -94,10 +96,12 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
       name_time <- rv$result$name_time
       name_data <- rv$result$name_data
       name_model <- rv$result$name_model
+      name_target_data <- rv$result$name_target_data
+      name_target_model <- rv$result$name_target_model
       cols <- pal(length(name_data))
       cols <- set_names(c(cols, cols), c(name_data, name_model))
       plot_fit(rv$result$data, name_time, name_data, rv$result$smooth,
-               name_model, cols)
+               name_model, name_target_data, name_target_model, cols)
     }
   })
 

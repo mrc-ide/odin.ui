@@ -120,19 +120,22 @@ print_every <- function(every) {
 
 
 plot_fit <- function(data, name_time, name_data, model_output, name_model,
-                     cols) {
+                     name_target_data, name_target_model, cols) {
   p <- plotly::plot_ly()
   p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
   for (i in name_model) {
+    dash <- if (i == name_target_model) "solid" else "dash"
     p <- plotly::add_lines(p, x = model_output[, "t"], y = model_output[, i],
-                           name = i, line = list(color = cols[[i]]))
+                           name = i,
+                           line = list(color = cols[[i]], dash = dash))
   }
 
   data_time <- data[[name_time]]
   for (i in name_data) {
     j <- !is.na(data[[i]])
+    symbol <- if (i == name_target_data) "circle" else "circle-open"
     p <- plotly::add_markers(p, x = data_time[j], y = data[[i]][j], name = i,
-                             marker = list(color = cols[[i]]))
+                             marker = list(color = cols[[i]], symbol = symbol))
   }
 
   p
