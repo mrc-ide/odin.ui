@@ -20,8 +20,6 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
       browser()
     })
 
-  ## TODO: all this colour palette stuff needs changing
-  pal <- odin_ui_palettes("odin")
   rv <- shiny::reactiveValues(pars = NULL)
 
   shiny::observe({
@@ -102,8 +100,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
       name_model <- rv$result$name_model
       name_target_data <- rv$result$name_target_data
       name_target_model <- rv$result$name_target_model
-      cols <- pal(length(name_data))
-      cols <- set_names(c(cols, cols), c(name_data, name_model))
+      cols <- odin_colours(name_model, name_data, rv$result$info$link)
       plot_fit(rv$result$data, name_time, name_data, rv$result$smooth,
                name_model, name_target_data, name_target_model, cols)
     }

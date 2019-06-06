@@ -127,7 +127,7 @@ plot_fit <- function(data, name_time, name_data, model_output, name_model,
     dash <- if (i == name_target_model) "solid" else "dash"
     p <- plotly::add_lines(p, x = model_output[, "t"], y = model_output[, i],
                            name = i,
-                           line = list(color = cols[[i]], dash = dash))
+                           line = list(color = cols$model[[i]], dash = dash))
   }
 
   data_time <- data[[name_time]]
@@ -135,7 +135,8 @@ plot_fit <- function(data, name_time, name_data, model_output, name_model,
     j <- !is.na(data[[i]])
     symbol <- if (i == name_target_data) "circle" else "circle-open"
     p <- plotly::add_markers(p, x = data_time[j], y = data[[i]][j], name = i,
-                             marker = list(color = cols[[i]], symbol = symbol))
+                             marker = list(color = cols$data[[i]],
+                                           symbol = symbol))
   }
 
   p
@@ -193,7 +194,7 @@ run_model_data <- function(d, m, info, user, extra) {
 
 odin_colours <- function(model, data, link) {
   col_model <- set_names(odin_ui_palettes("odin")(length(model)), model)
-  col_data <- set_names(odin_ui_palettes("brewer_set1")(length(data)), data)
+  col_data <- odin_colours_data(data)
 
   if (length(link) > 0L) {
     link <- list_to_character(link, TRUE)
@@ -201,4 +202,9 @@ odin_colours <- function(model, data, link) {
   }
 
   list(model = col_model, data = col_data)
+}
+
+
+odin_colours_data <- function(data) {
+  set_names(odin_ui_palettes("brewer_set1")(length(data)), data)
 }

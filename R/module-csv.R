@@ -92,7 +92,7 @@ mod_csv_server <- function(input, output, session) {
 
   output$data_plot <- plotly::renderPlotly({
     if (isTRUE(rv$data$configured)) {
-      cols <- odin_ui_palettes("odin")(length(rv$data$name_vars))
+      cols <- odin_colours_data(rv$data$name_vars)
       plot_data(rv$data$data, rv$data$name_time, rv$data$name_vars, cols)
     }
   })
