@@ -8,5 +8,5 @@ mock_model <- function(pars) {
 
 
 data_frame <- function(...) {
-  data.frame(..., stringsAsFactors = FALSE)
+  data.frame(..., stringsAsFactors = FALSE, check.names = FALSE)
 }

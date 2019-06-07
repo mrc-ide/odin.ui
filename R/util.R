@@ -144,3 +144,8 @@ list_to_df <- function(x) {
 constrain <- function(x, min, max) {
   min(max(x, min), max)
 }
+
+
+squote <- function(x) {
+  sprintf("'%s'", x)
+}
