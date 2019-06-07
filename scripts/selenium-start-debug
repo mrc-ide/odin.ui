@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
+HERE=$(dirname $0)
+ODIN_UI_ROOT=$(realpath $HERE/..)
+# or use 2.53.0
+SELENIUM_VERSION=latest
+
 docker run -d --rm \
        --name shinysel-selenium \
        --network=host \
-       -v ${PWD}:/host \
-       selenium/standalone-firefox-debug
+       -v ${ODIN_UI_ROOT}:/host \
+       selenium/standalone-firefox-debug:$SELENIUM_VERSION

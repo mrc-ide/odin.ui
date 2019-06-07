@@ -1,6 +1,3 @@
-## Cache to store persistent state in
-.selenium <- new.env(parent = emptyenv())
-
 ## Create a selenium driver (if we have not already done so), skipping
 ## gracefully if it is not possible
 selenium_driver <- function() {
@@ -11,21 +8,18 @@ selenium_driver <- function() {
     ## No point running a test if we can't launch the application either
     testthat::skip_if_not_installed("callr")
   }
-  if (is.null(.selenium$driver)) {
-    .selenium$driver <- tryCatch({
-      dr <- RSelenium::remoteDriver()
-      dr$open(silent = TRUE)
-      dr
-    }, error = function(e) {
-      if (required) {
-        stop(e)
-      } else {
-        testthat::skip(e$message)
-      }
-    })
-    .selenium$port <- free_port(8000)
-  }
-  .selenium$driver
+  tryCatch({
+    dr <- RSelenium::remoteDriver()
+    dr$open(silent = TRUE)
+    dr$maxWindowSize()
+    dr
+  }, error = function(e) {
+    if (required) {
+      stop(e)
+    } else {
+      testthat::skip(e$message)
+    }
+  })
 }
 
 
@@ -37,7 +31,7 @@ path_remote <- function(path) {
 ## This version is totally built around our demo app - we'll need to
 ## generalise this later.
 launch_prototype <- function() {
-  port <- .selenium$port()
+  port <- get_free_port()
   args <- list(port)
 
   process <- callr::r_bg(function(port) {
@@ -141,3 +135,23 @@ retry_until_element_exists <- function(driver, value, using = "id", ...) {
         sprintf("Searching for element %s = %s", using, value))
   driver$findElement(using, value)
 }
+
+
+expect_with_retry <- function(expectation, fn, ..., timeout = 5, poll = 0.1) {
+  give_up <- Sys.time() + timeout
+  repeat {
+    res <- tryCatch(
+      expectation(fn(), ...),
+      error = identity)
+    if (!inherits(res, "error")) {
+      return(invisible(res))
+    }
+    if (Sys.time() > give_up) {
+      stop(res)
+    }
+    Sys.sleep(poll)
+  }
+}
+
+
+get_free_port <- free_port(8000)
