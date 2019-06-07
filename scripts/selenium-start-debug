@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+docker run -d --rm \
+       --name shinysel-selenium \
+       --network=host \
+       -v ${PWD}:/host \
+       selenium/standalone-firefox-debug

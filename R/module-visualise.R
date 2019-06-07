@@ -244,6 +244,7 @@ mod_vis_graph_settings <- function(outputs, cols, ns) {
 
 
 ## Just punting on this:
+##' @importFrom plotly plot_ly
 plot_vis <- function(result, input, y2, cols, logscale_y) {
   p <- plotly::plot_ly()
   p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)

@@ -1,7 +1,10 @@
-devtools::load_all()
-## odin_ui_csv_app(run = FALSE)
+odin_prototype <- function(initial_code) {
+  shiny::shinyApp(ui = odin_prototype_ui(initial_code),
+                  server = odin_prototype_server(initial_code))
+}
 
-odin_fit_ui <- function(initial_code) {
+
+odin_prototype_ui <- function(initial_code) {
   shiny::shinyUI(
     shiny::navbarPage(
       "odin editor",
@@ -58,7 +61,7 @@ odin_fit_ui <- function(initial_code) {
 }
 
 
-odin_fit_server <- function(initial_code) {
+odin_prototype_server <- function(initial_code) {
   function(input, output, session) {
     state <- shiny::reactiveValues(state = NULL)
 
@@ -149,7 +152,3 @@ state_filename <- function(filename) {
   }
   filename
 }
-
-code <- readLines("../anne/model/model1.R")
-shiny::shinyApp(ui = odin_fit_ui(code),
-                server = odin_fit_server(code))
