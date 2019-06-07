@@ -28,17 +28,31 @@ path_remote <- function(path) {
 }
 
 
-## This version is totally built around our demo app - we'll need to
-## generalise this later.
 launch_prototype <- function() {
-  port <- get_free_port()
-  args <- list(port)
-
-  process <- callr::r_bg(function(port) {
+  launch_app(function(port) {
     options(error = traceback)
     app <- odin.ui:::odin_prototype(character(0))
     shiny::runApp(app, port = port)
-  }, args = args)
+  })
+}
+
+
+launch_csv <- function() {
+  launch_app(function(port) {
+    options(error = traceback)
+    app <- odin.ui:::odin_ui_csv_app()
+    shiny::runApp(app, port = port)
+  })
+}
+
+
+## This version is totally built around our demo app - we'll need to
+## generalise this later.
+launch_app <- function(driver) {
+  port <- get_free_port()
+  args <- list(port)
+
+  process <- callr::r_bg(driver, args = args)
 
   url <- paste0("http://localhost:", port)
   ## It will take a short while before the server is responsive to
