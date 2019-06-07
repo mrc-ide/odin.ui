@@ -10,6 +10,7 @@ mod_fit_ui <- function(id) {
         shiny::uiOutput(ns("pars"))),
       shiny::mainPanel(
         plotly::plotlyOutput(ns("results_plot")),
+        shiny::uiOutput(ns("graph_control")),
         shiny::textOutput(ns("goodness_of_fit")))))
 }
 
@@ -52,6 +53,12 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
     ui
   })
 
+  output$graph_control <- shiny::renderUI({
+    if (!is.null(rv$result)) {
+      mod_fit_graph_control(rv$outputs, rv$cols, session$ns)
+    }
+  })
+
   shiny::observe({
     d <- data()
     m <- model()
@@ -65,7 +72,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
       target_model <- info$link[[target_data]]
       mod <- m$result$model(user = user)
       ## Result aligned with the data
-      result_data <- cbind(mod$run(d$data[[name_time]]), d$data)
+      result_combined <- cbind(mod$run(d$data[[name_time]]), d$data)
 
       ## Result smoothly plotted
       t <- seq(0, max(d$data[[name_time]]), length.out = 501)
@@ -75,16 +82,23 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
       compare <- make_compare(d$data, name_time, target_data, target_model,
                               compare_sse)
 
-      ## Big whack of data to use later on:
-      rv$result <- list(data = result_data,
+      name_data <- names(info$link)
+      name_model <- list_to_character(info$link)
+      rv$outputs <- data_frame(
+        name = name_model,
+        y2 = sprintf("y2_%s", name_model))
+      rv$cols <- odin_colours(name_model, name_data, rv$result$info$link)
+      rv$result <- list(data = d$data,
+                        combined = result_combined,
                         smooth = result_smooth,
-                        goodness_of_fit = compare(result_data),
+                        user = user,
+                        goodness_of_fit = compare(result_combined),
                         info = info,
                         name_time = name_time,
-                        name_data = names(info$link),
+                        name_data = name_data,
                         name_target_data = target_data,
                         name_target_model = target_model,
-                        name_model = list_to_character(info$link))
+                        name_model = name_model)
     } else {
       rv$result <- NULL
     }
@@ -100,9 +114,9 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
       name_model <- rv$result$name_model
       name_target_data <- rv$result$name_target_data
       name_target_model <- rv$result$name_target_model
-      cols <- odin_colours(name_model, name_data, rv$result$info$link)
-      plot_fit(rv$result$data, name_time, name_data, rv$result$smooth,
-               name_model, name_target_data, name_target_model, cols)
+      ## TODO: this will not work well if names are shared
+      plot_fit(rv$result$combined, name_time, name_data, rv$result$smooth,
+               name_model, name_target_data, name_target_model, rv$cols)
     }
   })
 
@@ -142,6 +156,18 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
         mod_fit_pars_update(session, rv$fit$coef[pars$vary, , drop = FALSE])
         message("done")
       }
+    })
+
+  output$download_button <- shiny::downloadHandler(
+    filename = function() {
+      mod_fit_download_filename(input$download_filename, input$download_type)
+    },
+    content = function(filename) {
+      data <- switch(input$download_type,
+                     modelled = rv$result$smooth,
+                     combined = rv$result$combined,
+                     parameters = list_to_df(rv$result$user))
+      write.csv(data, filename, row.names = FALSE)
     })
 
   get_state <- function() {
@@ -229,4 +255,67 @@ mod_fit_set_inputs <- function(data, session, update_fn) {
   for (i in seq_along(data)) {
     update_fn(session, names(data)[[i]], value = data[[i]])
   }
+}
+
+
+mod_fit_graph_control <- function(outputs, cols, ns) {
+  graph_settings <- mod_fit_graph_settings(outputs, cols, ns)
+  shiny::tagList(
+    shiny::div(
+      class = "pull-right",
+      shiny::div(
+        class = "form-inline mt-5",
+        shiny::div(
+          class = "form-group",
+          raw_text_input(ns("download_filename"), placeholder = "filename",
+                         value = "")),
+        shiny::div(
+          class = "form-group",
+          raw_select_input(ns("download_type"),
+                           choices = list("modelled", "combined",
+                                          "parameters"))),
+        shiny::downloadButton(ns("download_button"), "Download",
+                              class = "btn-blue")),
+      graph_settings))
+}
+
+
+mod_fit_graph_settings <- function(outputs, cols, ns) {
+  if (is.null(outputs)) {
+    return(NULL)
+  }
+  title <- "Graph settings"
+  id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
+  labels <- Map(function(lab, col)
+    shiny::span(lab, style = paste0("color:", col)),
+    outputs$name, cols$model[outputs$name])
+
+  tags <- shiny::div(class = "form-group",
+                     raw_checkbox_input(ns("logscale_y"), "Log scale y axis"),
+                     shiny::tags$label("Include in plot"),
+                     Map(raw_checkbox_input, ns(outputs$y2),
+                         labels, value = FALSE))
+
+  head <- shiny::a(style = "text-align: right; display: block;",
+                   "data-toggle" = "collapse",
+                   class = "text-muted",
+                   href = paste0("#", id),
+                   title, shiny::icon("gear", lib = "font-awesome"))
+
+  body <- shiny::div(id = id,
+                    class = "collapse box",
+                    style = "width: 300px;",
+                    list(tags))
+
+  shiny::div(class = "pull-right mt-3", head, body)
+}
+
+
+mod_fit_download_filename <- function(filename, type) {
+  if (!is.null(filename) && nzchar(filename)) {
+    filename <- ensure_extension(filename, "csv")
+  } else {
+    filename <- sprintf("odin-fit-%s-%s.csv", type, date_string())
+  }
+  filename
 }
