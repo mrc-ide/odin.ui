@@ -42,3 +42,21 @@ docker run --rm -p 3838:3838 mrcide/odin.ui
 ```
 
 Then visit http://localhost:3838/odin.ui/
+
+## Testing
+
+Start a selenium server with either
+
+```
+./scripts/selenium-start
+```
+
+or
+
+```
+./scripts/selenium-start-debug
+```
+
+(with the latter you can connect over VNC to `localhost:5900`, which is useful for writing the tests and debugging failures, but not needed for running the suite).
+
+The package *must* be installed before running the tests because we use `callr::r_bg` to create a backgrounded R process that will run the shiny app.
