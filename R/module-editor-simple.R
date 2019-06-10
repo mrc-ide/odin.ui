@@ -152,12 +152,11 @@ editor_validation_info <- function(status) {
     panel <- NULL
   } else {
     if (!is.null(status$error)) {
-      body <- shiny::pre(status$error$message)
+      body <- shiny::pre(status$error)
       result <- "error"
       class <- "danger"
     } else if (length(status$messages) > 0L) {
-      body <- shiny::pre(paste(vcapply(status$messages, "[[", "message"),
-                               collapse = "\n\n"))
+      body <- shiny::pre(paste(status$messages, collapse = "\n\n"))
       result <- "note"
       class <- "info"
     } else {

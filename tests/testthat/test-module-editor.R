@@ -28,8 +28,7 @@ test_that("editor validation info", {
   expect_equal(as.character(res$children[[1]]$children[[2]]$children[[1]]),
                "<pre>failure</pre>")
 
-  res <- editor_validation_info(list(messages = list(list(message = "a"),
-                                                     list(message = "b"))))
+  res <- editor_validation_info(list(messages = c("a", "b")))
   expect_equal(res$children[[1]]$attribs$class, "panel panel-info")
   expect_match(res$children[[1]]$children[[1]]$children[[1]]$attribs$class,
                "info-circle")
