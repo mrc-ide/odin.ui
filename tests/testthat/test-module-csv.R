@@ -164,7 +164,7 @@ test_that("csv summary: configured", {
   res <- csv_summary(list(success = TRUE, configured = TRUE,
                           data = matrix(0, 3, 4), name_vars = c("a", "b")))
   expect_equal(res$children[[1]]$attribs$class,
-               "panel panel-info")
+               "panel panel-success")
   expect_equal(res$children[[1]]$children[[1]]$children[[2]],
                "Uploaded 3 rows and 4 columns")
   expect_equal(res$children[[1]]$children[[2]]$children[[1]],

@@ -167,10 +167,12 @@ csv_summary <- function(data) {
     if (isTRUE(data$configured)) {
       body <- sprintf("Response variables: %s",
                       paste(data$name_vars, collapse = ", "))
+      class <- "success"
     } else {
       body <- "Select a time variable to view plot"
+      class <- "info"
     }
-    simple_panel("info", head, body)
+    simple_panel(class, head, body)
   } else {
     body <- shiny::tags$ul(lapply(data$error, shiny::tags$li))
     simple_panel("danger", "Error loading csv", body)
