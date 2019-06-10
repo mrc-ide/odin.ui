@@ -80,14 +80,14 @@ mod_editor_simple_server <- function(input, output, session, initial_code) {
       if (!is.null(input$uploaded_file)) {
         code <- editor_read_code(input$uploaded_file$datapath)
         shinyAce::updateAceEditor(session, ns("editor"), value = code)
-        data$validation <- odin::odin_validate(code, "text")
+        data$validation <- editor_validate(code)
       }
     })
 
   ## Manual validation
   shiny::observeEvent(
     input$validate_button, {
-      data$validation <- odin::odin_validate(input$editor, "text")
+      data$validation <- editor_validate(input$editor)
     })
 
   ## Realtime validation
@@ -97,7 +97,7 @@ mod_editor_simple_server <- function(input, output, session, initial_code) {
         identical(data$compilation$code, input$editor)
     }
     if (input$auto_validate) {
-      data$validation <- odin::odin_validate(input$editor, "text")
+      data$validation <- editor_validate(input$editor)
     }
   })
 
@@ -151,7 +151,7 @@ editor_validation_info <- function(status) {
   if (is.null(status)) {
     panel <- NULL
   } else {
-    if (!is.null(status$error$message)) {
+    if (!is.null(status$error)) {
       body <- shiny::pre(status$error$message)
       result <- "error"
       class <- "danger"
@@ -177,22 +177,27 @@ editor_compilation_info <- function(status) {
   if (is.null(status)) {
     panel <- NULL
   } else {
-    if (!is.null(status$error$message)) {
-      body <- shiny::pre(status$error$message)
-      result <- "error"
-      class <- "danger"
-    } else if (length(status$messages) > 0L) {
-      body <- shiny::pre(paste(vcapply(status$messages, "[[", "message"),
-                               collapse = "\n\n"))
-      result <- "note"
-      class <- "info"
-    } else {
-      body <- NULL
-      result <- "success"
-      class <- "success"
+    success <- isTRUE(status$result$success)
+    result <- sprintf("%s, %.2f s elapsed",
+                      if (success) "success" else "error",
+                      status$result$elapsed[["elapsed"]])
+    is_current <- status$is_current
+    if (!is_current) {
+      result <- paste(result, "(code has changed since this was run)")
     }
+    if (success) {
+      class <- if (is_current) "success" else "default"
+      icon_name <- "check-circle"
+      ## TODO: this should be hideable, and hidden by default
+      body <- shiny::pre(paste(status$result$output, collapse = "\n"))
+    } else {
+      class <- if (is_current) "danger" else "warning"
+      icon_name <- "times-circle"
+      body <- shiny::pre(status$result$error)
+    }
+
     title <- sprintf("Compilation: %s", result)
-    panel <- simple_panel(class, title, body)
+    panel <- simple_panel(class, title, body, icon_name)
   }
 
   panel
@@ -200,7 +205,7 @@ editor_compilation_info <- function(status) {
 
 
 editor_border <- function(status) {
-  if (!is.null(status$error$message)) {
+  if (!is.null(status$error)) {
     "alert"
   } else {
     "normal"
@@ -213,11 +218,23 @@ editor_read_code <- function(path) {
 }
 
 
+editor_validate <- function(code) {
+  res <- odin::odin_validate(code, "text")
+  if (!is.null(res$error)) {
+    res$error <- res$error$message
+  }
+  res$messages <- vcapply(res$messages, function(x) x$message)
+  res
+}
+
+
 editor_compile <- function(code) {
-  validation <- odin::odin_validate(code, "text")
+  validation <- editor_validate(code)
   if (validation$success) {
     result <- odin::odin_build(validation$result)
     result$info <- model_info(result$model)
+  } else {
+    result <- NULL
   }
   compilation <- list(code = code, result = result, is_current = TRUE)
   list(validation = validation, compilation = compilation)

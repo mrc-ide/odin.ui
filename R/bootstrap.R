@@ -1,5 +1,5 @@
-simple_panel <- function(class, title, body) {
-  icon_name <- switch(
+simple_panel <- function(class, title, body, icon_name = NULL) {
+  icon_name <- icon_name %||% switch(
     class,
     danger = "exclamation-circle",
     success = "check-circle",
