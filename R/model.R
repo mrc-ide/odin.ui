@@ -210,3 +210,20 @@ model_metadata <- function(model) {
   ir <- odin::odin_ir(model, TRUE)
   ir
 }
+
+
+model_info <- function(model) {
+  if (is.null(model)) {
+    return(NULL)
+  }
+  metadata <- odin::odin_ir(model, TRUE)
+  variables <- names(metadata$data$variable$contents)
+  output <- names(metadata$data$output$contents)
+  d <- metadata$data$elements[c(variables, output)]
+  rank <- vapply(d, "[[", integer(1), "rank", USE.NAMES = FALSE)
+  type <- rep("variable", length(d))
+  type[names(d) %in% output] <- "output"
+  vars <- data_frame(name = names(d), rank = rank, type = type)
+
+  list(pars = coef(model), vars = vars)
+}

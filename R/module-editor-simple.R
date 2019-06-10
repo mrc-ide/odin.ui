@@ -2,7 +2,7 @@
 mod_editor_simple_ui <- function(id, initial_code, path_docs) {
   ns <- shiny::NS(id)
 
-  initial_code <- mod_editor_validate_initial_code(initial_code)
+  initial_code <- editor_validate_initial_code(initial_code)
   docs <- shiny::includeMarkdown(path_docs %||% odin_ui_file("md/editor.md"))
   path_editor_css <- odin_ui_file("css/styles-editor.css")
 
@@ -60,7 +60,7 @@ mod_editor_simple_server <- function(input, output, session, initial_code) {
   data <- shiny::reactiveValues(validation = NULL,
                                 compilation = NULL)
 
-  initial_code <- mod_editor_validate_initial_code(initial_code)
+  initial_code <- editor_validate_initial_code(initial_code)
 
   shiny::observeEvent(
     input$reset_button, {
@@ -78,10 +78,8 @@ mod_editor_simple_server <- function(input, output, session, initial_code) {
   shiny::observeEvent(
     input$uploaded_file, {
       if (!is.null(input$uploaded_file)) {
-        code <- readLines(input$uploaded_file$datapath)
-        code_str <- paste0(code, "\n", collapse = "")
-        ## TODO: This probably needs considerable santisation!
-        shinyAce::updateAceEditor(session, ns("editor"), value = code_str)
+        code <- editor_read_code(input$uploaded_file$datapath)
+        shinyAce::updateAceEditor(session, ns("editor"), value = code)
         data$validation <- odin::odin_validate(code, "text")
       }
     })
@@ -103,32 +101,26 @@ mod_editor_simple_server <- function(input, output, session, initial_code) {
     }
   })
 
-  shiny::observe({
-    res <- mod_editor_validation_info(data$validation)
-    output$validation_info <- res$panel
-    shinyAce::updateAceEditor(session, ns("editor"), border = res$border)
+  output$validation_info <- shiny::renderUI({
+    editor_validation_info(data$validation)
+  })
+
+  output$compilation_info <- shiny::renderUI({
+    editor_compilation_info(data$compilation)
   })
 
   shiny::observe({
-    res <- mod_editor_compilation_info(data$compilation)
-    output$compilation_info <- res$panel
-    shinyAce::updateAceEditor(session, ns("editor"), border = res$border)
+    shinyAce::updateAceEditor(session, ns("editor"),
+                              border = editor_border(data$validation))
   })
 
   ## Here is the first part of the exit route out of the module
   shiny::observeEvent(
     input$go_button, {
-      code <- input$editor
       res <- shiny::withProgress(
-        message = "Compiling model...",
-        detail = "some detail", value = 1, {
-          data$validation <- odin::odin_validate(code, "text")
-          if (data$validation$success) {
-            odin::odin_build(data$validation$result)
-          }
-        })
-
-      data$compilation <- list(code = code, result = res, is_current = TRUE)
+        message = "Compiling...", value = 1, editor_compile(input$editor))
+      data$validation <- res$validation
+      data$compilation <- res$compilation
     })
 
   get_state <- function() {
@@ -136,27 +128,111 @@ mod_editor_simple_server <- function(input, output, session, initial_code) {
       ## TODO: for completeness, it might be worth getting the model
       ## filename and the auto_validate state too, but for now we don't.
       list(code = input$editor,
-           is_current = isTRUE(data$compilation$is_current))
+           compiled = if (data$compilation$success) data$compilation$code)
     })
   }
 
   set_state <- function(state) {
-    code <- state$code
-    shinyAce::updateAceEditor(session, ns("editor"), value = code)
-    if (state$is_current) {
-      ## Then trigger the compilation here too (note that this
-      ## duplicates code in the go_button observer)
-      res <- shiny::withProgress(
-        message = "Compiling model...",
-        detail = "some detail", value = 1, {
-          data$validation <- odin::odin_validate(code, "text")
-          odin::odin_build(data$validation$result)
-        })
-      data$compilation <- list(code = code, result = res, is_current = TRUE)
+    if (!is.null(state$compiled)) {
+      res <- editor_compile(state$compiled)
+      data$validation <- res$validation
+      data$compilation <- res$compilation
     }
+    shinyAce::updateAceEditor(session, ns("editor"), value = state$code)
   }
 
   return(list(result = shiny::reactive(data$compilation),
               get_state = get_state,
               set_state = set_state))
+}
+
+
+editor_validation_info <- function(status) {
+  if (is.null(status)) {
+    panel <- NULL
+  } else {
+    if (!is.null(status$error$message)) {
+      body <- shiny::pre(status$error$message)
+      result <- "error"
+      class <- "danger"
+    } else if (length(status$messages) > 0L) {
+      body <- shiny::pre(paste(vcapply(status$messages, "[[", "message"),
+                               collapse = "\n\n"))
+      result <- "note"
+      class <- "info"
+    } else {
+      body <- NULL
+      result <- "success"
+      class <- "success"
+    }
+    title <- sprintf("Validation: %s", result)
+    panel <- simple_panel(class, title, body)
+  }
+
+  panel
+}
+
+
+editor_compilation_info <- function(status) {
+  if (is.null(status)) {
+    panel <- NULL
+  } else {
+    if (!is.null(status$error$message)) {
+      body <- shiny::pre(status$error$message)
+      result <- "error"
+      class <- "danger"
+    } else if (length(status$messages) > 0L) {
+      body <- shiny::pre(paste(vcapply(status$messages, "[[", "message"),
+                               collapse = "\n\n"))
+      result <- "note"
+      class <- "info"
+    } else {
+      body <- NULL
+      result <- "success"
+      class <- "success"
+    }
+    title <- sprintf("Compilation: %s", result)
+    panel <- simple_panel(class, title, body)
+  }
+
+  panel
+}
+
+
+editor_border <- function(status) {
+  if (!is.null(status$error$message)) {
+    "alert"
+  } else {
+    "normal"
+  }
+}
+
+
+editor_read_code <- function(path) {
+  paste0(readLines(path), "\n", collapse = "")
+}
+
+
+editor_compile <- function(code) {
+  validation <- odin::odin_validate(code, "text")
+  if (validation$success) {
+    result <- odin::odin_build(validation$result)
+    result$info <- model_info(result$model)
+  }
+  compilation <- list(code = code, result = result, is_current = TRUE)
+  list(validation = validation, compilation = compilation)
+}
+
+
+editor_validate_initial_code <- function(initial_code) {
+  if (is.null(initial_code)) {
+    initial_code <- readLines(odin_ui_file("editor_default.R"))
+  } else if (!is.character(initial_code)) {
+    stop("'initial_code' must be a character vector", call. = FALSE)
+  }
+  initial_code <- paste(initial_code, collapse = "\n")
+  if (nzchar(initial_code) && !grepl("\\n$", initial_code)) {
+    initial_code <- paste0(initial_code, "\n")
+  }
+  initial_code
 }
