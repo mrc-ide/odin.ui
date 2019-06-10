@@ -15,18 +15,7 @@ mod_configure_ui <- function(id) {
 
 mod_configure_server <- function(input, output, session, data, model) {
   output$data_summary <- shiny::renderText({
-    d <- data()
-    if (is.null(d)) {
-      ## Ideally this would point us back to the data tab with a link
-      ## but that requires passing in the parent session:
-      ## https://stackoverflow.com/a/54751068
-      msg <- "Please upload data"
-    } else if (!isTRUE(d$configured)) {
-      msg <- "Please select time variable for your data"
-    } else {
-      msg <- sprintf("%d rows of data have been uploaded", nrow(d$data))
-    }
-    msg
+    configure_data_summary(data())
   })
 
   rv <- shiny::reactiveValues(link = NULL)
@@ -147,5 +136,19 @@ mod_configure_link_ui <- function(input, session, rv, data, model, restore) {
           ns(sprintf(fmt, x)), x, selected = selected[[x]],
           choices = vars_model, options = if (is.null(selected[[x]])) opts))
     })
+  }
+}
+
+
+configure_data_summary <- function(data) {
+  if (is.null(data)) {
+    ## Ideally this would point us back to the data tab with a link
+    ## but that requires passing in the parent session:
+    ## https://stackoverflow.com/a/54751068
+    "Please upload data"
+  } else if (!isTRUE(data$configured)) {
+    "Please select time variable for your data"
+  } else {
+    sprintf("%d rows of data have been uploaded", nrow(data$data))
   }
 }
