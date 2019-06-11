@@ -55,7 +55,8 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
 }
 
 
-mod_editor_simple_server <- function(input, output, session, initial_code) {
+mod_editor_simple_server <- function(input, output, session, initial_code,
+                                     editor_tab) {
   ns <- session$ns
   data <- shiny::reactiveValues(validation = NULL,
                                 compilation = NULL)
@@ -141,9 +142,16 @@ mod_editor_simple_server <- function(input, output, session, initial_code) {
     shinyAce::updateAceEditor(session, ns("editor"), value = state$code)
   }
 
-  return(list(result = shiny::reactive(data$compilation),
-              get_state = get_state,
-              set_state = set_state))
+  shiny::observeEvent(
+    input$goto_editor, {
+      editor_tab$go()
+    })
+
+  list(result = shiny::reactive(data$compilation),
+       status = shiny::reactive(
+         editor_status(data$compilation, editor_tab, session$ns)),
+       get_state = get_state,
+       set_state = set_state)
 }
 
 
@@ -188,6 +196,7 @@ editor_compilation_info <- function(status) {
       class <- if (is_current) "success" else "default"
       icon_name <- "check-circle"
       ## TODO: this should be hideable, and hidden by default
+      ## TODO: only do this if it's nonempty
       body <- shiny::pre(paste(status$result$output, collapse = "\n"))
     } else {
       class <- if (is_current) "danger" else "warning"
@@ -251,4 +260,39 @@ editor_validate_initial_code <- function(initial_code) {
     initial_code <- paste0(initial_code, "\n")
   }
   initial_code
+}
+
+
+editor_status <- function(model, editor_tab, ns) {
+  if (is.null(model)) {
+    class <- "danger"
+    title <- "Please compile a model"
+    if (is.null(editor_tab)) {
+      body <- NULL
+    } else {
+      body <- shiny::tagList(
+        "Return to the",
+        shiny::actionLink(ns("goto_editor"), editor_tab$link_text))
+    }
+  } else {
+    np <- nrow(model$result$info$pars)
+    nv <- nrow(model$result$info$vars)
+    title <- sprintf("Model with %d parameters and %d variables/outputs",
+                     np, nv)
+    if (model$is_current) {
+      class <- "success"
+      body <- NULL
+    } else {
+      class <- "warning"
+      msg <- "Warning: model is out of date, consider recompiling the model."
+      if (is.null(editor_tab)) {
+        body <- msg
+      } else {
+        body <- shiny::tagList(
+          msg, "Return to the",
+          shiny::actionLink(ns("goto_editor"), editor_tab$link_text))
+      }
+    }
+  }
+  simple_panel(class, title, body)
 }

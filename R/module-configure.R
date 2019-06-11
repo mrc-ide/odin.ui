@@ -4,8 +4,10 @@ mod_configure_ui <- function(id) {
     shiny::titlePanel("Configure"),
     shiny::h3("Data"),
     shiny::uiOutput(ns("data_status")),
+    shiny::uiOutput(ns("data_status2")),
     shiny::h3("Model"),
     shiny::uiOutput(ns("model_status")),
+    shiny::uiOutput(ns("model_status2")),
     shiny::h3("Link"),
     shiny::uiOutput(ns("link")),
     shiny::textOutput(ns("link_status")))
@@ -13,15 +15,15 @@ mod_configure_ui <- function(id) {
 
 
 mod_configure_server <- function(input, output, session, data, model,
-                                 data_tab = NULL, model_tab = NULL) {
+                                 data_status = NULL, model_status = NULL) {
   rv <- shiny::reactiveValues(link = NULL)
 
   output$data_status <- shiny::renderUI({
-    configure_data_status(data(), data_tab, session$ns)
+    data_status()
   })
 
   output$model_status <- shiny::renderUI({
-    configure_model_status(model(), model_tab, session$ns)
+    model_status()
   })
 
   output$link_status <- shiny::renderText({
@@ -42,14 +44,6 @@ mod_configure_server <- function(input, output, session, data, model,
       rv$label <- sprintf("%s ~ %s",
                           names(rv$link), vcapply(rv$link, identity))
     }
-  })
-
-  shiny::observeEvent(input$goto_data, {
-    data_tab$go()
-  })
-
-  shiny::observeEvent(input$goto_model, {
-    model_tab$go()
   })
 
   get_state <- function() {
@@ -113,68 +107,6 @@ configure_link_ui_update <- function(map, input, data, model, restore) {
 
   list(map = map, selected = selected,
        vars_data = vars_data, vars_model = vars_model)
-}
-
-
-configure_data_status <- function(data, data_tab, ns) {
-  if (isTRUE(data$configured)) {
-    class <- "success"
-    title <- sprintf("%d rows of data have been uploaded", nrow(data$data))
-    body <- NULL
-  } else {
-    class <- "danger"
-    if (is.null(data$data)) {
-      ## Ideally this would point us back to the data tab with a link
-      ## but that requires passing in the parent session:
-      ## https://stackoverflow.com/a/54751068
-      title <- "Please upload data"
-    } else {
-      title <- "Please select time variable for your data"
-    }
-    if (is.null(data_tab)) {
-      body <- NULL
-    } else {
-      body <- shiny::tagList(
-        "Return to the",
-        shiny::actionLink(ns("goto_data"), data_tab$link_text))
-    }
-  }
-  simple_panel(class, title, body)
-}
-
-
-configure_model_status <- function(model, model_tab, ns) {
-  if (is.null(model)) {
-    class <- "danger"
-    title <- "Please compile a model"
-    if (is.null(model_tab)) {
-      body <- NULL
-    } else {
-      body <- shiny::tagList(
-        "Return to the",
-        shiny::actionLink(ns("goto_model"), model_tab$link_text))
-    }
-  } else {
-    np <- nrow(model$result$info$pars)
-    nv <- nrow(model$result$info$vars)
-    title <- sprintf("Model with %d parameters and %d variables/outputs",
-                     np, nv)
-    if (model$is_current) {
-      class <- "success"
-      body <- NULL
-    } else {
-      class <- "warning"
-      msg <- "Warning: model is out of date, consider recompiling the model."
-      if (is.null(model_tab)) {
-        body <- msg
-      } else {
-        body <- shiny::tagList(
-          msg, "Return to the",
-          shiny::actionLink(ns("goto_model"), model_tab$link_text))
-      }
-    }
-  }
-  simple_panel(class, title, body)
 }
 
 
