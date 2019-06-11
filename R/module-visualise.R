@@ -271,7 +271,7 @@ plot_vis <- function(result, input, y2, cols, logscale_y) {
                              yaxis = yaxis)
   }
 
-  if (any(y2$modelled)) {
+  if (any(y2$model)) {
     opts <- list(overlaying = "y",
                  side = "right",
                  showgrid = FALSE,
