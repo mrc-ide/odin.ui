@@ -3,10 +3,9 @@ mod_configure_ui <- function(id) {
   shiny::tagList(
     shiny::titlePanel("Configure"),
     shiny::h3("Data"),
-    shiny::uiOutput(ns("data_summary")),
+    shiny::uiOutput(ns("data_status")),
     shiny::h3("Model"),
     shiny::uiOutput(ns("model_status")),
-    shiny::textOutput(ns("model_summary")),
     shiny::h3("Link"),
     shiny::uiOutput(ns("link")),
     shiny::textOutput(ns("link_status")))
@@ -14,19 +13,15 @@ mod_configure_ui <- function(id) {
 
 
 mod_configure_server <- function(input, output, session, data, model,
-                                 data_tab = NULL) {
+                                 data_tab = NULL, model_tab = NULL) {
   rv <- shiny::reactiveValues(link = NULL)
 
-  output$data_summary <- shiny::renderUI({
-    configure_data_summary(data(), data_tab, session$ns)
-  })
-
-  output$model_summary <- shiny::renderText({
-    configure_model_summary(model())
+  output$data_status <- shiny::renderUI({
+    configure_data_status(data(), data_tab, session$ns)
   })
 
   output$model_status <- shiny::renderUI({
-    configure_model_status(model())
+    configure_model_status(model(), model_tab, session$ns)
   })
 
   output$link_status <- shiny::renderText({
@@ -51,6 +46,10 @@ mod_configure_server <- function(input, output, session, data, model,
 
   shiny::observeEvent(input$goto_data, {
     data_tab$go()
+  })
+
+  shiny::observeEvent(input$goto_model, {
+    model_tab$go()
   })
 
   get_state <- function() {
@@ -117,7 +116,7 @@ configure_link_ui_update <- function(map, input, data, model, restore) {
 }
 
 
-configure_data_summary <- function(data, data_tab, ns) {
+configure_data_status <- function(data, data_tab, ns) {
   if (isTRUE(data$configured)) {
     class <- "success"
     title <- sprintf("%d rows of data have been uploaded", nrow(data$data))
@@ -144,22 +143,38 @@ configure_data_summary <- function(data, data_tab, ns) {
 }
 
 
-configure_model_summary <- function(model) {
+configure_model_status <- function(model, model_tab, ns) {
   if (is.null(model)) {
-    "Please compile a model"
+    class <- "danger"
+    title <- "Please compile a model"
+    if (is.null(model_tab)) {
+      body <- NULL
+    } else {
+      body <- shiny::tagList(
+        "Return to the",
+        shiny::actionLink(ns("goto_model"), model_tab$link_text))
+    }
   } else {
     np <- nrow(model$result$info$pars)
     nv <- nrow(model$result$info$vars)
-    sprintf("Model with %d parameters and %d variables/outputs", np, nv)
+    title <- sprintf("Model with %d parameters and %d variables/outputs",
+                     np, nv)
+    if (model$is_current) {
+      class <- "success"
+      body <- NULL
+    } else {
+      class <- "warning"
+      msg <- "Warning: model is out of date, consider recompiling the model."
+      if (is.null(model_tab)) {
+        body <- msg
+      } else {
+        body <- shiny::tagList(
+          msg, "Return to the",
+          shiny::actionLink(ns("goto_model"), model_tab$link_text))
+      }
+    }
   }
-}
-
-
-configure_model_status <- function(model) {
-  if (!is.null(model$is_current) && !model$is_current) {
-    simple_panel("warning", "Warning: model is out of date",
-                 "Consider recompiling the model")
-  }
+  simple_panel(class, title, body)
 }
 
 

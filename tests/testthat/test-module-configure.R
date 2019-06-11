@@ -1,19 +1,19 @@
 context("module: configure")
 
-test_that("data summary: no callback", {
+test_that("data status: no callback", {
   m <- matrix(0, 3, 4)
-  expect_equal(configure_data_summary(NULL, NULL),
+  expect_equal(configure_data_status(NULL, NULL),
                simple_panel("danger", "Please upload data", NULL))
   expect_equal(
-    configure_data_summary(list(configured = FALSE, data = m), NULL),
+    configure_data_status(list(configured = FALSE, data = m), NULL),
     simple_panel("danger", "Please select time variable for your data", NULL))
   expect_equal(
-    configure_data_summary(list(configured = TRUE, data = m), NULL),
+    configure_data_status(list(configured = TRUE, data = m), NULL),
     simple_panel("success", "3 rows of data have been uploaded", NULL))
 })
 
 
-test_that("data summary: with callback", {
+test_that("data status: with callback", {
   m <- matrix(0, 3, 4)
 
   ns <- shiny::NS("module")
@@ -23,34 +23,68 @@ test_that("data summary: with callback", {
     "Return to the",
     shiny::actionLink(ns("goto_data"), data_tab$link_text))
 
-  expect_equal(configure_data_summary(NULL, data_tab, ns),
+  expect_equal(configure_data_status(NULL, data_tab, ns),
                simple_panel("danger", "Please upload data", body))
   expect_equal(
-    configure_data_summary(list(configured = FALSE, data = m), data_tab, ns),
+    configure_data_status(list(configured = FALSE, data = m), data_tab, ns),
     simple_panel("danger","Please select time variable for your data", body))
   expect_equal(
-    configure_data_summary(list(configured = TRUE, data = m), data_tab, ns),
+    configure_data_status(list(configured = TRUE, data = m), data_tab, ns),
     simple_panel("success", "3 rows of data have been uploaded", NULL))
 })
 
 
-test_that("model summary", {
-  expect_equal(configure_model_summary(NULL),
-               "Please compile a model")
+test_that("model status: no callback", {
+  m <- list(result = list(info = list(pars = matrix(0, 3, 0),
+                                      vars = matrix(0, 4, 0))),
+            is_current = FALSE)
+  expect_equal(
+    configure_model_status(NULL, NULL),
+    simple_panel("danger", "Please compile a model", NULL))
 
-  x <- list(result = list(info = list(pars = matrix(0, 3, 0),
-                                      vars = matrix(0, 4, 0))))
-  expect_equal(configure_model_summary(x),
-               "Model with 3 parameters and 4 variables/outputs")
+  expect_equal(
+    configure_model_status(m, NULL),
+    simple_panel(
+      "warning", "Model with 3 parameters and 4 variables/outputs",
+      "Warning: model is out of date, consider recompiling the model."))
+
+  m$is_current <- TRUE
+  expect_equal(
+    configure_model_status(m, NULL),
+    simple_panel("success", "Model with 3 parameters and 4 variables/outputs",
+                 NULL))
 })
 
 
-test_that("model status", {
-  expect_null(configure_model_status(NULL))
-  expect_null(configure_model_status(list(is_current = TRUE)))
-  expect_equal(configure_model_status(list(is_current = FALSE)),
-               simple_panel("warning", "Warning: model is out of date",
-                            "Consider recompiling the model"))
+test_that("model status: with callback", {
+  m <- list(result = list(info = list(pars = matrix(0, 3, 0),
+                                      vars = matrix(0, 4, 0))),
+            is_current = FALSE)
+  ns <- shiny::NS("module")
+  session <- NULL
+  model_tab <- goto_module("Model tab", NULL, "navbar", "Model")
+
+  body <- shiny::tagList(
+    "Return to the",
+    shiny::actionLink(ns("goto_model"), model_tab$link_text))
+  expect_equal(
+    configure_model_status(NULL, model_tab, ns),
+    simple_panel("danger", "Please compile a model", body))
+
+  body <- shiny::tagList(
+    "Warning: model is out of date, consider recompiling the model.",
+    "Return to the",
+    shiny::actionLink(ns("goto_model"), model_tab$link_text))
+  expect_equal(
+    configure_model_status(m, model_tab, ns),
+    simple_panel(
+      "warning", "Model with 3 parameters and 4 variables/outputs", body))
+
+  m$is_current <- TRUE
+  expect_equal(
+    configure_model_status(m, model_tab, ns),
+    simple_panel("success", "Model with 3 parameters and 4 variables/outputs",
+                 NULL))
 })
 
 

@@ -67,14 +67,15 @@ odin_prototype_server <- function(initial_code) {
 
     rv <- shiny::reactiveValues(status = NULL)
 
-    data <- shiny::callModule(mod_csv_server, "odin_csv")
     data_tab <- goto_module("Data tab", session, "odin_ui_navbar", "Data")
+    model_tab <- goto_module("Editor tab", session, "odin_ui_navbar", "Editor")
 
+    data <- shiny::callModule(mod_csv_server, "odin_csv")
     model <- shiny::callModule(
       mod_editor_simple_server, "odin_editor", initial_code)
     configure <- shiny::callModule(
       mod_configure_server, "odin_configure", data$result, model$result,
-      data_tab)
+      data_tab, model_tab)
 
     fit <- shiny::callModule(
       mod_fit_server, "odin_fit", data$result, model$result, configure$result)
