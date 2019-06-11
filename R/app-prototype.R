@@ -68,10 +68,14 @@ odin_prototype_server <- function(initial_code) {
     rv <- shiny::reactiveValues(status = NULL)
 
     data <- shiny::callModule(mod_csv_server, "odin_csv")
+    data_tab <- goto_module("Data tab", session, "odin_ui_navbar", "Data")
+
     model <- shiny::callModule(
       mod_editor_simple_server, "odin_editor", initial_code)
     configure <- shiny::callModule(
-      mod_configure_server, "odin_configure", data$result, model$result)
+      mod_configure_server, "odin_configure", data$result, model$result,
+      data_tab)
+
     fit <- shiny::callModule(
       mod_fit_server, "odin_fit", data$result, model$result, configure$result)
     vis <- shiny::callModule(
@@ -151,4 +155,10 @@ state_filename <- function(filename) {
     filename <- sprintf("odin-%s.rds", date_string())
   }
   filename
+}
+
+
+goto_module <- function(link_text, session, navbar_id, tab) {
+  list(link_text = link_text, go = function()
+    shiny::updateNavbarPage(session, navbar_id, tab))
 }

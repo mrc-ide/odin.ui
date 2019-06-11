@@ -1,13 +1,36 @@
 context("module: configure")
 
-test_that("data summary", {
-  expect_equal(configure_data_summary(NULL),
-               "Please upload data")
-  expect_equal(configure_data_summary(list()),
-               "Please select time variable for your data")
-  expect_equal(configure_data_summary(list(configured = TRUE,
-                                           data = matrix(0, 3, 4))),
-               "3 rows of data have been uploaded")
+test_that("data summary: no callback", {
+  m <- matrix(0, 3, 4)
+  expect_equal(configure_data_summary(NULL, NULL),
+               simple_panel("danger", "Please upload data", NULL))
+  expect_equal(
+    configure_data_summary(list(configured = FALSE, data = m), NULL),
+    simple_panel("danger", "Please select time variable for your data", NULL))
+  expect_equal(
+    configure_data_summary(list(configured = TRUE, data = m), NULL),
+    simple_panel("success", "3 rows of data have been uploaded", NULL))
+})
+
+
+test_that("data summary: with callback", {
+  m <- matrix(0, 3, 4)
+
+  ns <- shiny::NS("module")
+  session <- NULL
+  data_tab <- goto_module("Data tab", NULL, "navbar", "Data")
+  body <- shiny::tagList(
+    "Return to the",
+    shiny::actionLink(ns("goto_data"), data_tab$link_text))
+
+  expect_equal(configure_data_summary(NULL, data_tab, ns),
+               simple_panel("danger", "Please upload data", body))
+  expect_equal(
+    configure_data_summary(list(configured = FALSE, data = m), data_tab, ns),
+    simple_panel("danger","Please select time variable for your data", body))
+  expect_equal(
+    configure_data_summary(list(configured = TRUE, data = m), data_tab, ns),
+    simple_panel("success", "3 rows of data have been uploaded", NULL))
 })
 
 

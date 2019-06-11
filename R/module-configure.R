@@ -3,7 +3,7 @@ mod_configure_ui <- function(id) {
   shiny::tagList(
     shiny::titlePanel("Configure"),
     shiny::h3("Data"),
-    shiny::textOutput(ns("data_summary")),
+    shiny::uiOutput(ns("data_summary")),
     shiny::h3("Model"),
     shiny::uiOutput(ns("model_status")),
     shiny::textOutput(ns("model_summary")),
@@ -13,11 +13,12 @@ mod_configure_ui <- function(id) {
 }
 
 
-mod_configure_server <- function(input, output, session, data, model) {
+mod_configure_server <- function(input, output, session, data, model,
+                                 data_tab = NULL) {
   rv <- shiny::reactiveValues(link = NULL)
 
-  output$data_summary <- shiny::renderText({
-    configure_data_summary(data())
+  output$data_summary <- shiny::renderUI({
+    configure_data_summary(data(), data_tab, session$ns)
   })
 
   output$model_summary <- shiny::renderText({
@@ -46,6 +47,10 @@ mod_configure_server <- function(input, output, session, data, model) {
       rv$label <- sprintf("%s ~ %s",
                           names(rv$link), vcapply(rv$link, identity))
     }
+  })
+
+  shiny::observeEvent(input$goto_data, {
+    data_tab$go()
   })
 
   get_state <- function() {
@@ -112,17 +117,30 @@ configure_link_ui_update <- function(map, input, data, model, restore) {
 }
 
 
-configure_data_summary <- function(data) {
-  if (is.null(data)) {
-    ## Ideally this would point us back to the data tab with a link
-    ## but that requires passing in the parent session:
-    ## https://stackoverflow.com/a/54751068
-    "Please upload data"
-  } else if (!isTRUE(data$configured)) {
-    "Please select time variable for your data"
+configure_data_summary <- function(data, data_tab, ns) {
+  if (isTRUE(data$configured)) {
+    class <- "success"
+    title <- sprintf("%d rows of data have been uploaded", nrow(data$data))
+    body <- NULL
   } else {
-    sprintf("%d rows of data have been uploaded", nrow(data$data))
+    class <- "danger"
+    if (is.null(data$data)) {
+      ## Ideally this would point us back to the data tab with a link
+      ## but that requires passing in the parent session:
+      ## https://stackoverflow.com/a/54751068
+      title <- "Please upload data"
+    } else {
+      title <- "Please select time variable for your data"
+    }
+    if (is.null(data_tab)) {
+      body <- NULL
+    } else {
+      body <- shiny::tagList(
+        "Return to the",
+        shiny::actionLink(ns("goto_data"), data_tab$link_text))
+    }
   }
+  simple_panel(class, title, body)
 }
 
 
