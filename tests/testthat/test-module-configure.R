@@ -36,3 +36,20 @@ test_that("link status", {
   expect_equal(configure_link_status("a"), "a")
   expect_equal(configure_link_status(c("a", "b")), "a & b")
 })
+
+
+test_that("link update", {
+  vars_data <- c("A", "B")
+  vars_model <- c("a", "b", "c")
+  data <- list(name_vars = vars_data, configured = TRUE)
+  model <- list(result = list(info = list(vars = list(name = vars_model))))
+
+  ## Nothing selected:
+  expect_equal(
+    configure_link_ui_update(NULL, NULL, data, model, NULL),
+    list(
+      map = c(A = "link_data_A", B = "link_data_B"),
+      selected = list(A = NULL, B = NULL),
+      vars_data = vars_data,
+      vars_model = vars_model))
+})

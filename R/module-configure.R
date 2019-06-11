@@ -68,37 +68,47 @@ mod_configure_server <- function(input, output, session, data, model) {
 }
 
 
-## This would be more testable split out a little further
 configure_link_ui <- function(ns, input, rv, data, model, restore) {
-  if (!isTRUE(data$configured) || is.null(model)) {
-    rv$map <- NULL
-  } else {
-    if (is.null(restore)) {
-      prev <- lapply(rv$map, function(x) input[[x]])
-    } else {
-      prev <- restore
-    }
-
-    vars_data <- data$name_vars
-    vars_model <- model$result$info$vars$name
-
-    ## Are any of these still current?
-    fmt <- "link_data_%s"
-    rv$map <- setNames(sprintf(fmt, vars_data), vars_data)
+  res <- configure_link_ui_update(rv$map, input, data, model, restore)
+  rv$map <- res$map
+  if (!is.null(rv$map)) {
     opts <- list(
       placeholder = "Select variable",
       onInitialize = I('function() { this.setValue(""); }'))
-
-    selected <- set_names(rep(list(NULL), length(vars_data)), vars_data)
-    i <- names(prev) %in% vars_data &
-      unlist(prev, FALSE, FALSE) %in% vars_model
-    selected[names(prev)[i]] <- prev[i]
-
-    lapply(vars_data, function(x)
+    lapply(res$vars_data, function(x)
       shiny::selectizeInput(
-        ns(sprintf(fmt, x)), x, selected = selected[[x]],
-        choices = vars_model, options = if (is.null(selected[[x]])) opts))
+        ns(res$map[[x]]), x,
+        selected = res$selected[[x]], choices = res$vars_model,
+        options = if (is.null(res$selected[[x]])) opts))
   }
+}
+
+
+configure_link_ui_update <- function(map, input, data, model, restore) {
+  if (!isTRUE(data$configured) || is.null(model)) {
+    return(list(map = NULL, selected = NULL))
+  }
+
+  if (is.null(restore)) {
+    prev <- lapply(map, function(x) input[[x]])
+  } else {
+    prev <- restore
+  }
+
+  vars_data <- data$name_vars
+  vars_model <- model$result$info$vars$name
+
+  ## Are any of these still current?
+  fmt <- "link_data_%s"
+  map <- setNames(sprintf(fmt, vars_data), vars_data)
+
+  selected <- set_names(rep(list(NULL), length(vars_data)), vars_data)
+  i <- names(prev) %in% vars_data &
+    unlist(prev, FALSE, FALSE) %in% vars_model
+  selected[names(prev)[i]] <- prev[i]
+
+  list(map = map, selected = selected,
+       vars_data = vars_data, vars_model = vars_model)
 }
 
 
