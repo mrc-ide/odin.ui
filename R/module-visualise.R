@@ -44,16 +44,15 @@ mod_vis_ui <- function(id) {
 
 
 mod_vis_server <- function(input, output, session, data, model, configure,
-                           data_status = NULL, model_status = NULL,
                            import = NULL) {
   rv <- shiny::reactiveValues(pars = NULL)
 
   output$status_data <- shiny::renderUI({
-    data_status()
+    data()$status
   })
 
   output$status_model <- shiny::renderUI({
-    model_status()
+    model()$status
   })
 
   shiny::observe({

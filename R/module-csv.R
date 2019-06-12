@@ -54,6 +54,10 @@ mod_csv_server <- function(input, output, session, csv_status_body) {
     rv$data <- csv_configure(rv$data, input$name_time)
   })
 
+  shiny::observe({
+    rv$status <- csv_status(rv$data, csv_status_body)
+  })
+
   output$summary <- shiny::renderUI({
     csv_summary(rv$data)
   })
@@ -84,7 +88,7 @@ mod_csv_server <- function(input, output, session, csv_status_body) {
                              selected = state$data$name_time)
   }
 
-  list(result = shiny::reactive(rv$data),
+  list(result = shiny::reactive(c(rv$data, list(status = rv$status))),
        status = shiny::reactive(csv_status(rv$data, csv_status_body)),
        get_state = get_state,
        set_state = set_state)

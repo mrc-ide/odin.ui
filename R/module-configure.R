@@ -3,29 +3,28 @@ mod_configure_ui <- function(id) {
   shiny::tagList(
     shiny::titlePanel("Configure"),
     shiny::h3("Data"),
-    shiny::uiOutput(ns("data_status")),
+    shiny::uiOutput(ns("status_data")),
     shiny::h3("Model"),
-    shiny::uiOutput(ns("model_status")),
+    shiny::uiOutput(ns("status_model")),
     shiny::h3("Link"),
     shiny::uiOutput(ns("link")),
-    shiny::textOutput(ns("link_status")))
+    shiny::textOutput(ns("status_link")))
 }
 
 
 mod_configure_server <- function(input, output, session, data, model,
-                                 data_status = NULL, model_status = NULL,
                                  configure_status_body = NULL) {
   rv <- shiny::reactiveValues(link = NULL)
 
-  output$data_status <- shiny::renderUI({
-    data_status()
+  output$status_data <- shiny::renderUI({
+    data()$status
   })
 
-  output$model_status <- shiny::renderUI({
-    model_status()
+  output$status_model <- shiny::renderUI({
+    model()$status
   })
 
-  output$link_status <- shiny::renderText({
+  output$status_link <- shiny::renderText({
     configure_link_status(rv$label)
   })
 

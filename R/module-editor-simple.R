@@ -58,7 +58,7 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
 mod_editor_simple_server <- function(input, output, session, initial_code,
                                      editor_status_body) {
   ns <- session$ns
-  data <- shiny::reactiveValues(validation = NULL,
+  rv <- shiny::reactiveValues(validation = NULL,
                                 compilation = NULL)
 
   initial_code <- editor_validate_initial_code(initial_code)
@@ -66,8 +66,8 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
   shiny::observeEvent(
     input$reset_button, {
       shinyAce::updateAceEditor(session, ns("editor"), value = initial_code)
-      data$compilation <- NULL
-      data$validation <- NULL
+      rv$compilation <- NULL
+      rv$validation <- NULL
     })
 
   output$download_button <- shiny::downloadHandler(
@@ -81,38 +81,42 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
       if (!is.null(input$uploaded_file)) {
         code <- editor_read_code(input$uploaded_file$datapath)
         shinyAce::updateAceEditor(session, ns("editor"), value = code)
-        data$validation <- editor_validate(code)
+        rv$validation <- editor_validate(code)
       }
     })
 
   ## Manual validation
   shiny::observeEvent(
     input$validate_button, {
-      data$validation <- editor_validate(input$editor)
+      rv$validation <- editor_validate(input$editor)
     })
 
   ## Realtime validation
   shiny::observe({
-    if (!is.null(data$compilation)) {
-      data$compilation$is_current <-
-        identical(data$compilation$code, input$editor)
+    if (!is.null(rv$compilation)) {
+      rv$compilation$is_current <-
+        identical(rv$compilation$code, input$editor)
     }
     if (input$auto_validate) {
-      data$validation <- editor_validate(input$editor)
+      rv$validation <- editor_validate(input$editor)
     }
   })
 
   output$validation_info <- shiny::renderUI({
-    editor_validation_info(data$validation)
+    editor_validation_info(rv$validation)
   })
 
   output$compilation_info <- shiny::renderUI({
-    editor_compilation_info(data$compilation)
+    editor_compilation_info(rv$compilation)
   })
 
   shiny::observe({
     shinyAce::updateAceEditor(session, ns("editor"),
-                              border = editor_border(data$validation))
+                              border = editor_border(rv$validation))
+  })
+
+  shiny::observe({
+    rv$status <- editor_status(rv$compilation, editor_status_body)
   })
 
   ## Here is the first part of the exit route out of the module
@@ -120,8 +124,8 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
     input$go_button, {
       res <- shiny::withProgress(
         message = "Compiling...", value = 1, editor_compile(input$editor))
-      data$validation <- res$validation
-      data$compilation <- res$compilation
+      rv$validation <- res$validation
+      rv$compilation <- res$compilation
     })
 
   get_state <- function() {
@@ -129,22 +133,21 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
       ## TODO: for completeness, it might be worth getting the model
       ## filename and the auto_validate state too, but for now we don't.
       list(code = input$editor,
-           compiled = if (data$compilation$success) data$compilation$code)
+           compiled = if (rv$compilation$success) rv$compilation$code)
     })
   }
 
   set_state <- function(state) {
     if (!is.null(state$compiled)) {
       res <- editor_compile(state$compiled)
-      data$validation <- res$validation
-      data$compilation <- res$compilation
+      rv$validation <- res$validation
+      rv$compilation <- res$compilation
     }
     shinyAce::updateAceEditor(session, ns("editor"), value = state$code)
   }
 
-  list(result = shiny::reactive(data$compilation),
-       status = shiny::reactive(
-         editor_status(data$compilation, editor_status_body)),
+  list(result = shiny::reactive(
+         c(rv$compilation, list(status = rv$status))),
        get_state = get_state,
        set_state = set_state)
 }

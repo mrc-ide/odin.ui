@@ -52,24 +52,12 @@ mod_batch_server <- function(input, output, session, model, data,
     }
   })
 
-  ## TODO: eventually we should use time only - that should be easy
-  ## enough though
   output$status_data <- shiny::renderUI({
-    if (!isTRUE(data()$configured)) {
-      simple_panel("danger", "Data not present",
-                   "Please upload data using the data tab")
-    }
+    data()$status
   })
 
   output$status_model <- shiny::renderUI({
-    m <- model()
-    if (is.null(m)) {
-      simple_panel("danger", "Model not present",
-                   "Please create a model using the editor tab")
-    } else if (!m$is_current) {
-      simple_panel("warning", "Model out of date",
-                   "You may need to recompile your model")
-    }
+    model()$status
   })
 
   output$model_parameters <- shiny::renderUI({

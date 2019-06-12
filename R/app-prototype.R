@@ -76,13 +76,13 @@ odin_prototype_server <- function(initial_code) {
       mod_editor_simple_server, "odin_editor", initial_code, editor_tab)
     configure <- shiny::callModule(
       mod_configure_server, "odin_configure", data$result, model$result,
-      data$status, model$status, configure_tab)
+      configure_tab)
 
     fit <- shiny::callModule(
       mod_fit_server, "odin_fit", data$result, model$result, configure$result)
     vis <- shiny::callModule(
       mod_vis_server, "odin_vis", data$result, model$result, configure$result,
-      data$status, model$status, fit$pars)
+      fit$pars)
     batch <- shiny::callModule(
       mod_batch_server, "odin_batch", model$result, data$result, fit$pars)
 
@@ -94,7 +94,7 @@ odin_prototype_server <- function(initial_code) {
       }
 
       dat <- model$result()
-      if (is.null(dat)) {
+      if (is.null(dat$is_current)) {
         status_model <- "missing"
       } else if (dat$is_current) {
         status_model <- "ok"
