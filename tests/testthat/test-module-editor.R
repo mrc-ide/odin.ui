@@ -154,49 +154,31 @@ test_that("model status: no callback", {
             is_current = FALSE)
   expect_equal(
     editor_status(NULL, NULL),
-    simple_panel("danger", "Please compile a model", NULL))
+    module_status("danger", "Please compile a model", NULL))
+  expect_equal(
+    editor_status(NULL, "solution"),
+    module_status("danger", "Please compile a model", "solution"))
 
   expect_equal(
     editor_status(m, NULL),
-    simple_panel(
+    module_status(
       "warning", "Model with 3 parameters and 4 variables/outputs",
       "Warning: model is out of date, consider recompiling the model."))
+  expect_equal(
+    editor_status(m, "solution"),
+    module_status(
+      "warning", "Model with 3 parameters and 4 variables/outputs",
+      shiny::tagList(
+        "Warning: model is out of date, consider recompiling the model.",
+        "solution")))
 
   m$is_current <- TRUE
   expect_equal(
     editor_status(m, NULL),
-    simple_panel("success", "Model with 3 parameters and 4 variables/outputs",
-                 NULL))
-})
-
-
-test_that("model status: with callback", {
-  m <- list(result = list(info = list(pars = matrix(0, 3, 0),
-                                      vars = matrix(0, 4, 0))),
-            is_current = FALSE)
-  ns <- shiny::NS("module")
-  session <- NULL
-  editor_tab <- goto_module("Model tab", NULL, "navbar", "Model")
-
-  body <- shiny::tagList(
-    "Return to the",
-    shiny::actionLink(ns("goto_editor"), editor_tab$link_text))
+    module_status("success", "Model with 3 parameters and 4 variables/outputs",
+                  NULL))
   expect_equal(
-    editor_status(NULL, editor_tab, ns),
-    simple_panel("danger", "Please compile a model", body))
-
-  body <- shiny::tagList(
-    "Warning: model is out of date, consider recompiling the model.",
-    "Return to the",
-    shiny::actionLink(ns("goto_editor"), editor_tab$link_text))
-  expect_equal(
-    editor_status(m, editor_tab, ns),
-    simple_panel(
-      "warning", "Model with 3 parameters and 4 variables/outputs", body))
-
-  m$is_current <- TRUE
-  expect_equal(
-    editor_status(m, editor_tab, ns),
-    simple_panel("success", "Model with 3 parameters and 4 variables/outputs",
-                 NULL))
+    editor_status(m, "solution"),
+    module_status("success", "Model with 3 parameters and 4 variables/outputs",
+                  NULL))
 })

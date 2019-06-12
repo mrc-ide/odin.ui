@@ -29,20 +29,20 @@ test_that("configure status", {
     configure_status(NULL, NULL),
     module_status("danger", "Model/Data link is not configured", NULL))
   expect_equal(
-    configure_status(NULL, "reason"),
-    module_status("danger", "Model/Data link is not configured", "reason"))
+    configure_status(NULL, "solution"),
+    module_status("danger", "Model/Data link is not configured", "solution"))
 
   expect_equal(
     configure_status(FALSE, NULL),
     module_status("danger", "Model/Data link is not configured", NULL))
   expect_equal(
-    configure_status(FALSE, "reason"),
-    module_status("danger", "Model/Data link is not configured", "reason"))
+    configure_status(FALSE, "solution"),
+    module_status("danger", "Model/Data link is not configured", "solution"))
 
   expect_equal(
     configure_status(TRUE, NULL),
     module_status("success", "Model/Data link is configured", NULL))
   expect_equal(
-    configure_status(TRUE, "reason"),
+    configure_status(TRUE, "solution"),
     module_status("success", "Model/Data link is configured", NULL))
 })

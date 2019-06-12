@@ -184,35 +184,27 @@ test_that("csv summary: unconfigured", {
 })
 
 
-test_that("data status: no callback", {
+test_that("csv status", {
   m <- matrix(0, 3, 4)
-  expect_equal(csv_status(NULL, NULL),
-               simple_panel("danger", "Data not present", NULL))
+  expect_equal(
+    csv_status(NULL, NULL),
+    module_status("danger", "Data not present", NULL))
+  expect_equal(
+    csv_status(NULL, "solution"),
+    module_status("danger", "Data not present", "solution"))
+
   expect_equal(
     csv_status(list(configured = FALSE, data = m), NULL),
-    simple_panel("danger", "Please select time variable for your data", NULL))
+    module_status("danger", "Please select time variable for your data", NULL))
+  expect_equal(
+    csv_status(list(configured = FALSE, data = m), "solution"),
+    module_status("danger", "Please select time variable for your data",
+                  "solution"))
+
   expect_equal(
     csv_status(list(configured = TRUE, data = m), NULL),
-    simple_panel("success", "3 rows of data have been uploaded", NULL))
-})
-
-
-test_that("data status: with callback", {
-  m <- matrix(0, 3, 4)
-
-  ns <- shiny::NS("module")
-  session <- NULL
-  data_tab <- goto_module("Data tab", NULL, "navbar", "Data")
-  body <- shiny::tagList(
-    "Return to the",
-    shiny::actionLink(ns("goto_data"), data_tab$link_text))
-
-  expect_equal(csv_status(NULL, data_tab, ns),
-               simple_panel("danger", "Data not present", body))
+    module_status("success", "3 rows of data have been uploaded", NULL))
   expect_equal(
-    csv_status(list(configured = FALSE, data = m), data_tab, ns),
-    simple_panel("danger","Please select time variable for your data", body))
-  expect_equal(
-    csv_status(list(configured = TRUE, data = m), data_tab, ns),
-    simple_panel("success", "3 rows of data have been uploaded", NULL))
+    csv_status(list(configured = TRUE, data = m), "solution"),
+    module_status("success", "3 rows of data have been uploaded", NULL))
 })
