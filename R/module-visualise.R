@@ -44,9 +44,14 @@ mod_vis_ui <- function(id) {
 }
 
 
+## Basic flow is
+##   {data, model, configure} => configuration
+##   configuration => control interface
+##   {configuration, control interface} => result
+##   {result, control inteface} => plot
 mod_vis_server <- function(input, output, session, data, model, configure,
                            import = NULL) {
-  rv <- shiny::reactiveValues(pars = NULL)
+  rv <- shiny::reactiveValues()
 
   output$status_data <- shiny::renderUI({
     show_module_status_if_not_ok(data()$status)
@@ -174,11 +179,28 @@ vis_control_graph_settings <- function(configuration, ns) {
 }
 
 
+vis_control_parameters <- function(configuration, ns) {
+  if (is.null(configuration)) {
+    return(NULL)
+  }
+  input <- function(name, id, value) {
+    horizontal_form_group(
+      shiny::span(name),
+      raw_numeric_input(ns(id), value = value))
+  }
+  pars <- configuration$pars
+  mod_model_control_section(
+    "Model parameters",
+    unname(Map(input, pars$name, pars$id_value, pars$value)),
+    ns = ns)
+}
+
+
 vis_download_filename <- function(filename, type) {
   if (!is.null(filename) && nzchar(filename)) {
     filename <- ensure_extension(filename, "csv")
   } else {
-    filename <- sprintf("odin-visusalise-%s-%s.csv", type, date_string())
+    filename <- sprintf("odin-visualise-%s-%s.csv", type, date_string())
   }
   filename
 }
@@ -201,32 +223,15 @@ vis_configuration <- function(model, data, link) {
   ## the ui
   pars <- model$result$info$pars
   pars$value <- vnapply(pars$default_value, function(x) x %||% NA_real_)
-  pars$id_value <- sprintf("id_value_value_%s", pars$name)
+  pars$id_value <- sprintf("par_value_%s", pars$name)
 
   vars <- model$result$info$vars
-  vars$id_y2 <- sprintf("y2_%s", vars$name)
+  vars$id_y2 <- sprintf("var_y2_%s", vars$name)
 
   cols <- odin_colours(vars$name, data$name_vars, link)
 
   list(data = data, model = model, link = link,
        pars = pars, vars = vars, cols = cols)
-}
-
-
-vis_control_parameters <- function(configuration, ns) {
-  if (is.null(configuration)) {
-    return(NULL)
-  }
-  input <- function(name, id, value) {
-    horizontal_form_group(
-      shiny::span(name),
-      raw_numeric_input(ns(id), value = value))
-  }
-  pars <- configuration$pars
-  mod_model_control_section(
-    "Model parameters",
-    unname(Map(input, pars$name, pars$id_value, pars$value)),
-    ns = ns)
 }
 
 
@@ -255,14 +260,6 @@ vis_run_model <- function(configuration, user) {
   ## 3. Result smoothly computed
   result_smooth <- mod$run(seq(0, max(t), length.out = 501))
 
-  ## name_time: configuration$data$name_time
-  ## data: configuration$data$data
-  ## name_vars: configuration$model$vars$name
-  ## name_data: configuration$data$name_vars
-  ## link: configuration$link
-  ## combined: simulation$combined
-  ## smooth: simulation$smooth
-  ## user: simulation$user
   list(configuration = configuration,
        simulation = list(data = result_data,
                          combined = result_combined,
@@ -274,8 +271,8 @@ vis_run_model <- function(configuration, user) {
 ##' @importFrom plotly plot_ly
 vis_plot <- function(result, y2_model, logscale_y) {
   cfg <- result$configuration
-  y2 <- odin_y2(y2_model, cfg$data$name_vars, cfg$link)
-  cols <- cfg$cols
+  y2 <- odin_y2(y2_model, cfg$data$name_vars, result$configuration$link)
+  cols <- result$configuration$cols
 
   p <- plotly::plot_ly()
   p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
