@@ -283,5 +283,5 @@ editor_status <- function(model, body) {
       }
     }
   }
-  simple_panel(class, title, body)
+  module_status(class, title, body)
 }

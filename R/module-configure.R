@@ -17,11 +17,11 @@ mod_configure_server <- function(input, output, session, data, model,
   rv <- shiny::reactiveValues(link = NULL)
 
   output$status_data <- shiny::renderUI({
-    data()$status
+    data()$status$ui
   })
 
   output$status_model <- shiny::renderUI({
-    model()$status
+    model()$status$ui
   })
 
   output$status_link <- shiny::renderText({
@@ -122,8 +122,11 @@ configure_link_status <- function(label) {
 
 configure_status <- function(configured, body) {
   if (isTRUE(configured)) {
-    NULL
+    class <- "success"
+    title <- "Model/Data link is configured"
   } else {
-    simple_panel("danger", "Model/Data link is not configured", body)
+    class <- "danger"
+    title <- "Model/Data link is not configured"
   }
+  module_status(class, title, body)
 }

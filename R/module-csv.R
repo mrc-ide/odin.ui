@@ -186,10 +186,12 @@ csv_summary <- function(data) {
 
 csv_status <- function(data, body = NULL) {
   if (isTRUE(data$configured)) {
+    ok <- TRUE
     class <- "success"
     title <- sprintf("%d rows of data have been uploaded", nrow(data$data))
     body <- NULL
   } else {
+    ok <- FALSE
     class <- "danger"
     if (is.null(data$data)) {
       title <- "Data not present"
@@ -197,5 +199,5 @@ csv_status <- function(data, body = NULL) {
       title <- "Please select time variable for your data"
     }
   }
-  simple_panel(class, title, body)
+  module_status(class, title, body)
 }

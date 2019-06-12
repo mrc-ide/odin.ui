@@ -53,11 +53,11 @@ mod_batch_server <- function(input, output, session, model, data,
   })
 
   output$status_data <- shiny::renderUI({
-    data()$status
+    show_module_status_if_not_ok(data()$status)
   })
 
   output$status_model <- shiny::renderUI({
-    model()$status
+    show_module_status_if_not_ok(model()$status)
   })
 
   output$model_parameters <- shiny::renderUI({

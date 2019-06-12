@@ -25,7 +25,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
   rv <- shiny::reactiveValues(pars = NULL)
 
   output$status_link <- shiny::renderUI({
-    configure()$status
+    show_module_status_if_not_ok(configure()$status)
   })
 
   shiny::observe({

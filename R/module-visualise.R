@@ -48,11 +48,11 @@ mod_vis_server <- function(input, output, session, data, model, configure,
   rv <- shiny::reactiveValues(pars = NULL)
 
   output$status_data <- shiny::renderUI({
-    data()$status
+    show_module_status_if_not_ok(data()$status)
   })
 
   output$status_model <- shiny::renderUI({
-    model()$status
+    show_module_status_if_not_ok(model()$status)
   })
 
   shiny::observe({
