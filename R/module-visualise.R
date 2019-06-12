@@ -85,19 +85,13 @@ mod_vis_server <- function(input, output, session, data, model, configure,
   shiny::observeEvent(
     input$import, {
       user <- import()
-      browser()
-      if (!is.null(user)) {
-        shiny::isolate({
-          id <- rv$pars$id_value[match(names(user), rv$pars$name)]
-          if (!any(is.na(id))) {
-            for (i in seq_along(id)) {
-              shiny::updateNumericInput(session, id[[i]], value = user[[i]])
-            }
-            ## Disabling this for now for consistency with the batch plot
-            ## rv$result <- run_model_data(data(), model(), configure(), user,
-            ##                             list(pars = rv$pars, link = rv$link))
-          }
-        })
+      pars <- rv$configuration$pars
+      if (identical(names(user), pars$name)) {
+        for (i in seq_along(user)) {
+          shiny::updateNumericInput(
+            session, pars$id_value[[i]], value = user[[i]])
+        }
+        rv$result <- vis_run_model(rv$configuration, user)
       }
     })
 
