@@ -33,6 +33,10 @@ mod_configure_server <- function(input, output, session, data, model,
   })
 
   shiny::observe({
+    rv$status <- configure_status(rv$configured, configure_status_body)
+  })
+
+  shiny::observe({
     if (is.null(rv$map)) {
       rv$link <- NULL
       rv$label <- character(0)
@@ -61,7 +65,7 @@ mod_configure_server <- function(input, output, session, data, model,
          link = rv$link,
          label = rv$label,
          configured = rv$configured,
-         status = configure_status(rv$configured, configure_status_body))),
+         status = rv$status)),
        get_state = get_state,
        set_state = set_state)
 }
@@ -124,6 +128,7 @@ configure_status <- function(configured, body) {
   if (isTRUE(configured)) {
     class <- "success"
     title <- "Model/Data link is configured"
+    body <- NULL
   } else {
     class <- "danger"
     title <- "Model/Data link is not configured"
