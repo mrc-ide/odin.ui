@@ -86,42 +86,15 @@ odin_prototype_server <- function(initial_code) {
     batch <- shiny::callModule(
       mod_batch_server, "odin_batch", model$result, data$result, fit$pars)
 
-    shiny::observe({
-      if (!isTRUE(data$result()$configured)) {
-        status_data <- "missing"
-      } else {
-        status_data <- "ok"
-      }
-
-      dat <- model$result()
-      if (is.null(dat$is_current)) {
-        status_model <- "missing"
-      } else if (dat$is_current) {
-        status_model <- "ok"
-      } else {
-        status_model <- "outofdate"
-      }
-
-      if (!configure$result()$configured) {
-        status_link <- "missing"
-      } else {
-        status_link <- status_model
-      }
-
-      rv$status <- list(data = status_data,
-                        model = status_model,
-                        link = status_link)
-    })
-
     output$status <- shiny::renderUI({
-      map <- c(missing = "text-danger",
-               outofdate = "text-warning",
-               ok = "text-success")
+      class_data <- text_module_status(data$result()$status)
+      class_model <- text_module_status(model$result()$status)
+      class_configure <- text_module_status(configure$result()$status)
       shiny::tagList(
         "Status",
-        shiny::icon("table", class = map[[rv$status$data]]),
-        shiny::icon("edit", class = map[[rv$status$model]]),
-        shiny::icon("random", class = map[[rv$status$link]]))
+        shiny::icon("table", class = class_data),
+        shiny::icon("edit", class = class_model),
+        shiny::icon("random", class = class_configure))
     })
 
     output$download_everything <- shiny::downloadHandler(
