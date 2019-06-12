@@ -27,7 +27,7 @@ mod_csv_ui <- function(id) {
 }
 
 
-mod_csv_server <- function(input, output, session, data_tab) {
+mod_csv_server <- function(input, output, session, csv_status_body) {
   rv <- reactiveValues(data = NULL)
 
   shiny::observeEvent(
@@ -84,14 +84,8 @@ mod_csv_server <- function(input, output, session, data_tab) {
                              selected = state$data$name_time)
   }
 
-  shiny::observeEvent(
-    input$goto_data, {
-      data_tab$go()
-    })
-
-  ## TODO: Can drop success and error here, but they don't hurt
   list(result = shiny::reactive(rv$data),
-       status = shiny::reactive(csv_status(rv$data, data_tab, session$ns)),
+       status = shiny::reactive(csv_status(rv$data, csv_status_body)),
        get_state = get_state,
        set_state = set_state)
 }
@@ -186,7 +180,7 @@ csv_summary <- function(data) {
 }
 
 
-csv_status <- function(data, data_tab, ns) {
+csv_status <- function(data, body = NULL) {
   if (isTRUE(data$configured)) {
     class <- "success"
     title <- sprintf("%d rows of data have been uploaded", nrow(data$data))
@@ -197,13 +191,6 @@ csv_status <- function(data, data_tab, ns) {
       title <- "Data not present"
     } else {
       title <- "Please select time variable for your data"
-    }
-    if (is.null(data_tab)) {
-      body <- NULL
-    } else {
-      body <- shiny::tagList(
-        "Return to the",
-        shiny::actionLink(ns("goto_data"), data_tab$link_text))
     }
   }
   simple_panel(class, title, body)

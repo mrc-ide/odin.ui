@@ -4,10 +4,8 @@ mod_configure_ui <- function(id) {
     shiny::titlePanel("Configure"),
     shiny::h3("Data"),
     shiny::uiOutput(ns("data_status")),
-    shiny::uiOutput(ns("data_status2")),
     shiny::h3("Model"),
     shiny::uiOutput(ns("model_status")),
-    shiny::uiOutput(ns("model_status2")),
     shiny::h3("Link"),
     shiny::uiOutput(ns("link")),
     shiny::textOutput(ns("link_status")))

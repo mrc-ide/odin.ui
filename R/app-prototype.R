@@ -67,8 +67,8 @@ odin_prototype_server <- function(initial_code) {
 
     rv <- shiny::reactiveValues(status = NULL)
 
-    data_tab <- goto_module("Data tab", session, "odin_ui_navbar", "Data")
-    editor_tab <- goto_module("Editor tab", session, "odin_ui_navbar", "Editor")
+    data_tab <- "Return to the Data tab"
+    editor_tab <- "Return to the Editor tab"
 
     data <- shiny::callModule(mod_csv_server, "odin_csv", data_tab)
     model <- shiny::callModule(
@@ -81,7 +81,7 @@ odin_prototype_server <- function(initial_code) {
       mod_fit_server, "odin_fit", data$result, model$result, configure$result)
     vis <- shiny::callModule(
       mod_vis_server, "odin_vis", data$result, model$result, configure$result,
-      fit$pars)
+      data$status, model$status, fit$pars)
     batch <- shiny::callModule(
       mod_batch_server, "odin_batch", model$result, data$result, fit$pars)
 
@@ -156,10 +156,4 @@ state_filename <- function(filename) {
     filename <- sprintf("odin-%s.rds", date_string())
   }
   filename
-}
-
-
-goto_module <- function(link_text, session, navbar_id, tab) {
-  list(link_text = link_text, go = function()
-    shiny::updateNavbarPage(session, navbar_id, tab))
 }

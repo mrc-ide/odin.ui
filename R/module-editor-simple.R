@@ -56,7 +56,7 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
 
 
 mod_editor_simple_server <- function(input, output, session, initial_code,
-                                     editor_tab) {
+                                     editor_status_body) {
   ns <- session$ns
   data <- shiny::reactiveValues(validation = NULL,
                                 compilation = NULL)
@@ -142,14 +142,9 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
     shinyAce::updateAceEditor(session, ns("editor"), value = state$code)
   }
 
-  shiny::observeEvent(
-    input$goto_editor, {
-      editor_tab$go()
-    })
-
   list(result = shiny::reactive(data$compilation),
        status = shiny::reactive(
-         editor_status(data$compilation, editor_tab, session$ns)),
+         editor_status(data$compilation, editor_status_body)),
        get_state = get_state,
        set_state = set_state)
 }
@@ -263,17 +258,10 @@ editor_validate_initial_code <- function(initial_code) {
 }
 
 
-editor_status <- function(model, editor_tab, ns) {
+editor_status <- function(model, body) {
   if (is.null(model)) {
     class <- "danger"
     title <- "Please compile a model"
-    if (is.null(editor_tab)) {
-      body <- NULL
-    } else {
-      body <- shiny::tagList(
-        "Return to the",
-        shiny::actionLink(ns("goto_editor"), editor_tab$link_text))
-    }
   } else {
     np <- nrow(model$result$info$pars)
     nv <- nrow(model$result$info$vars)
@@ -285,12 +273,10 @@ editor_status <- function(model, editor_tab, ns) {
     } else {
       class <- "warning"
       msg <- "Warning: model is out of date, consider recompiling the model."
-      if (is.null(editor_tab)) {
+      if (is.null(body)) {
         body <- msg
       } else {
-        body <- shiny::tagList(
-          msg, "Return to the",
-          shiny::actionLink(ns("goto_editor"), editor_tab$link_text))
+        body <- shiny::tagList(msg, body)
       }
     }
   }

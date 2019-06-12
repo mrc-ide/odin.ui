@@ -44,8 +44,17 @@ mod_vis_ui <- function(id) {
 
 
 mod_vis_server <- function(input, output, session, data, model, configure,
+                           data_status = NULL, model_status = NULL,
                            import = NULL) {
   rv <- shiny::reactiveValues(pars = NULL)
+
+  output$status_data <- shiny::renderUI({
+    data_status()
+  })
+
+  output$status_model <- shiny::renderUI({
+    model_status()
+  })
 
   shiny::observe({
     m <- model()
@@ -66,28 +75,6 @@ mod_vis_server <- function(input, output, session, data, model, configure,
       rv$outputs <- outputs$vars
       rv$cols <- odin_colours(
         outputs$vars$name, d$name_vars, configure()$link)
-    }
-  })
-
-  ## TODO: this is not ideal because the module should be able to cope
-  ## with different ways of the data not being visible.  So the caller
-  ## should provide something here that generates the *body* of the
-  ## warning.
-  output$status_data <- shiny::renderUI({
-    if (!isTRUE(data()$configured)) {
-      simple_panel("danger", "Data not present",
-                   "Please upload data using the data tab")
-    }
-  })
-
-  output$status_model <- shiny::renderUI({
-    m <- model()
-    if (is.null(m)) {
-      simple_panel("danger", "Model not present",
-                   "Please create a model using the editor tab")
-    } else if (!m$is_current) {
-      simple_panel("warning", "Model out of date",
-                   "You may need to recompile your model")
     }
   })
 
