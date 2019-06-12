@@ -69,13 +69,14 @@ odin_prototype_server <- function(initial_code) {
 
     data_tab <- "Return to the Data tab"
     editor_tab <- "Return to the Editor tab"
+    configure_tab <- "Return to the Configure tab"
 
     data <- shiny::callModule(mod_csv_server, "odin_csv", data_tab)
     model <- shiny::callModule(
       mod_editor_simple_server, "odin_editor", initial_code, editor_tab)
     configure <- shiny::callModule(
       mod_configure_server, "odin_configure", data$result, model$result,
-      data$status, model$status)
+      data$status, model$status, configure_tab)
 
     fit <- shiny::callModule(
       mod_fit_server, "odin_fit", data$result, model$result, configure$result)

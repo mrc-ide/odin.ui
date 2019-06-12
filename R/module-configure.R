@@ -13,7 +13,8 @@ mod_configure_ui <- function(id) {
 
 
 mod_configure_server <- function(input, output, session, data, model,
-                                 data_status = NULL, model_status = NULL) {
+                                 data_status = NULL, model_status = NULL,
+                                 configure_status_body = NULL) {
   rv <- shiny::reactiveValues(link = NULL)
 
   output$data_status <- shiny::renderUI({
@@ -36,11 +37,13 @@ mod_configure_server <- function(input, output, session, data, model,
     if (is.null(rv$map)) {
       rv$link <- NULL
       rv$label <- character(0)
+      rv$configured <- FALSE
     } else {
       link <- lapply(rv$map, function(x) input[[x]])
       rv$link <- link[vlapply(link, function(x) !is.null(x) && nzchar(x))]
       rv$label <- sprintf("%s ~ %s",
                           names(rv$link), vcapply(rv$link, identity))
+      rv$configured <- length(rv$link) > 0
     }
   })
 
@@ -58,7 +61,8 @@ mod_configure_server <- function(input, output, session, data, model,
   list(result = shiny::reactive(list(
          link = rv$link,
          label = rv$label,
-         configured = length(rv$link) > 0)),
+         configured = rv$configured,
+         status = configure_status(rv$configured, configure_status_body))),
        get_state = get_state,
        set_state = set_state)
 }
@@ -113,5 +117,14 @@ configure_link_status <- function(label) {
     "No linked variables"
   } else {
     paste(label, collapse = " & ")
+  }
+}
+
+
+configure_status <- function(configured, body) {
+  if (isTRUE(configured)) {
+    NULL
+  } else {
+    simple_panel("danger", "Model/Data link is not configured", body)
   }
 }

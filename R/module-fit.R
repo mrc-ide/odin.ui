@@ -4,6 +4,7 @@ mod_fit_ui <- function(id) {
     shiny::titlePanel("Fit a model"),
     shiny::sidebarLayout(
       shiny::sidebarPanel(
+        shiny::uiOutput(ns("status_link")),
         shiny::actionButton(ns("fit"), "Fit model"),
         shiny::actionButton(ns("reset"), "Reset"),
         shiny::selectInput(ns("target"), "Target to fit", character(0)),
@@ -22,6 +23,10 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
     })
 
   rv <- shiny::reactiveValues(pars = NULL)
+
+  output$status_link <- shiny::renderUI({
+    configure()$status
+  })
 
   shiny::observe({
     info <- configure()
