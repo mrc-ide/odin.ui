@@ -122,6 +122,11 @@ list_to_numeric <- function(x, named = FALSE) {
 }
 
 
+list_to_logical <- function(x, named = FALSE) {
+  vlapply(x, identity, USE.NAMES = named)
+}
+
+
 date_string <- function(time = Sys.time()) {
   format(time, "%Y%m%d-%H%M%S")
 }

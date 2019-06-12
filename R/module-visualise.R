@@ -22,7 +22,8 @@ mod_vis_ui <- function(id) {
           class = "form-horizontal",
           shiny::uiOutput(ns("status_data")),
           shiny::uiOutput(ns("status_model")),
-          shiny::uiOutput(ns("odin_control")),
+          ## TODO: status_configure but tone down warning to info
+          shiny::uiOutput(ns("control_parameters")),
           ## https://github.com/rstudio/shiny/issues/1675#issuecomment-298398997
           shiny::uiOutput(ns("import_button"), inline = TRUE),
           shiny::actionButton(ns("reset_button"), "Reset",
@@ -39,7 +40,7 @@ mod_vis_ui <- function(id) {
       shiny::mainPanel(
         shiny::div(class = "plotly-graph-wrapper",
                    plotly::plotlyOutput(ns("odin_output"))),
-        shiny::uiOutput(ns("graph_control")))))
+        shiny::uiOutput(ns("control_graph")))))
 }
 
 
@@ -56,52 +57,22 @@ mod_vis_server <- function(input, output, session, data, model, configure,
   })
 
   shiny::observe({
-    m <- model()
-    d <- data()
-    if (is.null(m$result) || !isTRUE(d$configured)) {
-      rv$pars <- NULL
-      rv$outputs <- NULL
-    } else {
-      pars <- coef(m$result$model)
-      pars$value <- vapply(pars$default_value, identity, numeric(1))
-      pars$par_id <- sprintf("par_id_%s", pars$name)
-      rv$pars <- pars
-
-      metadata <- model_metadata(m$result$model)
-      outputs <- mod_model_control_outputs(metadata, NULL, NULL, ns)
-      outputs$vars$id <- outputs$name_map
-      outputs$vars$y2 <- sprintf("y2_%s", outputs$vars$name)
-      rv$outputs <- outputs$vars
-      rv$cols <- odin_colours(
-        outputs$vars$name, d$name_vars, configure()$link)
-    }
+    rv$configuration <- vis_configuration(model(), data(), configure()$link)
   })
 
-  output$odin_control <- shiny::renderUI({
-    if (!is.null(rv$pars)) {
-      ns <- session$ns
-      input <- function(name, id, value) {
-        horizontal_form_group(
-          shiny::span(name),
-          raw_numeric_input(ns(id), value = value))
-      }
-      mod_model_control_section(
-        "Model parameters",
-        unname(Map(input, rv$pars$name, rv$pars$par_id, rv$pars$value)),
-        ns = ns)
-    }
+  output$control_parameters <- shiny::renderUI({
+    vis_control_parameters(rv$configuration, session$ns)
   })
 
-  output$graph_control <- shiny::renderUI({
-    mod_vis_graph_control(rv$outputs, rv$cols, session$ns)
+  output$control_graph <- shiny::renderUI({
+    vis_control_graph(rv$configuration, session$ns)
   })
 
   shiny::observeEvent(
     input$go_button, {
-      user <- set_names(lapply(rv$pars$par_id, function(x) input[[x]]),
-                        rv$pars$name)
-      rv$result <- run_model_data(data(), model(), configure(), user,
-                                  list(pars = rv$pars, link = rv$link))
+      pars <- rv$configuration$pars
+      user <- get_inputs(input, pars$id_value, pars$name)
+      rv$result <- vis_run_model(rv$configuration, user)
     })
 
   output$import_button <- shiny::renderUI({
@@ -114,9 +85,10 @@ mod_vis_server <- function(input, output, session, data, model, configure,
   shiny::observeEvent(
     input$import, {
       user <- import()
+      browser()
       if (!is.null(user)) {
         shiny::isolate({
-          id <- rv$pars$par_id[match(names(user), rv$pars$name)]
+          id <- rv$pars$id_value[match(names(user), rv$pars$name)]
           if (!any(is.na(id))) {
             for (i in seq_along(id)) {
               shiny::updateNumericInput(session, id[[i]], value = user[[i]])
@@ -131,87 +103,66 @@ mod_vis_server <- function(input, output, session, data, model, configure,
 
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result)) {
-      y2_model <- set_names(vlapply(rv$outputs$y2, function(el) input[[el]]),
-                            rv$outputs$name)
-      y2_data <- set_names(rep(FALSE, length(rv$result$name_data)),
-                           rv$result$name_data)
-      info <- configure()
-      if (info$configured) {
-        y2_data[names(info$link)] <- y2_model[list_to_character(info$link)]
-      }
-      y2 <- list(model = y2_model, data = y2_data)
-      plot_vis(rv$result, input, y2, rv$cols, input$logscale_y)
+      y2_model <- get_inputs(input, rv$configuration$vars$id_y2,
+                       rv$configuration$vars$name)
+      vis_plot(rv$result, y2_model, input$logscale_y)
     }
   })
 
   output$download_button <- shiny::downloadHandler(
     filename = function() {
-      mod_vis_download_filename(input$download_filename, input$download_type)
+      vis_download_filename(input$download_filename, input$download_type)
     },
     content = function(filename) {
-      data <- switch(input$download_type,
-                     modelled = rv$result$smooth,
-                     combined = rv$result$combined,
-                     parameters = list_to_df(rv$result$user))
-      write.csv(data, filename, row.names = FALSE)
+      vis_download_data(filename, rv$result$simulation, input$download_type)
     })
+
+  ## TODO: save/load state
 }
 
 
-mod_vis_pars <- function(pars, ns) {
-  if (!is.null(pars) && nrow(pars) > 0L) {
-    pars$value <- vapply(pars$default_value, identity, numeric(1))
-    pars$par_id <- sprintf("par_%s", pars$name)
-    input <- function(name, id, value) {
-      horizontal_form_group(
-        shiny::span(name),
-        raw_numeric_input(ns(id), value = value))
-    }
-    ui <- mod_model_control_section(
-      "Model parameters",
-      unname(Map(input, pars$name, pars$par_id, pars$value)),
-      ns = ns)
-    list(pars = pars, ui = ui)
-  }
-}
-
-
-mod_vis_graph_control <- function(outputs, cols, ns) {
-  graph_settings <- mod_vis_graph_settings(outputs, cols, ns)
-  shiny::tagList(
-    shiny::div(
-      class = "pull-right",
-      shiny::div(
-        class = "form-inline mt-5",
-        shiny::div(
-          class = "form-group",
-          raw_text_input(ns("download_filename"), placeholder = "filename",
-                         value = "")),
-        shiny::div(
-          class = "form-group",
-          raw_select_input(ns("download_type"),
-                           choices = list("modelled", "combined",
-                                          "parameters"))),
-        shiny::downloadButton(ns("download_button"), "Download",
-                              class = "btn-blue")),
-      graph_settings))
-}
-
-
-mod_vis_graph_settings <- function(outputs, cols, ns) {
-  if (is.null(outputs)) {
+vis_control_graph <- function(configuration, ns) {
+  if (is.null(configuration)) {
     return(NULL)
   }
+
+  shiny::div(
+    class = "pull-right",
+    vis_control_graph_downloads(ns),
+    vis_control_graph_settings(configuration, ns))
+}
+
+
+vis_control_graph_downloads <- function(ns) {
+  shiny::div(
+    class = "form-inline mt-5",
+    shiny::div(
+      class = "form-group",
+      raw_text_input(
+        ns("download_filename"), placeholder = "filename", value = "")),
+    shiny::div(
+      class = "form-group",
+      raw_select_input(
+        ns("download_type"),
+        choices = list("modelled", "combined", "parameters"))),
+    shiny::downloadButton(
+      ns("download_button"), "Download", class = "btn-blue"))
+}
+
+
+vis_control_graph_settings <- function(configuration, ns) {
   title <- "Graph settings"
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
+
+  vars <- configuration$vars
   labels <- Map(function(lab, col)
     shiny::span(lab, style = paste0("color:", col)),
-    outputs$name, cols$model[outputs$name])
+    vars$name, configuration$cols$model[vars$name])
 
   tags <- shiny::div(class = "form-group",
                      raw_checkbox_input(ns("logscale_y"), "Log scale y axis"),
                      shiny::tags$label("Plot on second y axis"),
-                     Map(raw_checkbox_input, ns(outputs$y2),
+                     Map(raw_checkbox_input, ns(vars$id_y2),
                          labels, value = FALSE))
 
   head <- shiny::a(style = "text-align: right; display: block;",
@@ -221,17 +172,117 @@ mod_vis_graph_settings <- function(outputs, cols, ns) {
                    title, shiny::icon("gear", lib = "font-awesome"))
 
   body <- shiny::div(id = id,
-                    class = "collapse box",
-                    style = "width: 300px;",
-                    list(tags))
+                     class = "collapse box",
+                     style = "width: 300px;",
+                     list(tags))
 
   shiny::div(class = "pull-right mt-3", head, body)
 }
 
 
-## Just punting on this:
+vis_download_filename <- function(filename, type) {
+  if (!is.null(filename) && nzchar(filename)) {
+    filename <- ensure_extension(filename, "csv")
+  } else {
+    filename <- sprintf("odin-visusalise-%s-%s.csv", type, date_string())
+  }
+  filename
+}
+
+
+vis_download_data <- function(filename, simulation, type) {
+  data <- switch(type,
+                 modelled = simulation$smooth,
+                 combined = simulation$combined,
+                 parameters = simulation$user)
+  write_csv(data, filename)
+}
+
+
+vis_configuration <- function(model, data, link) {
+  if (!isTRUE(model$result$success) || !isTRUE(data$configured)) {
+    return(NULL)
+  }
+  ## Configure how we'll interact with paramters, to pull them from
+  ## the ui
+  pars <- model$result$info$pars
+  pars$value <- vnapply(pars$default_value, function(x) x %||% NA_real_)
+  pars$id_value <- sprintf("id_value_value_%s", pars$name)
+
+  vars <- model$result$info$vars
+  vars$id_y2 <- sprintf("y2_%s", vars$name)
+
+  cols <- odin_colours(vars$name, data$name_vars, link)
+
+  list(data = data, model = model, link = link,
+       pars = pars, vars = vars, cols = cols)
+}
+
+
+vis_control_parameters <- function(configuration, ns) {
+  if (is.null(configuration)) {
+    return(NULL)
+  }
+  input <- function(name, id, value) {
+    horizontal_form_group(
+      shiny::span(name),
+      raw_numeric_input(ns(id), value = value))
+  }
+  pars <- configuration$pars
+  mod_model_control_section(
+    "Model parameters",
+    unname(Map(input, pars$name, pars$id_value, pars$value)),
+    ns = ns)
+}
+
+
+vis_run_model <- function(configuration, user) {
+  if (is.null(configuration)) {
+    return(NULL)
+  }
+
+  data <- configuration$data
+  model <- configuration$model
+
+  name_time <- data$name_time
+  mod <- model$result$model(user = user)
+
+  ## 1. Result aligned with the data
+  t <- data$data[[name_time]]
+  t_after_zero <- t[[1]] > 0
+  result_data <- mod$run(if (t_after_zero) c(0, t) else t)
+  if (t_after_zero) {
+    result_data <- result_data[-1, , drop = FALSE]
+  }
+
+  ## 2. Result combined with the data
+  result_combined <- cbind(result_data, data$data)
+
+  ## 3. Result smoothly computed
+  result_smooth <- mod$run(seq(0, max(t), length.out = 501))
+
+  ## name_time: configuration$data$name_time
+  ## data: configuration$data$data
+  ## name_vars: configuration$model$vars$name
+  ## name_data: configuration$data$name_vars
+  ## link: configuration$link
+  ## combined: simulation$combined
+  ## smooth: simulation$smooth
+  ## user: simulation$user
+  list(configuration = configuration,
+       simulation = list(data = result_data,
+                         combined = result_combined,
+                         smooth = result_smooth,
+                         user = list_to_df(user)))
+}
+
+
 ##' @importFrom plotly plot_ly
-plot_vis <- function(result, input, y2, cols, logscale_y) {
+vis_plot <- function(result, y2_model, logscale_y) {
+  cfg <- result$configuration
+  y2 <- odin_y2(y2_model, cfg$data$name_vars, cfg$link)
+  cols <- cfg$cols
+
   p <- plotly::plot_ly()
   p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
 
@@ -239,17 +290,18 @@ plot_vis <- function(result, input, y2, cols, logscale_y) {
     p <- plotly::layout(p, yaxis = list(type = "log"))
   }
 
-  xy <- result$smooth
-  for (i in result$name_vars) {
+  xy <- result$simulation$smooth
+  for (i in names(cols$model)) {
     yaxis <- if (y2$model[[i]]) "y2" else NULL
     p <- plotly::add_lines(p, x = xy[, 1], y = xy[, i], name = i,
                            line = list(color = cols$model[[i]]),
                            yaxis = yaxis)
   }
 
-  data_time <- result$data[[result$name_time]]
-  for (i in result$name_data) {
-    y <- result$data[[i]]
+  data <- cfg$data$data
+  data_time <- data[[cfg$data$name_time]]
+  for (i in names(cols$data)) {
+    y <- data[[i]]
     j <- !is.na(y)
     yaxis <- if (y2$data[[i]]) "y2" else NULL
     p <- plotly::add_markers(p, x = data_time[j], y = y[j], name = i,
@@ -266,14 +318,4 @@ plot_vis <- function(result, input, y2, cols, logscale_y) {
   }
 
   p
-}
-
-
-mod_vis_download_filename <- function(filename, type) {
-  if (!is.null(filename) && nzchar(filename)) {
-    filename <- ensure_extension(filename, "csv")
-  } else {
-    filename <- sprintf("odin-visusalise-%s-%s.csv", type, date_string())
-  }
-  filename
 }
