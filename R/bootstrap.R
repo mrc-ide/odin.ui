@@ -6,7 +6,7 @@ simple_panel <- function(class, title, body, icon_name = NULL) {
     "info-circle")
   icon <- shiny::icon(sprintf("%s fa-lg", icon_name))
   head <- shiny::div(class = "panel-heading", icon, title)
-  if (!is.null(body) && nzchar(body)) {
+  if (!is.null(body) && !identical(body, "")) {
     body <- shiny::div(class = "panel-body", body)
   } else {
     body <- NULL
