@@ -2,6 +2,7 @@ context("odin.ui")
 
 
 test_that("generated parameter interface includes all parameters", {
+  skip("rewrite or remove")
   pars <- data_frame(name = c("N0", "K", "r"),
                      has_default = TRUE,
                      default_value = I(list(1, 100, 0.5)),
@@ -24,6 +25,7 @@ test_that("generated parameter interface includes all parameters", {
 
 
 test_that("parameters must be scalar", {
+  skip("rewrite or remove")
   pars <- data_frame(name = "v",
                      has_default = FALSE,
                      default_value = I(list(NULL)),
@@ -35,6 +37,7 @@ test_that("parameters must be scalar", {
 
 
 test_that("parameters must have defaults", {
+  skip("rewrite or remove")
   pars <- data_frame(name = "v",
                      has_default = FALSE,
                      default_value = I(list(NULL)),
@@ -46,6 +49,7 @@ test_that("parameters must have defaults", {
 
 
 test_that("models can have no parameters", {
+  skip("rewrite or remove")
   pars <- data_frame(name = character(0),
                      has_default = logical(0),
                      default_value = I(list()),
@@ -58,6 +62,7 @@ test_that("models can have no parameters", {
 
 
 test_that("time can be length 1", {
+  skip("rewrite or remove")
   res <- mod_model_control_run_options(10, list(discrete = FALSE),
                                        NA, NULL, NULL, identity)
   expect_false(res$has_start_time)
@@ -70,6 +75,7 @@ test_that("time can be length 1", {
 
 
 test_that("time can be length 2", {
+  skip("rewrite or remove")
   res <- mod_model_control_run_options(c(0, 10), list(discrete = FALSE),
                                        NA, NULL, NULL, identity)
   expect_true(res$has_start_time)
@@ -82,6 +88,7 @@ test_that("time can be length 2", {
 
 
 test_that("time must be length 1-2", {
+  skip("rewrite or remove")
   expect_error(mod_model_control_run_options(numeric(), list(discrete = FALSE),
                                              NA, NULL, identity),
                "'default_time' must be length 1 or 2", fixed = TRUE)
