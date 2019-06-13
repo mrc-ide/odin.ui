@@ -8,6 +8,6 @@ r_github_packages:
   - r-lib/covr
   - mrc-ide/cinterpolate
   - richfitz/dde
-  - mrc-ide/odin@development
+  - mrc-ide/odin
 after_success:
   - Rscript -e 'covr::codecov(quiet = FALSE)'
