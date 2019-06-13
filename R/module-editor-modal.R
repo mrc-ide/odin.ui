@@ -1,6 +1,6 @@
 editor_metadata_modal <- function(pars, data, success, ns) {
   ## Some of the prep here might be helpful to do elsewhere.
-  defaults <- setNames(pars$default_value, pars$name)
+  defaults <- set_names(pars$default_value, pars$name)
 
   ## Most of the validation could be put into javascript too, which
   ## would reduce load considerably - none of the validation is
@@ -146,7 +146,7 @@ editor_metadata_validate <- function(pars, input) {
     res
   }
 
-  data <- c(setNames(lapply(pars$name, validate_par), pars$name),
+  data <- c(set_names(lapply(pars$name, validate_par), pars$name),
             list(t = validate_time()))
 
   list(data = data,

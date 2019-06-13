@@ -103,7 +103,7 @@ configure_link_ui_update <- function(map, input, data, model, restore) {
 
   ## Are any of these still current?
   fmt <- "link_data_%s"
-  map <- setNames(sprintf(fmt, vars_data), vars_data)
+  map <- set_names(sprintf(fmt, vars_data), vars_data)
 
   selected <- set_names(rep(list(NULL), length(vars_data)), vars_data)
   i <- names(prev) %in% vars_data &
