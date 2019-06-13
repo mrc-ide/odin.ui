@@ -192,11 +192,11 @@ validate_time_scale <- function(time_scale, metadata) {
          call. = FALSE)
   }
   ## time_scale_stage <- nodes$stage[nodes$id == time_scale]
-  if (!(time_scale_stage %in% c("constant", "user"))) {
-    stop(sprintf("'time_scale' value '%s' is not constant or user-supplied",
-                 time_scale),
-         call. = FALSE)
-  }
+  ## if (!(time_scale_stage %in% c("constant", "user"))) {
+  ##   stop(sprintf("'time_scale' value '%s' is not constant or user-supplied",
+  ##                time_scale),
+  ##        call. = FALSE)
+  ## }
   if (nodes$rank[nodes$id == time_scale] > 0L) {
     stop(sprintf("'time_scale' value '%s' is not scalar", time_scale),
          call. = FALSE)
