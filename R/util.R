@@ -112,6 +112,11 @@ read_csv <- function(filename) {
 }
 
 
+data_frame <- function(...) {
+  data.frame(..., stringsAsFactors = FALSE, check.names = FALSE)
+}
+
+
 list_to_character <- function(x, named = FALSE) {
   vcapply(x, identity, USE.NAMES = named)
 }

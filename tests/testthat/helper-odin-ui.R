@@ -5,8 +5,3 @@ mock_model <- function(pars) {
   attr(ret, "user_info") <- function() pars
   ret
 }
-
-
-data_frame <- function(...) {
-  data.frame(..., stringsAsFactors = FALSE, check.names = FALSE)
-}
