@@ -51,7 +51,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
       rv$pars <- NULL
       ui <- NULL
     } else {
-      dat <- mod_fit_pars(coef(m$result$model), session$ns)
+      dat <- mod_fit_pars(stats::coef(m$result$model), session$ns)
       rv$pars <- dat$pars
       ui <- dat$ui
     }
@@ -193,7 +193,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
         rv$pars <- NULL
         ui <- NULL
       } else {
-        dat <- mod_fit_pars(coef(m$result$model), session$ns)
+        dat <- mod_fit_pars(stats::coef(m$result$model), session$ns)
         rv$pars <- dat$pars
         ui <- dat$ui
       }

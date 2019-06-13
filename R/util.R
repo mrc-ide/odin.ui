@@ -108,7 +108,7 @@ yaml_read <- function(filename) {
 
 
 read_csv <- function(filename) {
-  read.csv(filename, stringsAsFactors = FALSE, check.names = FALSE)
+  utils::read.csv(filename, stringsAsFactors = FALSE, check.names = FALSE)
 }
 
 

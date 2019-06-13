@@ -28,7 +28,7 @@ mod_csv_ui <- function(id) {
 
 
 mod_csv_server <- function(input, output, session, csv_status_body) {
-  rv <- reactiveValues(data = NULL)
+  rv <- shiny::reactiveValues(data = NULL)
 
   shiny::observeEvent(
     input$clear, {

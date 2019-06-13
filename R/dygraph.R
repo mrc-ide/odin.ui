@@ -102,7 +102,7 @@ dygraph_multi <- function(dat, include, cols, mean, interval, second_y,
 
 
 dygraph_interval <- function(v, dat, intervals) {
-  r <- apply(dat[[v]], 1, quantile, intervals[[v]])
+  r <- apply(dat[[v]], 1, stats::quantile, intervals[[v]])
   m <- rowMeans(dat[[v]])
   ret <- cbind(r[1, ], m, r[2, ])
   colnames(ret) <- sprintf(c("%s[lower]", "%s", "%s[upper]"), v)

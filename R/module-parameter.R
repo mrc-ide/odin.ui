@@ -25,7 +25,7 @@ mod_parameter_server <- function(input, output, session,
 
   metadata <- model_metadata(model)
   extra <- validate_extra(extra, metadata)
-  user <- coef(model)
+  user <- stats::coef(model)
 
   parameters <- validate_model_parameters(model, parameters)
   control <- mod_parameter_control(metadata, default_time, parameters,

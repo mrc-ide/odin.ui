@@ -225,5 +225,5 @@ model_info <- function(model) {
   type[names(d) %in% output] <- "output"
   vars <- data_frame(name = names(d), rank = rank, type = type)
 
-  list(pars = coef(model), vars = vars)
+  list(pars = stats::coef(model), vars = vars)
 }

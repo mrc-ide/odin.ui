@@ -131,7 +131,7 @@ mod_editor_server <- function(input, output, session, initial_code) {
       data$compilation <- list(code = code, result = res, is_current = TRUE)
 
       if (res$success) {
-        pars <- coef(res$model)
+        pars <- stats::coef(res$model)
         shiny::showModal(editor_metadata_modal(pars, NULL, TRUE, ns))
       }
     })
@@ -139,7 +139,7 @@ mod_editor_server <- function(input, output, session, initial_code) {
   ## This is the second part of the exit route out
   shiny::observeEvent(input$editor_metadata_ok, {
     model <- data$compilation$result$model
-    pars <- coef(model)
+    pars <- stats::coef(model)
     res <- editor_metadata_validate(pars, input)
     if (res$success) {
       shiny::removeModal()

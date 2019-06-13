@@ -38,7 +38,7 @@ mod_batch_server <- function(input, output, session, model, data,
       rv$pars <- NULL
       rv$outputs <- NULL
     } else {
-      pars <- coef(m$result$model)
+      pars <- stats::coef(m$result$model)
       pars$value <- vapply(pars$default_value, identity, numeric(1))
       pars$par_id <- sprintf("par_id_%s", pars$name)
       rv$pars <- pars

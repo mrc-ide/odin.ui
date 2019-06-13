@@ -204,5 +204,5 @@ update_model <- function(model, input, output, control, extra, time_scale) {
       return()
     }
     run_model(model, pars, time, replicates, extra, time_scale)
-  }, error = function (x) str(x))
+  }, error = function (x) utils::str(x))
 }

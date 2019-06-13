@@ -78,7 +78,7 @@ fit_model <- function(target, coef, tolerance = 1e-4, method = "optim") {
 
 do_fit_optim <- function(start, target, tolerance, lower, upper) {
   control <- list(factr = tolerance, pgtol = tolerance)
-  optim(start, target, lower = lower, upper = upper,
+  stats::optim(start, target, lower = lower, upper = upper,
         method = "L-BFGS-B", control = control)
 }
 
