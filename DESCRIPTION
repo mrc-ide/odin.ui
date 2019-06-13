@@ -18,6 +18,7 @@ Imports:
     odin (>= 0.2.0),
     shiny (>= 1.0.4),
     shinyAce,
+    shinyjs,
     subplex,
     yaml
 RoxygenNote: 6.1.1
