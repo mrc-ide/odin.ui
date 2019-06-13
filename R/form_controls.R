@@ -46,7 +46,7 @@ file_input <- function (inputId, label, multiple = FALSE, accept = NULL,
     restoredValue <- NULL
   }
   if (!is.null(restoredValue)) {
-    restoredValue <- shiny::toJSON(restoredValue, strict_atomic = FALSE)
+    restoredValue <- jsonlite::toJSON(restoredValue, strict_atomic = FALSE)
   }
   inputTag <- shiny::tags$input(id = inputId, name = inputId, type = "file",
                                 style = "display: none;", `data-restore` = restoredValue)
