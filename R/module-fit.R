@@ -172,7 +172,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
                      modelled = rv$result$smooth,
                      combined = rv$result$combined,
                      parameters = list_to_df(rv$result$user))
-      write.csv(data, filename, row.names = FALSE)
+      write_csv(data, filename)
     })
 
   get_state <- function() {
