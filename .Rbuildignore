@@ -14,3 +14,4 @@ vignettes_src
 examples
 ^docker$
 ^\.dockerignore$
+^scripts$
