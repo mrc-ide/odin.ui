@@ -129,21 +129,16 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
     })
 
   get_state <- function() {
-    shiny::isolate({
-      ## TODO: for completeness, it might be worth getting the model
-      ## filename and the auto_validate state too, but for now we don't.
-      list(code = input$editor,
-           compiled = if (rv$compilation$success) rv$compilation$code)
-    })
+    list(editor = input$editor,
+         compilation = rv$compilation$code)
   }
 
   set_state <- function(state) {
-    if (!is.null(state$compiled)) {
-      res <- editor_compile(state$compiled)
-      rv$validation <- res$validation
-      rv$compilation <- res$compilation
+    if (!is.null(state$compilation)) {
+      rv$compilation <- editor_compile(state$compilation)$compilation
     }
-    shinyAce::updateAceEditor(session, ns("editor"), value = state$code)
+    shinyAce::updateAceEditor(session, ns("editor"), value = state$editor)
+    rv$validation <- editor_validate(state$editor)
   }
 
   list(result = shiny::reactive(
