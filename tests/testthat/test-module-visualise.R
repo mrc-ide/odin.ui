@@ -81,7 +81,7 @@ test_that("run model", {
     deriv(x) <- a
     initial(x) <- 1
     a <- user(1)
-  })))
+  }, verbose = FALSE)))
   t <- 0:10
   data <- list(name_time = "t", data = data_frame(t = t, x = sin(t)))
   configuration <- list(model = model, data = data)
@@ -104,7 +104,7 @@ test_that("run model copes with missing zero", {
     deriv(x) <- a
     initial(x) <- 1
     a <- user(1)
-  })))
+  }, verbose = FALSE)))
   t <- 1:10
   data <- list(name_time = "t", data = data_frame(t = t, x = sin(t)))
   configuration <- list(model = model, data = data)
@@ -123,21 +123,53 @@ test_that("run model copes with missing zero", {
 
 
 test_that("plot", {
+  ## Lots of data to set up here:
   model <- list(result = list(model = odin::odin({
     deriv(x) <- a
     initial(x) <- 1
+    deriv(y) <- 2 * a
+    initial(y) <- 2
     a <- user(1)
-  })))
-  t <- 1:10
-  data <- list(name_time = "t", data = data_frame(t = t, x = sin(t)))
+  }, verbose = FALSE)))
+  t_data <- 1:10
+  data <- list(name_time = "t",
+               name_vars = c("x", "y"),
+               data = data_frame(t = t_data, x = sin(t_data), y = cos(t_data)))
+  cols <- odin_colours(c("x", "y"), c("x", "y"), c("x" = "x"))
   configuration <- list(model = model, data = data, link = c("x" = "x"),
-                        cols = odin_colours("x", "x", c("x" = "x")))
+                        cols = odin_colours(c("x", "y"), c("x", "y"),
+                                            c("x" = "x")))
   user <- list(a = 2)
-
   res <- vis_run_model(configuration, user)
-  p <- vis_plot(res, c(x = FALSE), FALSE)
-  ## For now, not really any test here.  But soon we'll find a common
-  ## way of doing this with a "plot over a set of series" that will
-  ## limit how much is not easily testable.
-  expect_is(p, "plotly")
+  y2_model <- c(x = FALSE, y = FALSE)
+
+  ## and the expected output:
+  t_model <- seq(0, 10, length.out = 501)
+  expected <- list(
+    list(x = t_model, y = 1 + t_model * 2, name = "x", yaxis = "y1",
+         line = list(color = cols$model[["x"]])),
+    list(x = t_model, y = 2 + t_model * 4, name = "y", yaxis = "y1",
+         line = list(color = cols$model[["y"]])),
+    list(x = t_data, y = data$data$x, name = "x", yaxis = "y1",
+         marker = list(color = cols$data[["x"]])),
+    list(x = t_data, y = data$data$y, name = "y", yaxis = "y1",
+         marker = list(color = cols$data[["y"]])))
+
+  series <- vis_plot_series(res, y2_model)
+  expect_equal(series, expected)
+
+  ## y2 is shared across fields:
+  series2 <- vis_plot_series(res, c(x = TRUE, y = FALSE))
+  expected2 <- expected
+  expected2[[1]]$yaxis <- "y2"
+  expected2[[3]]$yaxis <- "y2"
+  expect_equal(series2, expected2)
+
+  series3 <- vis_plot_series(res, c(x = FALSE, y = TRUE))
+  expected3 <- expected
+  expected3[[2]]$yaxis <- "y2"
+  expect_equal(series3, expected3)
+
+  ## This can't be helpfully tested at this point
+  expect_is(vis_plot(res, y2_model, FALSE), "plotly")
 })

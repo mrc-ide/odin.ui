@@ -268,7 +268,7 @@ vis_run_model <- function(configuration, user) {
 }
 
 
-vis_plot <- function(result, y2_model, logscale_y) {
+vis_plot_series <- function(result, y2_model) {
   cfg <- result$configuration
   y2 <- odin_y2(y2_model, cfg$data$name_vars, result$configuration$link)
   cols <- result$configuration$cols
@@ -282,5 +282,10 @@ vis_plot <- function(result, y2_model, logscale_y) {
   series_data <- plot_plotly_series_bulk(
     data_time, data[names(cols$data)], cols$data, TRUE, y2$data)
 
-  plot_plotly(c(series_model, series_data), logscale_y)
+  c(series_model, series_data)
+}
+
+
+vis_plot <- function(result, y2_model, logscale_y) {
+  plot_plotly(vis_plot_series(result, y2_model), logscale_y)
 }
