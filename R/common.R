@@ -52,3 +52,56 @@ odin_y2 <- function(y2_model, name_data, link) {
   y2_data[names(link)] <- y2_model[list_to_character(link)]
   list(model = list_to_logical(y2_model, TRUE), data = y2_data)
 }
+
+
+##' @importFrom plotly plot_ly
+plot_plotly <- function(series, logscale_y = FALSE) {
+  p <- plotly::plot_ly()
+  p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
+
+  for (s in series) {
+    if (!is.null(s$marker)) {
+      p <- plotly::add_markers(p, x = s$x, y = s$y, name = s$name,
+                               marker = s$marker, yaxis = s$yaxis)
+    } else {
+      p <- plotly::add_lines(p, x = s$x, y = s$y, name = s$name,
+                             line = s$line, yaxis = s$yaxis)
+    }
+  }
+
+  if (logscale_y) {
+    p <- plotly::layout(p, yaxis = list(type = "log"))
+  }
+
+  if (any(vcapply(series, "[[", "yaxis") == "y2")) {
+    opts <- list(overlaying = "y",
+                 side = "right",
+                 showgrid = FALSE,
+                 type = if (logscale_y) "log" else "linear")
+    p <- plotly::layout(p, yaxis2 = opts)
+  }
+  p
+}
+
+
+plot_plotly_series <- function(x, y, name, col, points = FALSE, y2 = FALSE) {
+  i <- is.na(x) | is.na(y)
+  if (any(i)) {
+    x <- x[!i]
+    y <- y[!i]
+  }
+  yaxis <- if (y2) "y2" else "y1"
+  ret <- list(x = x, y = y, name = name, yaxis = yaxis)
+  if (points) {
+    ret$marker <- list(color = col)
+  } else {
+    ret$line <- list(color = col)
+  }
+  ret
+}
+
+
+plot_plotly_series_bulk <- function(x, y, col, points, y2) {
+  lapply(colnames(y), function(i)
+    plot_plotly_series(x, y[, i], i, col[[i]], points, y2[[i]]))
+}

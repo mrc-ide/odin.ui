@@ -268,45 +268,19 @@ vis_run_model <- function(configuration, user) {
 }
 
 
-##' @importFrom plotly plot_ly
 vis_plot <- function(result, y2_model, logscale_y) {
   cfg <- result$configuration
   y2 <- odin_y2(y2_model, cfg$data$name_vars, result$configuration$link)
   cols <- result$configuration$cols
 
-  p <- plotly::plot_ly()
-  p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
-
-  if (logscale_y) {
-    p <- plotly::layout(p, yaxis = list(type = "log"))
-  }
-
   xy <- result$simulation$smooth
-  for (i in names(cols$model)) {
-    yaxis <- if (y2$model[[i]]) "y2" else NULL
-    p <- plotly::add_lines(p, x = xy[, 1], y = xy[, i], name = i,
-                           line = list(color = cols$model[[i]]),
-                           yaxis = yaxis)
-  }
+  series_model <- plot_plotly_series_bulk(
+    xy[, 1], xy[, names(cols$model), drop = FALSE], cols$model, FALSE, y2$model)
 
   data <- cfg$data$data
   data_time <- data[[cfg$data$name_time]]
-  for (i in names(cols$data)) {
-    y <- data[[i]]
-    j <- !is.na(y)
-    yaxis <- if (y2$data[[i]]) "y2" else NULL
-    p <- plotly::add_markers(p, x = data_time[j], y = y[j], name = i,
-                             marker = list(color = cols$data[[i]]),
-                             yaxis = yaxis)
-  }
+  series_data <- plot_plotly_series_bulk(
+    data_time, data[names(cols$data)], cols$data, TRUE, y2$data)
 
-  if (any(y2$model)) {
-    opts <- list(overlaying = "y",
-                 side = "right",
-                 showgrid = FALSE,
-                 type = if (logscale_y) "log" else "linear")
-    p <- plotly::layout(p, yaxis2 = opts)
-  }
-
-  p
+  plot_plotly(c(series_model, series_data), logscale_y)
 }
