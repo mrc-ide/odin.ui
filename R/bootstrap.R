@@ -16,3 +16,11 @@ simple_panel <- function(class, title, body, icon_name = NULL) {
     shiny::div(
       class = sprintf("panel panel-%s", class), head, body))
 }
+
+
+unordered_list <- function(els) {
+  if (length(els) == 0L) {
+    return(NULL)
+  }
+  shiny::tags$ul(lapply(els, shiny::tags$li))
+}

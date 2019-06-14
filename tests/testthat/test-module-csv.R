@@ -2,16 +2,18 @@ context("module: csv")
 
 test_that("read simple csv", {
   path <- tempfile()
+  filename <- "myfile.csv"
   on.exit(unlink(path))
 
   d <- data_frame(a = 1:5, b = runif(5), c = runif(5))
   write_csv(d, path)
 
   expect_equal(
-    csv_process(path, min_rows = 1),
+    csv_process(path, filename, min_rows = 1),
     list(success = TRUE,
          data = d,
          error = NULL,
+         filename = filename,
          vars = names(d),
          guess = NA))
 })
@@ -19,86 +21,98 @@ test_that("read simple csv", {
 
 test_that("invalid csv: too short", {
   path <- tempfile()
+  filename <- "myfile.csv"
   on.exit(unlink(path))
 
   d <- data_frame(a = 1:5, b = runif(5), c = runif(5))
   write_csv(d, path)
 
   expect_equal(
-    csv_process(path, min_rows = 10, min_cols = 1),
+    csv_process(path, filename, min_rows = 10, min_cols = 1),
     list(success = FALSE,
          data = NULL,
-         error = "Expected at least 10 rows"))
+         error = "Expected at least 10 rows",
+         filename = filename))
   expect_equal(
-    csv_process(path, min_cols = 5, min_rows = 1),
+    csv_process(path, filename, min_cols = 5, min_rows = 1),
     list(success = FALSE,
          data = NULL,
-         error = "Expected at least 5 columns"))
+         error = "Expected at least 5 columns",
+         filename = filename))
 })
 
 
 test_that("invalid csv: duplicate names", {
   path <- tempfile()
+  filename <- "myfile.csv"
   on.exit(unlink(path))
 
   d <- data_frame(a = 1:5, b = runif(5), a = runif(5))
   write_csv(d, path)
 
   expect_equal(
-    csv_process(path, min_rows = 1, min_cols = 1),
+    csv_process(path, filename, min_rows = 1, min_cols = 1),
     list(success = FALSE,
          data = NULL,
-         error = "Data contains duplicate names ('a')"))
+         error = "Data contains duplicate names ('a')",
+         filename = filename))
 })
 
 
 test_that("Non numeric data", {
   path <- tempfile()
+  filename <- "myfile.csv"
   on.exit(unlink(path))
 
   d <- data_frame(a = 1:5, b = runif(5), c = letters[1:5])
   write_csv(d, path)
   expect_equal(
-    csv_process(path, min_rows = 1, min_cols = 1),
+    csv_process(path, filename, min_rows = 1, min_cols = 1),
     list(success = FALSE,
          data = NULL,
-         error = "All columns must be numeric ('c')"))
+         error = "All columns must be numeric ('c')",
+         filename = filename))
 })
 
 
 test_that("Completely incorrect data", {
   path <- tempfile()
+  filename <- "myfile.csv"
   on.exit(unlink(path))
 
   d <- data_frame(a = 1:5, b = letters[1:5], a = runif(5))
   write_csv(d, path)
 
   expect_equal(
-    csv_process(path, min_rows = 15, min_cols = 7),
+    csv_process(path, filename, min_rows = 15, min_cols = 7),
     list(success = FALSE,
          data = NULL,
          error = c("Data contains duplicate names ('a')",
                    "All columns must be numeric ('b')",
                    "Expected at least 7 columns",
-                   "Expected at least 15 rows")))
+                   "Expected at least 15 rows"),
+         filename = "myfile.csv"))
 })
 
 
 test_that("Invalid csv", {
   path <- tempfile()
+  filename <- "myfile.csv"
   on.exit(unlink(path))
   writeLines(c("a,b", "1,2,3,4"), path)
 
   expected <- tryCatch(read_csv(path), error = identity)$message
-  expect_equal(csv_process(path),
+  expect_equal(csv_process(path, filename),
                list(success = FALSE,
                     data = NULL,
-                    error = expected))
+                    error = expected,
+                    filename = filename))
 })
 
 
 test_that("guess time column", {
   path <- tempfile()
+  filename <- "myfile.csv"
   on.exit(unlink(path))
 
   d <- data_frame(a = 1:5, b = runif(5), c = runif(5))
@@ -106,7 +120,7 @@ test_that("guess time column", {
   f <- function(x) {
     names(d)[[1]] <- x
     write_csv(d, path)
-    csv_process(path, min_rows = 1, min_cols = 1)
+    csv_process(path, filename, min_rows = 1, min_cols = 1)
   }
 
   expect_equal(f("t")$guess, "t")
@@ -121,30 +135,35 @@ test_that("guess time column", {
 
   names(d)[1:2] <- c("day", "week")
   write_csv(d, path)
-  expect_equal(csv_process(path, min_rows = 1, min_cols = 1)$guess, NA)
+  expect_equal(
+    csv_process(path, filename, min_rows = 1, min_cols = 1)$guess,
+    NA)
 })
 
 
 test_that("csv configure", {
   path <- tempfile()
+  filename <- "myfile.csv"
   on.exit(unlink(path))
 
   d <- data_frame(a = 1:5, b = runif(5), c = runif(5))
   write_csv(d, path)
 
-  data <- csv_process(path, min_rows = 1)
+  data <- csv_process(path, filename, min_rows = 1)
 
   expect_equal(csv_configure(data, "b"),
-               c(data, list(name_time = "b",
-                            name_vars = c("a", "c"),
-                            configured = TRUE)))
+               list(data = data$data,
+                    name_time = "b",
+                    configured = TRUE,
+                    name_vars = c("a", "c"),
+                    cols = odin_colours_data(c("a", "c"))))
 
-  expect_equal(csv_configure(data, ""),
-               c(data, list(name_vars = c("a", "b", "c"),
-                            configured = FALSE)))
-  expect_equal(csv_configure(data, NULL),
-               c(data, list(name_vars = c("a", "b", "c"),
-                            configured = FALSE)))
+  expect_equal(
+    csv_configure(data, ""),
+    list(data = data$data, name_time = NULL, configured = FALSE))
+  expect_equal(
+    csv_configure(data, NULL),
+    list(data = data$data, name_time = NULL, configured = FALSE))
 })
 
 
@@ -161,7 +180,9 @@ test_that("csv summary: errors", {
 
 
 test_that("csv summary: configured", {
-  res <- csv_summary(list(success = TRUE, configured = TRUE,
+  imported <- list()
+  res <- csv_summary(imported,
+                     list(success = TRUE, configured = TRUE,
                           data = matrix(0, 3, 4), name_vars = c("a", "b")))
   expect_equal(res$children[[1]]$attribs$class,
                "panel panel-success")
@@ -173,7 +194,9 @@ test_that("csv summary: configured", {
 
 
 test_that("csv summary: unconfigured", {
-  res <- csv_summary(list(success = TRUE, configured = FALSE,
+  imported <- list()
+  res <- csv_summary(imported,
+                     list(success = TRUE, configured = FALSE,
                           data = matrix(0, 3, 4), name_vars = c("a", "b")))
   expect_equal(res$children[[1]]$attribs$class,
                "panel panel-info")
@@ -181,6 +204,21 @@ test_that("csv summary: unconfigured", {
                "Uploaded 3 rows and 4 columns")
   expect_equal(res$children[[1]]$children[[2]]$children[[1]],
                "Select a time variable to view plot")
+})
+
+
+test_that("csv summary: no data", {
+  expect_equal(
+    csv_summary(NULL, NULL),
+    simple_panel("info", "Upload a data set to begin", NULL))
+})
+
+
+test_that("csv summary: errors", {
+  errs <- c("a", "b")
+  expect_equal(
+    csv_summary(list(error = errs), NULL),
+    simple_panel("danger", "Error loading csv", unordered_list(errs)))
 })
 
 

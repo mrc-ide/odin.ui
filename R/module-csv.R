@@ -28,75 +28,73 @@ mod_csv_ui <- function(id) {
 
 
 mod_csv_server <- function(input, output, session, csv_status_body) {
-  rv <- shiny::reactiveValues(data = NULL)
+  rv <- shiny::reactiveValues()
 
-  shiny::observeEvent(
-    input$clear, {
-      shinyjs::reset("filename")
-      shiny::updateSelectInput(session, "name_time", choices = character(0))
-      rv$data <- NULL
-    })
+  shiny::observe({
+    rv$configured <- csv_configure(rv$imported, input$name_time)
+  })
+
+  shiny::observe({
+    rv$status <- csv_status(rv$configured, csv_status_body)
+  })
+
+  output$summary <- shiny::renderUI({
+    csv_summary(rv$imported, rv$configured)
+  })
+
+  output$data_plot <- plotly::renderPlotly({
+    csv_plot(rv$configured)
+  })
+
+  output$data_table <- shiny::renderDataTable(
+    rv$imported$data,
+    options = list(paging = FALSE, dom = "t", searching = FALSE))
 
   shiny::observe({
     if (!is.null(input$filename)) {
+      ## NOTE: the isolate here breaks a cyclic dependency and allows
+      ## the "clear" to work
       shiny::isolate({
-        rv$data <- csv_process(input$filename$datapath)
-        if (rv$data$success) {
+        rv$imported <- csv_process(input$filename$datapath, input$filename$name)
+        if (rv$imported$success) {
           shiny::updateSelectInput(session, "name_time",
-                                   choices = rv$data$vars,
-                                   selected = rv$data$guess)
+                                   choices = rv$imported$vars,
+                                   selected = rv$imported$guess)
         }
       })
     }
   })
 
-  shiny::observe({
-    rv$data <- csv_configure(rv$data, input$name_time)
-  })
-
-  shiny::observe({
-    rv$status <- csv_status(rv$data, csv_status_body)
-  })
-
-  output$summary <- shiny::renderUI({
-    csv_summary(rv$data)
-  })
-
-  output$data_plot <- plotly::renderPlotly({
-    if (isTRUE(rv$data$configured)) {
-      cols <- odin_colours_data(rv$data$name_vars)
-      plot_data(rv$data$data, rv$data$name_time, rv$data$name_vars, cols)
-    }
-  })
-
-  output$data_table <- shiny::renderDataTable({
-    if (!is.null(rv$data$data)) {
-      rv$data$data
-    }
-  }, options = list(paging = FALSE, dom = "t", searching = FALSE))
+  shiny::observeEvent(
+    input$clear, {
+      shinyjs::reset("filename")
+      rv$configured <- NULL
+      rv$imported <- NULL
+      shiny::updateSelectInput(session, "name_time", choices = character(0))
+    })
 
   get_state <- function() {
-    list(filename = input$filename$name,
-         data = rv$data)
+    list(imported = rv$imported, configured = rv$configured)
   }
 
   set_state <- function(state) {
     ## TODO: can't yet set the filename in the upload widget
-    rv$data <- state$data
+    rv$imported <- state$imported
+    rv$configured <- state$configured
     shiny::updateSelectInput(session, "name_time",
-                             choices = state$data$vars,
-                             selected = state$data$name_time)
+                             choices = state$imported$vars,
+                             selected = state$configured$name_time)
   }
 
-  list(result = shiny::reactive(c(rv$data, list(status = rv$status))),
-       status = shiny::reactive(csv_status(rv$data, csv_status_body)),
+  list(result = shiny::reactive(c(rv$configured, list(status = rv$status))),
        get_state = get_state,
        set_state = set_state)
 }
 
 
-csv_process <- function(filename, min_cols = 2, min_rows = 10) {
-  result <- csv_validate(filename, min_cols, min_rows)
+csv_process <- function(path, filename, min_cols = 2, min_rows = 10) {
+  result <- csv_validate(path, min_cols, min_rows)
+  result$filename <- filename
 
   if (result$success) {
     vars <- names(result$data)
@@ -152,35 +150,42 @@ csv_validate <- function(filename, min_cols, min_rows) {
 
 
 csv_configure <- function(data, name_time) {
-  if (is.null(name_time) || !nzchar(name_time)) {
+  if (identical(name_time, "") || !any(data$vars == name_time)) {
     name_time <- NULL
   }
-  data$name_time <- name_time
-  data$name_vars <- setdiff(data$vars, name_time)
-  data$configured <- !is.null(data$data) && !is.null(name_time)
-  data
+  result <- list(data = data$data,
+                 name_time = name_time,
+                 configured = !is.null(data$data) && !is.null(name_time))
+  if (result$configured) {
+    result$name_vars <- setdiff(data$vars, name_time)
+    result$cols <- odin_colours_data(result$name_vars)
+  }
+  result
 }
 
 
-csv_summary <- function(data) {
-  if (is.null(data$success)) {
-    NULL
-  } else if (data$success) {
+csv_summary <- function(imported, configured) {
+  if (!is.null(imported$error)) {
+    class <- "danger"
+    head <- "Error loading csv"
+    body <- unordered_list(imported$error)
+  } else if (is.null(imported)) {
+    class <- "info"
+    head <- "Upload a data set to begin"
+    body <- NULL
+  } else {
     head <- sprintf("Uploaded %d rows and %d columns",
-                    nrow(data$data), ncol(data$data))
-    if (isTRUE(data$configured)) {
+                    nrow(configured$data), ncol(configured$data))
+    if (isTRUE(configured$configured)) {
       body <- sprintf("Response variables: %s",
-                      paste(data$name_vars, collapse = ", "))
+                      paste(configured$name_vars, collapse = ", "))
       class <- "success"
     } else {
       body <- "Select a time variable to view plot"
       class <- "info"
     }
-    simple_panel(class, head, body)
-  } else {
-    body <- shiny::tags$ul(lapply(data$error, shiny::tags$li))
-    simple_panel("danger", "Error loading csv", body)
   }
+  simple_panel(class, head, body)
 }
 
 
@@ -200,4 +205,16 @@ csv_status <- function(data, body = NULL) {
     }
   }
   module_status(class, title, body)
+}
+
+
+csv_plot <- function(result) {
+  if (!isTRUE(result$configured)) {
+    return(NULL)
+  }
+  series <- plot_plotly_series_bulk(
+    result$data[[result$name_time]],
+    result$data[result$name_vars],
+    col = result$cols, points = TRUE, y2 = FALSE)
+  plot_plotly(series)
 }

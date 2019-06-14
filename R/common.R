@@ -102,6 +102,9 @@ plot_plotly_series <- function(x, y, name, col, points = FALSE, y2 = FALSE) {
 
 
 plot_plotly_series_bulk <- function(x, y, col, points, y2) {
+  if (identical(y2, FALSE)) {
+    y2 <- set_names(rep(FALSE, length(col)), names(col))
+  }
   lapply(colnames(y), function(i)
     plot_plotly_series(x, y[, i], i, col[[i]], points, y2[[i]]))
 }
