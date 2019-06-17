@@ -215,7 +215,7 @@ fit_run <- function(configuration, target, user, vary) {
       success = FALSE,
       result = NULL,
       message = sprintf("Starting parameter value needed for %s",
-                        names(user)[is.na(user)])))
+                        paste(names(user)[is.na(user)], collapse = ", "))))
   }
 
   vary <- names(vary)[list_to_logical(vary)]
