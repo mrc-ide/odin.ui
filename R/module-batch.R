@@ -44,7 +44,6 @@ mod_batch_server <- function(input, output, session, model, data, configure,
   })
 
   shiny::observe({
-    message("updating batch configuration")
     rv$configuration <- batch_configuration(model(), data(), configure()$link)
   })
 

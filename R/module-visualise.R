@@ -62,7 +62,6 @@ mod_vis_server <- function(input, output, session, data, model, configure,
   })
 
   shiny::observe({
-    message("updating vis configuration")
     rv$configuration <- vis_configuration(model(), data(), configure()$link)
   })
 
