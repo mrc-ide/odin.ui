@@ -92,7 +92,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
     pars <- rv$configuration$pars
     user <- get_inputs(input, pars$id_value, pars$name)
     if (!is.null(target) && !any(is.na(list_to_numeric(user)))) {
-      compare <- fit_compare(rv$configuration, target)
+      compare <- fit_make_compare(rv$configuration, target)
       rv$result <- vis_run(rv$configuration, user)
       rv$goodness_of_fit <- compare(rv$result$simulation$data)
     } else {
@@ -231,7 +231,7 @@ fit_run <- function(configuration, target, user, vary) {
   lower <- pars$min[i]
   upper <- pars$max[i]
 
-  objective <- fit_objective(configuration, target, user, vary)
+  objective <- fit_make_objective(configuration, target, user, vary)
   result <- do_fit(user[vary], objective, lower, upper,
                    tolerance = 1e-6, method = "nmkb")
   user[vary] <- result$par
@@ -245,10 +245,10 @@ fit_run <- function(configuration, target, user, vary) {
 }
 
 
-fit_objective <- function(configuration, target, user, vary) {
+fit_make_objective <- function(configuration, target, user, vary) {
   mod <- configuration$model$result$model(user = as.list(user))
   time <- configuration$data$data[[configuration$data$name_time]]
-  compare <- fit_compare(configuration, target)
+  compare <- fit_make_compare(configuration, target)
   force(vary)
   function(p) {
     mod$set_user(user = set_names(as.list(p), vary))
@@ -258,12 +258,13 @@ fit_objective <- function(configuration, target, user, vary) {
 }
 
 
-fit_compare <- function(configuration, target) {
-  name_time <- configuration$data$name_time
-  target_data <- target
+fit_make_compare <- function(configuration, target, compare = compare_sse) {
+  real <- configuration$data$data[[target]]
   target_model <- configuration$link[[target]]
-  make_compare(configuration$data$data, name_time, target_data, target_model,
-               compare_sse)
+  compare <- match.fun(compare)
+  function(modelled) {
+    compare(modelled[, target_model], real)
+  }
 }
 
 

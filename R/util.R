@@ -180,3 +180,10 @@ expand_and_name <- function(x, nms) {
   }
   x
 }
+
+
+protect <- function(fun, fail = Inf) {
+  function(...) {
+    tryCatch(fun(...), error = function(e) fail)
+  }
+}

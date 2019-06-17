@@ -1,99 +1,3 @@
-## Create a closure that captures the model to data fit for a single
-## response variable.
-##
-## @param data a data frame
-## @param name_time the name of the time variable within the data
-## @param name_data the name of the response variable within the data
-## @param name_modelled the name of the response variable within the model
-## @param a function that will take two identical length vectors and
-##   return a scalar goodness of fit measurement (smaller is better)
-make_compare <- function(data, name_time, name_data, name_modelled, compare) {
-  real <- data[[name_data]]
-  compare <- match.fun(compare)
-  force(name_modelled)
-  function(modelled) {
-    compare(modelled[, name_modelled], real)
-  }
-}
-
-
-## Create a closure that can be used for optimising a model fit
-##
-## @param model the odin model
-##
-## @param model coefficient information (coef(model)), augmented with
-##   a column "vary" that is TRUE for values to be varied and "value",
-##   which is the parameter value to use for non-varying parameters,
-##   defaulting to default_value
-##
-## @param vector of times (greater than or equal to zero) that the
-##   model should stop at
-##
-## @param compare a comparison function as created by make_compare
-##
-## @callback a callback function (e.g., print_every)
-make_target <- function(model, coef, time, compare, callback = NULL) {
-  user <- set_names(coef$value %||% coef$default_value, coef$name)
-  mod <- model(user = as.list(user))
-  nms <- coef$name[coef$vary]
-
-  function(p) {
-    mod$set_user(user = set_names(as.list(p), nms))
-    y <- mod$run(c(0, time))[-1, , drop = FALSE]
-    res <- compare(y)
-    if (!is.null(callback)) {
-      callback(p, res)
-    }
-    res
-  }
-}
-
-
-make_target2 <- function(model, time, user, vary, compare) {
-  mod <- model(user = user)
-  force(time)
-  force(vary)
-  force(compare)
-  function(p) {
-    mod$set_user(user = set_names(as.list(p), vary))
-    y <- mod$run(c(0, time))[-1, , drop = FALSE]
-    compare(y)
-  }
-}
-
-
-
-
-do_fit_optim <- function(start, target, tolerance, lower, upper) {
-  control <- list(factr = tolerance, pgtol = tolerance)
-  stats::optim(start, target, lower = lower, upper = upper,
-        method = "L-BFGS-B", control = control)
-}
-
-
-do_fit_subplex <- function(start, target, tolerance) {
-  control <- list(reltol = tolerance)
-  subplex::subplex(start, protect(target), control)
-}
-
-
-do_fit_hjkb <- function(start, target, tolerance, lower, upper) {
-  control <- list(tol = tolerance)
-  dfoptim::hjkb(start, target, lower, upper, control)
-}
-
-
-do_fit_nmkb <- function(start, target, tolerance, lower, upper) {
-  control <- list(tol = tolerance)
-  res <- dfoptim::nmkb(start, target, lower, upper, control)
-  list(par = res$par,
-       value = res$value,
-       success = res$convergence == 0,
-       message = res$message,
-       evaluations = res$feval)
-}
-
-
 do_fit <- function(start, target, lower, upper, tolerance, method) {
   control <- list(factr = tolerance, pgtol = tolerance)
   t0 <- Sys.time()
@@ -111,92 +15,51 @@ do_fit <- function(start, target, lower, upper, tolerance, method) {
 }
 
 
-protect <- function(fun, fail = Inf) {
-  function(...) {
-    tryCatch(fun(...), error = function(e) fail)
-  }
+do_fit_optim <- function(start, target, tolerance, lower, upper) {
+  control <- list(factr = tolerance, pgtol = tolerance)
+  res <- stats::optim(start, target, lower = lower, upper = upper,
+                      method = "L-BFGS-B", control = control)
+  list(par = res$par,
+       value = res$value,
+       success = res$convergence == 0,
+       message = res$message,
+       evaluations = res$counts[[1]] + 2 * res$counts[[1]] * length(start))
 }
 
 
-print_every <- function(every) {
-  i <- 0L
-  function(p, res) {
-    if (i %% every == 0L) {
-      message(sprintf("{%s} => %s", paste(p, collapse = ", "), res))
-    }
-    i <<- i + 1L
-  }
+do_fit_subplex <- function(start, target, tolerance) {
+  control <- list(reltol = tolerance)
+  res <- subplex::subplex(start, protect(target), control)
+  list(par = res$par,
+       value = res$value,
+       success = res$convergence == 0,
+       message = res$message,
+       evaluations = res$count)
 }
 
 
-plot_fit <- function(data, name_time, name_data, model_output, name_model,
-                     name_target_data, name_target_model, cols) {
-  p <- plotly::plot_ly()
-  p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
-  for (i in name_model) {
-    dash <- if (i == name_target_model) "solid" else "dash"
-    p <- plotly::add_lines(p, x = model_output[, "t"], y = model_output[, i],
-                           name = i,
-                           line = list(color = cols$model[[i]], dash = dash))
-  }
-
-  data_time <- data[[name_time]]
-  for (i in name_data) {
-    j <- !is.na(data[[i]])
-    symbol <- if (i == name_target_data) "circle" else "circle-open"
-    p <- plotly::add_markers(p, x = data_time[j], y = data[[i]][j], name = i,
-                             marker = list(color = cols$data[[i]],
-                                           symbol = symbol))
-  }
-
-  p
+do_fit_hjkb <- function(start, target, tolerance, lower, upper) {
+  control <- list(tol = tolerance)
+  res <- dfoptim::hjkb(start, target, lower, upper, control)
+  list(par = res$par,
+       value = res$value,
+       success = res$convergence == 0,
+       message = "Optimisation completed",
+       evaluations = res$feval)
 }
 
 
-plot_data <- function(data, name_time, name_vars, cols) {
-  p <- plotly::plot_ly()
-  p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
-  data_time <- data[[name_time]]
-  for (i in seq_along(name_vars)) {
-    nm <- name_vars[[i]]
-    y <- data[[nm]]
-    j <- !is.na(y)
-    p <- plotly::add_markers(p, x = data_time[j], y = y[j], name = nm,
-                             marker = list(color = cols[[i]]))
-  }
-  p
+do_fit_nmkb <- function(start, target, tolerance, lower, upper) {
+  control <- list(tol = tolerance)
+  res <- dfoptim::nmkb(start, target, lower, upper, control)
+  list(par = res$par,
+       value = res$value,
+       success = res$convergence == 0,
+       message = res$message,
+       evaluations = res$feval)
 }
 
 
 compare_sse <- function(modelled, real) {
   sum((modelled - real)^2, na.rm = TRUE)
-}
-
-
-run_model_data <- function(d, m, info, user, extra) {
-  if (isTRUE(d$configured) && !is.null(m)) {
-    name_time <- d$name_time
-    mod <- m$result$model(user = user)
-    ## Result aligned with the data
-    result_combined <- cbind(mod$run(d$data[[name_time]]), d$data)
-
-    ## Result smoothly plotted
-    t <- seq(0, max(d$data[[name_time]]), length.out = 501)
-    result_smooth <- mod$run(t)
-
-    ## Big whack of data to use later on:
-    c(list(data = d$data,
-           combined = result_combined,
-           smooth = result_smooth,
-           name_time = name_time,
-           ## TODO: can do this through metadata on the model - see
-           ## module-configure.R link_ui
-           name_vars = colnames(result_smooth)[-1],
-           name_data = d$name_vars,
-           user = user,
-           link = info$link),
-      extra)
-  } else {
-    NULL
-  }
 }
