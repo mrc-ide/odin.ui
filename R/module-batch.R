@@ -195,7 +195,7 @@ batch_plot_series <- function(result, include) {
   include <- names(include)[list_to_logical(include)]
 
   ## TODO: remove cheat:
-  if (length(include == 0L)) {
+  if (length(include) == 0L) {
     include <- intersect(c("weekly_onset", "weekly_death_h"),
                          result$configuration$vars$name)
   }
