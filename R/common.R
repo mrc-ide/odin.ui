@@ -59,13 +59,22 @@ plot_plotly <- function(series, logscale_y = FALSE) {
   p <- plotly::plot_ly()
   p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
 
+  ## Don't truncate labels:
+  hoverlabel <- list(namelength = -1)
+
   for (s in series) {
     if (!is.null(s$marker)) {
       p <- plotly::add_markers(p, x = s$x, y = s$y, name = s$name,
-                               marker = s$marker, yaxis = s$yaxis)
+                               marker = s$marker, yaxis = s$yaxis,
+                               hoverlabel = hoverlabel,
+                               showlegend = s$showlegend,
+                               legendgroup = s$legendgroup)
     } else {
       p <- plotly::add_lines(p, x = s$x, y = s$y, name = s$name,
-                             line = s$line, yaxis = s$yaxis)
+                             line = s$line, yaxis = s$yaxis,
+                             hoverlabel = hoverlabel,
+                             showlegend = s$showlegend,
+                             legendgroup = s$legendgroup)
     }
   }
 
@@ -84,27 +93,115 @@ plot_plotly <- function(series, logscale_y = FALSE) {
 }
 
 
-plot_plotly_series <- function(x, y, name, col, points = FALSE, y2 = FALSE) {
+plot_plotly_series <- function(x, y, name, col, points = FALSE, y2 = FALSE,
+                               showlegend = TRUE, legendgroup = NULL,
+                               width = NULL) {
   i <- is.na(x) | is.na(y)
   if (any(i)) {
     x <- x[!i]
     y <- y[!i]
   }
   yaxis <- if (y2) "y2" else "y1"
-  ret <- list(x = x, y = y, name = name, yaxis = yaxis)
+  ret <- list(x = x, y = y, name = name, yaxis = yaxis,
+              legendgroup = legendgroup, showlegend = showlegend)
   if (points) {
     ret$marker <- list(color = col)
   } else {
-    ret$line <- list(color = col)
+    ret$line <- list(color = col, width = width)
   }
   ret
 }
 
 
-plot_plotly_series_bulk <- function(x, y, col, points, y2) {
-  if (identical(y2, FALSE)) {
-    y2 <- set_names(rep(FALSE, length(col)), names(col))
+plot_plotly_series_bulk <- function(x, y, col, points, y2,
+                                    showlegend = TRUE, legendgroup = NULL,
+                                    width = NULL) {
+  nms <- colnames(y)
+  y2 <- expand_and_name(y2, nms)
+  legendgroup <- expand_and_name(legendgroup, nms)
+  width <- expand_and_name(width, nms)
+  lapply(nms, function(i)
+    plot_plotly_series(x, y[, i], i, col[[i]], points, y2[[i]],
+                       showlegend = showlegend,
+                       legendgroup = legendgroup[[i]],
+                       width = width[[i]]))
+}
+
+
+common_control_graph_downloads <- function(ns) {
+  shiny::div(
+    class = "form-inline mt-5",
+    shiny::div(
+      class = "form-group",
+      raw_text_input(
+        ns("download_filename"), placeholder = "filename", value = "")),
+    shiny::div(
+      class = "form-group",
+      raw_select_input(
+        ns("download_type"),
+        choices = list("modelled", "combined", "parameters"))),
+    shiny::downloadButton(
+      ns("download_button"), "Download", class = "btn-blue"))
+}
+
+
+common_control_graph <- function(configuration, ns, check_title, check_field) {
+  if (is.null(configuration)) {
+    return(NULL)
   }
-  lapply(colnames(y), function(i)
-    plot_plotly_series(x, y[, i], i, col[[i]], points, y2[[i]]))
+
+  shiny::div(
+    class = "pull-right",
+    common_control_graph_downloads(ns),
+    common_control_graph_settings(configuration, ns, check_title, check_field))
+}
+
+
+common_control_graph_settings <- function(configuration, ns,
+                                          check_title, check_field) {
+  title <- "Graph settings"
+  id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
+
+  vars <- configuration$vars
+  labels <- Map(function(lab, col)
+    shiny::span(lab, style = paste0("color:", col)),
+    vars$name, configuration$cols$model[vars$name])
+
+  tags <- shiny::div(class = "form-group",
+                     raw_checkbox_input(ns("logscale_y"), "Log scale y axis"),
+                     shiny::tags$label(check_title),
+                     Map(raw_checkbox_input, ns(vars[[check_field]]),
+                         labels, value = FALSE))
+
+  head <- shiny::a(style = "text-align: right; display: block;",
+                   "data-toggle" = "collapse",
+                   class = "text-muted",
+                   href = paste0("#", id),
+                   title, shiny::icon("gear", lib = "font-awesome"))
+
+  body <- shiny::div(id = id,
+                     class = "collapse box",
+                     style = "width: 300px;",
+                     list(tags))
+
+  shiny::div(class = "pull-right mt-3", head, body)
+}
+
+
+common_download_filename <- function(filename, type, prefix) {
+  if (!is.null(filename) && nzchar(filename)) {
+    filename <- ensure_extension(filename, "csv")
+  } else {
+    filename <- sprintf("odin-%s-%s-%s.csv", prefix, type, date_string())
+  }
+  filename
+}
+
+
+common_download_data <- function(filename, simulation, type) {
+  data <- switch(type,
+                 modelled = simulation$smooth,
+                 combined = simulation$combined,
+                 parameters = simulation$user)
+  write_csv(data, filename)
 }

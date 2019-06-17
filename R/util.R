@@ -159,3 +159,24 @@ constrain <- function(x, min, max) {
 squote <- function(x) {
   sprintf("'%s'", x)
 }
+
+
+is_missing <- function(x) {
+  is.null(x) || is.na(x) || identical(x, "")
+}
+
+
+combine_colwise <- function(x, fmt = "%s (%d)") {
+  for (i in seq_along(x)) {
+    colnames(x[[i]]) <- sprintf(fmt, colnames(x[[i]]), i)
+  }
+  do.call("cbind", x)
+}
+
+
+expand_and_name <- function(x, nms) {
+  if (length(x) == 1 && is.null(names(x))) {
+    x <- set_names(rep(x, length(nms)), nms)
+  }
+  x
+}

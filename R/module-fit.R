@@ -176,6 +176,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
     })
 
   get_state <- function() {
+    message("fit state")
     inputs <- list(value = mod_fit_read_inputs(rv$pars$par_id, input),
                    vary = mod_fit_read_inputs(rv$pars$var_id, input))
     ## information for the control:

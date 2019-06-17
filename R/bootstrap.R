@@ -24,3 +24,13 @@ unordered_list <- function(els) {
   }
   shiny::tags$ul(lapply(els, shiny::tags$li))
 }
+
+
+simple_numeric_input <- function(name, ...) {
+  horizontal_form_group(shiny::span(name), raw_numeric_input(...))
+}
+
+
+simple_select_input <- function(name, ...) {
+  horizontal_form_group(shiny::span(name), raw_select_input(...))
+}

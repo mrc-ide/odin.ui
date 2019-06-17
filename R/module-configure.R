@@ -51,6 +51,7 @@ mod_configure_server <- function(input, output, session, data, model,
   })
 
   get_state <- function() {
+    message("configure state")
     list(link = rv$link)
   }
 

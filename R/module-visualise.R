@@ -62,6 +62,7 @@ mod_vis_server <- function(input, output, session, data, model, configure,
   })
 
   shiny::observe({
+    message("updating vis configuration")
     rv$configuration <- vis_configuration(model(), data(), configure()$link)
   })
 
@@ -70,7 +71,8 @@ mod_vis_server <- function(input, output, session, data, model, configure,
   })
 
   output$control_graph <- shiny::renderUI({
-    vis_control_graph(rv$configuration, session$ns)
+    common_control_graph(rv$configuration, session$ns,
+                         "Plot on second y axis", "id_y2")
   })
 
   shiny::observeEvent(
@@ -110,72 +112,14 @@ mod_vis_server <- function(input, output, session, data, model, configure,
 
   output$download_button <- shiny::downloadHandler(
     filename = function() {
-      vis_download_filename(input$download_filename, input$download_type)
+      common_download_filename(input$download_filename, input$download_type,
+                               "visualise")
     },
     content = function(filename) {
-      vis_download_data(filename, rv$result$simulation, input$download_type)
+      common_download_data(filename, rv$result$simulation, input$download_type)
     })
 
   ## TODO: save/load state
-}
-
-
-vis_control_graph <- function(configuration, ns) {
-  if (is.null(configuration)) {
-    return(NULL)
-  }
-
-  shiny::div(
-    class = "pull-right",
-    vis_control_graph_downloads(ns),
-    vis_control_graph_settings(configuration, ns))
-}
-
-
-vis_control_graph_downloads <- function(ns) {
-  shiny::div(
-    class = "form-inline mt-5",
-    shiny::div(
-      class = "form-group",
-      raw_text_input(
-        ns("download_filename"), placeholder = "filename", value = "")),
-    shiny::div(
-      class = "form-group",
-      raw_select_input(
-        ns("download_type"),
-        choices = list("modelled", "combined", "parameters"))),
-    shiny::downloadButton(
-      ns("download_button"), "Download", class = "btn-blue"))
-}
-
-
-vis_control_graph_settings <- function(configuration, ns) {
-  title <- "Graph settings"
-  id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
-
-  vars <- configuration$vars
-  labels <- Map(function(lab, col)
-    shiny::span(lab, style = paste0("color:", col)),
-    vars$name, configuration$cols$model[vars$name])
-
-  tags <- shiny::div(class = "form-group",
-                     raw_checkbox_input(ns("logscale_y"), "Log scale y axis"),
-                     shiny::tags$label("Plot on second y axis"),
-                     Map(raw_checkbox_input, ns(vars$id_y2),
-                         labels, value = FALSE))
-
-  head <- shiny::a(style = "text-align: right; display: block;",
-                   "data-toggle" = "collapse",
-                   class = "text-muted",
-                   href = paste0("#", id),
-                   title, shiny::icon("gear", lib = "font-awesome"))
-
-  body <- shiny::div(id = id,
-                     class = "collapse box",
-                     style = "width: 300px;",
-                     list(tags))
-
-  shiny::div(class = "pull-right mt-3", head, body)
 }
 
 
@@ -193,25 +137,6 @@ vis_control_parameters <- function(configuration, ns) {
     "Model parameters",
     unname(Map(input, pars$name, pars$id_value, pars$value)),
     ns = ns)
-}
-
-
-vis_download_filename <- function(filename, type) {
-  if (!is.null(filename) && nzchar(filename)) {
-    filename <- ensure_extension(filename, "csv")
-  } else {
-    filename <- sprintf("odin-visualise-%s-%s.csv", type, date_string())
-  }
-  filename
-}
-
-
-vis_download_data <- function(filename, simulation, type) {
-  data <- switch(type,
-                 modelled = simulation$smooth,
-                 combined = simulation$combined,
-                 parameters = simulation$user)
-  write_csv(data, filename)
 }
 
 
