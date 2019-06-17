@@ -52,10 +52,11 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
   })
 
   output$control_target <- shiny::renderUI({
-    ## NOTE: using isolate to avoid circular dependency
-    shiny::isolate({
-      fit_control_target(rv$configuration, session$ns, input$target)
-    })
+    ## TODO: it would be nice to depend on input$target so that we can
+    ## persist the previous choice but getting that to work without a
+    ## circular dependency is hard and isolate over all this
+    ## expression does not work well.
+    fit_control_target(rv$configuration, session$ns)
   })
 
   ## TODO: this should *only* include
@@ -76,6 +77,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
         fit_run(rv$configuration, input$target, user, vary))
       if (rv$fit$success) {
         set_inputs(session, pars$id_value, rv$fit$result$user)
+        rv$result <- vis_run(rv$configuration, rv$fit$result$user)
       }
     })
 
@@ -83,19 +85,13 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
     target <- input$target
     pars <- rv$configuration$pars
     user <- get_inputs(input, pars$id_value, pars$name)
-    if (!is.null(target) && !is.na(list_to_numeric(user))) {
+    if (!is.null(target) && !any(is.na(list_to_numeric(user)))) {
       compare <- fit_compare(rv$configuration, target)
-      ## TODO: running more than really needed here:
-      result <- vis_run(rv$configuration, rv$fit$result$user)
-      rv$goodness_of_fit <- compare(result$simulation$data)
-    }
-  })
-
-  shiny::observe({
-    if (isTRUE(rv$fit$success)) {
-      rv$result <- vis_run(rv$configuration, rv$fit$result$user)
+      rv$result <- vis_run(rv$configuration, user)
+      rv$goodness_of_fit <- compare(rv$result$simulation$data)
     } else {
       rv$result <- NULL
+      rv$goodness_of_fit <- NULL
     }
   })
 
@@ -161,13 +157,12 @@ fit_configuration <- function(model, data, link) {
 }
 
 
-fit_control_target <- function(configuration, ns, previous) {
-  choices <- set_names(names(configuration$link), configuration$link_label)
-  if (!is_missing(previous) && previous %in% choices) {
-    selected <- previous
-  } else {
-    selected <- NA
+fit_control_target <- function(configuration, ns) {
+  if (is.null(configuration$link)) {
+    return(NULL)
   }
+  choices <- set_names(names(configuration$link), configuration$link_label)
+  selected <- NA
   mod_model_control_section(
     "Optimisation",
     horizontal_form_group(
