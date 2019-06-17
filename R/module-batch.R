@@ -48,7 +48,7 @@ mod_batch_server <- function(input, output, session, model, data, configure,
   })
 
   output$control_parameters <- shiny::renderUI({
-    batch_control_parameters(rv$configuration, session$ns)
+    common_control_parameters(rv$configuration$pars, session$ns)
   })
 
   output$control_focal <- shiny::renderUI({
@@ -109,19 +109,6 @@ mod_batch_server <- function(input, output, session, model, data, configure,
     })
 
   ## TODO: save/load state
-}
-
-
-## NOTE: This is the same as vis_control_paramters
-batch_control_parameters <- function(configuration, ns) {
-  if (is.null(configuration)) {
-    return(NULL)
-  }
-  pars <- configuration$pars
-  mod_model_control_section(
-    "Model parameters",
-    Map(simple_numeric_input, pars$name, ns(pars$id_value), pars$value),
-    ns = ns)
 }
 
 

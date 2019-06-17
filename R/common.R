@@ -138,6 +138,17 @@ plot_plotly_series_bulk <- function(x, y, col, points, y2,
 }
 
 
+common_control_parameters <- function(pars, ns) {
+  if (is.null(pars)) {
+    return(NULL)
+  }
+  mod_model_control_section(
+    "Model parameters",
+    Map(simple_numeric_input, pars$name, ns(pars$id_value), pars$value),
+    ns = ns)
+}
+
+
 common_control_graph_downloads <- function(ns) {
   shiny::div(
     class = "form-inline mt-5",

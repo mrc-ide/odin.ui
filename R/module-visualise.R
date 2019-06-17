@@ -66,7 +66,7 @@ mod_vis_server <- function(input, output, session, data, model, configure,
   })
 
   output$control_parameters <- shiny::renderUI({
-    vis_control_parameters(rv$configuration, session$ns)
+    common_control_parameters(rv$configuration$pars, session$ns)
   })
 
   output$control_graph <- shiny::renderUI({
