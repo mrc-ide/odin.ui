@@ -44,7 +44,8 @@ mod_batch_server <- function(input, output, session, model, data, configure,
   })
 
   shiny::observe({
-    rv$configuration <- batch_configuration(model(), data(), configure()$link)
+    rv$configuration <- common_model_data_configuration(
+      model(), data(), configure()$link)
   })
 
   output$control_parameters <- shiny::renderUI({
@@ -56,8 +57,8 @@ mod_batch_server <- function(input, output, session, model, data, configure,
   })
 
   output$control_graph <- shiny::renderUI({
-    common_control_graph(rv$configuration, session$ns,
-                         "Display series in plot", "id_include")
+    common_control_graph(
+      rv$configuration, session$ns, "Display series in plot")
   })
 
   shiny::observeEvent(
@@ -94,7 +95,7 @@ mod_batch_server <- function(input, output, session, model, data, configure,
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result)) {
       vars <- rv$configuration$vars
-      include <- get_inputs(input, vars$id_include, vars$name)
+      include <- get_inputs(input, vars$id_graph_option, vars$name)
       batch_plot(rv$result, include, input$logscale_y)
     }
   })
@@ -126,25 +127,6 @@ batch_control_focal <- function(configuration, ns) {
     simple_numeric_input("Number of runs", ns("focal_n"), 10),
     shiny::textOutput(ns("status_focal")),
     ns = ns)
-}
-
-
-batch_configuration <- function(model, data, link) {
-  if (!isTRUE(model$result$success) || !isTRUE(data$configured)) {
-    return(NULL)
-  }
-
-  pars <- model$result$info$pars
-  pars$value <- vnapply(pars$default_value, function(x) x %||% NA_real_)
-  pars$id_value <- sprintf("par_value_%s", pars$name)
-
-  vars <- model$result$info$vars
-  vars$id_include <- sprintf("var_include_%s", vars$name)
-
-  cols <- odin_colours(vars$name, data$name_vars, link)
-
-  list(data = data, model = model, link = link,
-       pars = pars, vars = vars, cols = cols)
 }
 
 

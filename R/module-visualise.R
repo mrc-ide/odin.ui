@@ -62,7 +62,8 @@ mod_vis_server <- function(input, output, session, data, model, configure,
   })
 
   shiny::observe({
-    rv$configuration <- vis_configuration(model(), data(), configure()$link)
+    rv$configuration <- common_model_data_configuration(
+      model(), data(), configure()$link)
   })
 
   output$control_parameters <- shiny::renderUI({
@@ -70,8 +71,8 @@ mod_vis_server <- function(input, output, session, data, model, configure,
   })
 
   output$control_graph <- shiny::renderUI({
-    common_control_graph(rv$configuration, session$ns,
-                         "Plot on second y axis", "id_y2")
+    common_control_graph(
+      rv$configuration, session$ns, "Plot on second y axis")
   })
 
   shiny::observeEvent(
@@ -100,7 +101,7 @@ mod_vis_server <- function(input, output, session, data, model, configure,
 
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result)) {
-      y2_model <- get_inputs(input, rv$configuration$vars$id_y2,
+      y2_model <- get_inputs(input, rv$configuration$vars$id_graph_option,
                        rv$configuration$vars$name)
       vis_plot(rv$result, y2_model, input$logscale_y)
     }
@@ -128,26 +129,6 @@ vis_control_parameters <- function(configuration, ns) {
     "Model parameters",
     Map(simple_numeric_input, pars$name, ns(pars$id_value), pars$value),
     ns = ns)
-}
-
-
-vis_configuration <- function(model, data, link) {
-  if (!isTRUE(model$result$success) || !isTRUE(data$configured)) {
-    return(NULL)
-  }
-  ## Configure how we'll interact with paramters, to pull them from
-  ## the ui
-  pars <- model$result$info$pars
-  pars$value <- vnapply(pars$default_value, function(x) x %||% NA_real_)
-  pars$id_value <- sprintf("par_value_%s", pars$name)
-
-  vars <- model$result$info$vars
-  vars$id_y2 <- sprintf("var_y2_%s", vars$name)
-
-  cols <- odin_colours(vars$name, data$name_vars, link)
-
-  list(data = data, model = model, link = link,
-       pars = pars, vars = vars, cols = cols)
 }
 
 

@@ -26,54 +26,6 @@ test_that("download data", {
 })
 
 
-test_that("configuration", {
-  model <- list(result = list(
-                  success = TRUE,
-                  info = list(pars = data_frame(
-                                name = c("a", "b"),
-                                default_value = I(as.list(1:2))),
-                              vars = data_frame(
-                                name = c("X", "Y")))))
-
-  data <- list(configured = TRUE,
-               name_vars = c("x", "y"))
-  link <- NULL
-
-  expect_null(vis_configuration(NULL, NULL, NULL))
-  expect_null(vis_configuration(model, NULL, NULL))
-  expect_null(vis_configuration(NULL, data, NULL))
-
-  res <- vis_configuration(model, data, link)
-  expect_equal(res$data, data)
-  expect_equal(res$model, model)
-  expect_equal(res$link, link)
-  expect_equal(res$pars, cbind(model$result$info$pars,
-                               value = 1:2,
-                               id_value = paste0("par_value_", c("a", "b")),
-                               stringsAsFactors = FALSE))
-  expect_equal(res$vars, cbind(model$result$info$vars,
-                               id_y2 = paste0("var_y2_", c("X", "Y")),
-                               stringsAsFactors = FALSE))
-  expect_equal(res$link, link)
-  expect_equal(res$cols, odin_colours(c("X", "Y"), c("x", "y"), link))
-
-  link <- list(X = "x")
-  res <- vis_configuration(model, data, link)
-  expect_equal(res$data, data)
-  expect_equal(res$model, model)
-  expect_equal(res$link, link)
-  expect_equal(res$pars, cbind(model$result$info$pars,
-                               value = 1:2,
-                               id_value = paste0("par_value_", c("a", "b")),
-                               stringsAsFactors = FALSE))
-  expect_equal(res$vars, cbind(model$result$info$vars,
-                               id_y2 = paste0("var_y2_", c("X", "Y")),
-                               stringsAsFactors = FALSE))
-  expect_equal(res$link, link)
-  expect_equal(res$cols, odin_colours(c("X", "Y"), c("x", "y"), link))
-})
-
-
 test_that("run model", {
   expect_null(vis_run_model(NULL))
 

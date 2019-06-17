@@ -166,7 +166,7 @@ common_control_graph_downloads <- function(ns) {
 }
 
 
-common_control_graph <- function(configuration, ns, check_title, check_field) {
+common_control_graph <- function(configuration, ns, check_title) {
   if (is.null(configuration)) {
     return(NULL)
   }
@@ -174,12 +174,11 @@ common_control_graph <- function(configuration, ns, check_title, check_field) {
   shiny::div(
     class = "pull-right",
     common_control_graph_downloads(ns),
-    common_control_graph_settings(configuration, ns, check_title, check_field))
+    common_control_graph_settings(configuration, ns, check_title))
 }
 
 
-common_control_graph_settings <- function(configuration, ns,
-                                          check_title, check_field) {
+common_control_graph_settings <- function(configuration, ns, check_title) {
   title <- "Graph settings"
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
 
@@ -191,7 +190,7 @@ common_control_graph_settings <- function(configuration, ns,
   tags <- shiny::div(class = "form-group",
                      raw_checkbox_input(ns("logscale_y"), "Log scale y axis"),
                      shiny::tags$label(check_title),
-                     Map(raw_checkbox_input, ns(vars[[check_field]]),
+                     Map(raw_checkbox_input, ns(vars$id_graph_option),
                          labels, value = FALSE))
 
   head <- shiny::a(style = "text-align: right; display: block;",
@@ -225,4 +224,23 @@ common_download_data <- function(filename, simulation, type) {
                  combined = simulation$combined,
                  parameters = simulation$user)
   write_csv(data, filename)
+}
+
+
+common_model_data_configuration <- function(model, data, link) {
+  if (!isTRUE(model$result$success) || !isTRUE(data$configured)) {
+    return(NULL)
+  }
+
+  pars <- model$result$info$pars
+  pars$value <- vnapply(pars$default_value, function(x) x %||% NA_real_)
+  pars$id_value <- sprintf("par_value_%s", pars$name)
+
+  vars <- model$result$info$vars
+  vars$id_graph_option <- sprintf("var_graph_option_%s", vars$name)
+
+  cols <- odin_colours(vars$name, data$name_vars, link)
+
+  list(data = data, model = model, link = link,
+       pars = pars, vars = vars, cols = cols)
 }
