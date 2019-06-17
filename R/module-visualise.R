@@ -79,7 +79,7 @@ mod_vis_server <- function(input, output, session, data, model, configure,
     input$go_button, {
       pars <- rv$configuration$pars
       user <- get_inputs(input, pars$id_value, pars$name)
-      rv$result <- vis_run_model(rv$configuration, user)
+      rv$result <- vis_run(rv$configuration, user)
     })
 
   output$import_button <- shiny::renderUI({
@@ -98,7 +98,7 @@ mod_vis_server <- function(input, output, session, data, model, configure,
           shiny::updateNumericInput(
             session, pars$id_value[[i]], value = user[[i]])
         }
-        rv$result <- vis_run_model(rv$configuration, user)
+        rv$result <- vis_run(rv$configuration, user)
       }
     })
 
@@ -127,15 +127,10 @@ vis_control_parameters <- function(configuration, ns) {
   if (is.null(configuration)) {
     return(NULL)
   }
-  input <- function(name, id, value) {
-    horizontal_form_group(
-      shiny::span(name),
-      raw_numeric_input(ns(id), value = value))
-  }
   pars <- configuration$pars
   mod_model_control_section(
     "Model parameters",
-    unname(Map(input, pars$name, pars$id_value, pars$value)),
+    Map(simple_numeric_input, pars$name, ns(pars$id_value), pars$value),
     ns = ns)
 }
 
@@ -160,7 +155,7 @@ vis_configuration <- function(model, data, link) {
 }
 
 
-vis_run_model <- function(configuration, user) {
+vis_run <- function(configuration, user) {
   if (is.null(configuration)) {
     return(NULL)
   }
