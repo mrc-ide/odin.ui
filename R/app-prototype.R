@@ -91,11 +91,13 @@ odin_prototype_server <- function(initial_code) {
       class_data <- text_module_status(data$result()$status)
       class_model <- text_module_status(model$result()$status)
       class_configure <- text_module_status(configure$result()$status)
+      class_fit <- text_module_status(fit$result()$status)
       shiny::tagList(
         "Status",
         shiny::icon("table", class = class_data),
         shiny::icon("edit", class = class_model),
-        shiny::icon("random", class = class_configure))
+        shiny::icon("random", class = class_configure),
+        shiny::icon("calculator", class = class_fit))
     })
 
     output$download_everything <- shiny::downloadHandler(

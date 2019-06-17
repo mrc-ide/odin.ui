@@ -24,7 +24,9 @@ mod_fit_ui <- function(id) {
         shiny::div(class = "plotly-graph-wrapper",
                    plotly::plotlyOutput(ns("odin_output"))),
         shiny::uiOutput(ns("control_graph")),
-        shiny::textOutput(ns("goodness_of_fit")))))
+        shiny::textOutput(ns("goodness_of_fit")),
+        shiny::fluidRow(
+          shiny::column(4, shiny::uiOutput(ns("status_fit")))))))
 }
 
 
@@ -41,6 +43,10 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
 
   output$status_link <- shiny::renderUI({
     show_module_status_if_not_ok(configure()$status)
+  })
+
+  output$status_fit <- shiny::renderUI({
+    rv$fit$status$ui
   })
 
   shiny::observe({
@@ -130,7 +136,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
 
   shiny::outputOptions(output, "control_parameters", suspendWhenHidden = FALSE)
 
-  list(result = shiny::reactive(rv$fit$result),
+  list(result = shiny::reactive(c(rv$fit$result, list(status = rv$fit$status))),
        user = shiny::reactive(rv$fit$result$user),
        get_state = get_state,
        set_state = set_state)
@@ -194,9 +200,11 @@ fit_control_parameters <- function(pars, ns) {
 
 
 fit_result <- function(success, result, message) {
+  class <- if (success) "success" else "danger"
   list(success = success,
        result = result,
-       message = message)
+       message = message,
+       status = module_status(class, message, NULL))
 }
 
 
