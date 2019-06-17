@@ -56,6 +56,9 @@ odin_y2 <- function(y2_model, name_data, link) {
 
 ##' @importFrom plotly plot_ly
 plot_plotly <- function(series, logscale_y = FALSE) {
+  if (length(series) == 0L) {
+    return(NULL)
+  }
   p <- plotly::plot_ly()
   p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
 
