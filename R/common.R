@@ -22,6 +22,13 @@ get_inputs <- function(input, ids, names) {
 }
 
 
+set_inputs <- function(session, ids, values, fn = shiny::updateNumericInput) {
+  for (i in seq_along(ids)) {
+    shiny::updateNumericInput(session, ids[[i]], value = values[[i]])
+  }
+}
+
+
 odin_colours <- function(model, data, link) {
   col_model <- odin_colours_model(model)
   col_data <- odin_colours_data(data)

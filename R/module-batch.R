@@ -63,9 +63,7 @@ mod_batch_server <- function(input, output, session, model, data, configure,
 
   shiny::observeEvent(
     input$go_button, {
-      pars <- rv$configuration$pars
-      user <- get_inputs(input, pars$id_value, pars$name)
-      rv$result <- batch_run(rv$configuration, user, rv$focal)
+      rv$result <- batch_run(rv$configuration, rv$focal)
     })
 
   shiny::observe({
@@ -87,12 +85,10 @@ mod_batch_server <- function(input, output, session, model, data, configure,
       user <- import()
       pars <- rv$configuration$pars
       if (identical(names(user), pars$name)) {
-        for (i in seq_along(user)) {
-          shiny::updateNumericInput(
-            session, pars$id_value[[i]], value = user[[i]])
-        }
-        browser()
-        rv$result <- batch_run(rv$configuration, user, rv$focal)
+        set_inputs(session, pars$id_value, user)
+        rv$focal <- batch_focal(
+          input$focal_name, input$focal_pct, input$focal_n, user)
+        rv$result <- batch_run(rv$configuration, rv$focal)
       }
     })
 
@@ -166,7 +162,7 @@ batch_configuration <- function(model, data, link) {
 }
 
 
-batch_run <- function(configuration, user, focal) {
+batch_run <- function(configuration, focal) {
   if (is.null(focal)) {
     return(NULL)
   }

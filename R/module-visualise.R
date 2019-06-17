@@ -94,10 +94,7 @@ mod_vis_server <- function(input, output, session, data, model, configure,
       user <- import()
       pars <- rv$configuration$pars
       if (identical(names(user), pars$name)) {
-        for (i in seq_along(user)) {
-          shiny::updateNumericInput(
-            session, pars$id_value[[i]], value = user[[i]])
-        }
+        set_inputs(session, pars$id_value, user)
         rv$result <- vis_run(rv$configuration, user)
       }
     })
