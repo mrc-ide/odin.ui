@@ -49,31 +49,19 @@ make_target <- function(model, coef, time, compare, callback = NULL) {
 }
 
 
-## Fit a model
-## @param target a target function to optimise, as created by make_target
-## @param paramter information (as in make_target)
-## @param tolerance to be passed to the underlying method
-## @param method optimisation method
-fit_model <- function(target, coef, tolerance = 1e-4, method = "optim") {
-  control <- list(factr = tolerance, pgtol = tolerance)
-  i <- coef$vary
-
-  start <- unlist(coef$value[i])
-  lower <- coef$min[i]
-  upper <- coef$max[i]
-  fit <- switch(
-    method,
-    optim = do_fit_optim(start, target, tolerance, lower, upper),
-    subplex = do_fit_subplex(start, target, tolerance),
-    hjkb = do_fit_hjkb(start, target, tolerance, lower, upper),
-    nmkb = do_fit_nmkb(start, target, tolerance, lower, upper),
-    stop("Unknown method ", method))
-
-  coef$value[i] <- fit$par
-  fit$coef <- coef
-  fit$pars <- set_names(as.list(coef$value), coef$name)
-  fit
+make_target2 <- function(model, time, user, vary, compare) {
+  mod <- model(user = user)
+  force(time)
+  force(vary)
+  force(compare)
+  function(p) {
+    mod$set_user(user = set_names(as.list(p), vary))
+    y <- mod$run(c(0, time))[-1, , drop = FALSE]
+    compare(y)
+  }
 }
+
+
 
 
 do_fit_optim <- function(start, target, tolerance, lower, upper) {
@@ -97,7 +85,29 @@ do_fit_hjkb <- function(start, target, tolerance, lower, upper) {
 
 do_fit_nmkb <- function(start, target, tolerance, lower, upper) {
   control <- list(tol = tolerance)
-  dfoptim::nmkb(start, target, lower, upper, control)
+  res <- dfoptim::nmkb(start, target, lower, upper, control)
+  list(par = res$par,
+       value = res$value,
+       success = res$convergence == 0,
+       message = res$message,
+       evaluations = res$feval)
+}
+
+
+do_fit <- function(start, target, lower, upper, tolerance, method) {
+  control <- list(factr = tolerance, pgtol = tolerance)
+  t0 <- Sys.time()
+  res <- switch(
+    method,
+    ## optim = do_fit_optim(start, target, tolerance, lower, upper),
+    ## subplex = do_fit_subplex(start, target, tolerance),
+    ## hjkb = do_fit_hjkb(start, target, tolerance, lower, upper),
+    nmkb = do_fit_nmkb(start, target, tolerance, lower, upper),
+    stop("Unknown method ", method))
+  t1 <- Sys.time()
+  ## only really interested in wall time here:
+  res$elapsed <- as.numeric(t1 - t0, "secs")
+  res
 }
 
 

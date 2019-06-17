@@ -82,10 +82,10 @@ odin_prototype_server <- function(initial_code) {
       mod_fit_server, "odin_fit", data$result, model$result, configure$result)
     vis <- shiny::callModule(
       mod_vis_server, "odin_vis", data$result, model$result, configure$result,
-      fit$pars)
+      fit$user)
     batch <- shiny::callModule(
       mod_batch_server, "odin_batch", model$result, data$result,
-      configure$result, fit$pars)
+      configure$result, fit$user)
 
     output$status <- shiny::renderUI({
       class_data <- text_module_status(data$result()$status)

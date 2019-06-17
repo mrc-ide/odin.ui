@@ -24,7 +24,7 @@ mod_vis_ui <- function(id) {
           shiny::uiOutput(ns("status_model")),
           ## TODO: status_configure but tone down warning to info
           shiny::uiOutput(ns("control_parameters")),
-          ## https://github.com/rstudio/shiny/issues/1675#issuecomment-298398997
+          ##
           shiny::uiOutput(ns("import_button"), inline = TRUE),
           shiny::actionButton(ns("reset_button"), "Reset",
                               shiny::icon("refresh"),
@@ -151,11 +151,17 @@ vis_run <- function(configuration, user) {
     result_data <- result_data[-1, , drop = FALSE]
   }
 
+  ## 2. Result smoothly computed
+  result_smooth <- mod$run(seq(0, max(t), length.out = 501))
+
+  if ("include" %in% names(configuration$vars)) {
+    i <- c(1, which(configuration$vars$include) + 1)
+    result_data <- result_data[, i, drop = FALSE]
+    result_smooth <- result_smooth[, i, drop = FALSE]
+  }
+
   ## 2. Result combined with the data
   result_combined <- cbind(result_data, data$data)
-
-  ## 3. Result smoothly computed
-  result_smooth <- mod$run(seq(0, max(t), length.out = 501))
 
   list(configuration = configuration,
        simulation = list(data = result_data,

@@ -105,7 +105,8 @@ plot_plotly <- function(series, logscale_y = FALSE) {
 
 plot_plotly_series <- function(x, y, name, col, points = FALSE, y2 = FALSE,
                                showlegend = TRUE, legendgroup = NULL,
-                               width = NULL) {
+                               width = NULL, dash = "solid",
+                               symbol = "circle") {
   i <- is.na(x) | is.na(y)
   if (any(i)) {
     x <- x[!i]
@@ -115,9 +116,9 @@ plot_plotly_series <- function(x, y, name, col, points = FALSE, y2 = FALSE,
   ret <- list(x = x, y = y, name = name, yaxis = yaxis,
               legendgroup = legendgroup, showlegend = showlegend)
   if (points) {
-    ret$marker <- list(color = col)
+    ret$marker <- list(color = col, symbol = symbol)
   } else {
-    ret$line <- list(color = col, width = width)
+    ret$line <- list(color = col, width = width, dash = dash)
   }
   ret
 }
@@ -125,16 +126,20 @@ plot_plotly_series <- function(x, y, name, col, points = FALSE, y2 = FALSE,
 
 plot_plotly_series_bulk <- function(x, y, col, points, y2,
                                     showlegend = TRUE, legendgroup = NULL,
-                                    width = NULL) {
+                                    width = NULL, dash = "solid",
+                                    symbol = "circle") {
   nms <- colnames(y)
   y2 <- expand_and_name(y2, nms)
   legendgroup <- expand_and_name(legendgroup, nms)
   width <- expand_and_name(width, nms)
+  dash <- expand_and_name(dash, nms)
+  symbol <- expand_and_name(symbol, nms)
   lapply(nms, function(i)
     plot_plotly_series(x, y[, i], i, col[[i]], points, y2[[i]],
                        showlegend = showlegend,
                        legendgroup = legendgroup[[i]],
-                       width = width[[i]]))
+                       width = width[[i]], dash = dash[[i]],
+                       symbol = symbol[[i]]))
 }
 
 
@@ -183,6 +188,9 @@ common_control_graph_settings <- function(configuration, ns, check_title) {
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
 
   vars <- configuration$vars
+  if (!is.null(vars$include)) {
+    vars <- vars[vars$include, , drop = FALSE]
+  }
   labels <- Map(function(lab, col)
     shiny::span(lab, style = paste0("color:", col)),
     vars$name, configuration$cols$model[vars$name])

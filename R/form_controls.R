@@ -24,8 +24,9 @@ raw_select_input <- function (inputId, choices, selected = NULL, size = NULL) {
     selected <- as.character(selected)
   }
 
-  options <- lapply(choices, function (choice)
-    shiny::tags$option(choice, value = choice))
+  options <- Map(function(label, value)
+    shiny::tags$option(label, value = value),
+    names(choices) %||% choices, choices)
 
   shiny::tags$select(id = inputId, class = "form-control", size = size,
                      options)
