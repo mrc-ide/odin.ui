@@ -176,14 +176,18 @@ vis_plot_series <- function(result, y2_model) {
   y2 <- odin_y2(y2_model, cfg$data$name_vars, result$configuration$link)
   cols <- result$configuration$cols
 
-  xy <- result$simulation$smooth
+  model_vars <- cfg$model$result$info$vars$name
+  ## TODO: don't use names(cols) here and in the data section
+  model_data <- result$simulation$smooth
   series_model <- plot_plotly_series_bulk(
-    xy[, 1], xy[, names(cols$model), drop = FALSE], cols$model, FALSE, y2$model)
+    model_data[, 1], model_data[, model_vars, drop = FALSE],
+    cols$model, FALSE, y2$model)
 
-  data <- cfg$data$data
-  data_time <- data[[cfg$data$name_time]]
+  data_data <- cfg$data$data
+  data_time <- cfg$data$name_time
+  data_vars <- cfg$data$name_vars
   series_data <- plot_plotly_series_bulk(
-    data_time, data[names(cols$data)], cols$data, TRUE, y2$data)
+    data_data[[data_time]], data_data[data_vars], cols$data, TRUE, y2$data)
 
   c(series_model, series_data)
 }
