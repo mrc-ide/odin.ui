@@ -130,6 +130,21 @@ batch_control_focal <- function(configuration, ns) {
 }
 
 
+batch_focal <- function(name, pct, n, user) {
+  if (is_missing(pct) || is_missing(name) || is_missing(n)) {
+    return(NULL)
+  }
+  value <- user[[name]]
+  if (is_missing(value)) {
+    return(NULL)
+  }
+  dy <- abs(pct / 100 * value)
+  from <- value - dy
+  to <- value + dy
+  list(base = user, name = name, value = value, n = n, from = from, to = to)
+}
+
+
 batch_run <- function(configuration, focal) {
   if (is.null(focal)) {
     return(NULL)
@@ -227,21 +242,6 @@ batch_plot_series <- function(result, include) {
 
 batch_plot <- function(result, include, logscale_y) {
   plot_plotly(batch_plot_series(result, include), logscale_y)
-}
-
-
-batch_focal <- function(name, pct, n, user) {
-  if (is_missing(pct) || is_missing(name) || is_missing(n)) {
-    return(NULL)
-  }
-  value <- user[[name]]
-  if (is_missing(value)) {
-    return(NULL)
-  }
-  dy <- abs(pct / 100 * value)
-  from <- value - dy
-  to <- value + dy
-  list(base = user, name = name, value = value, n = n, from = from, to = to)
 }
 
 
