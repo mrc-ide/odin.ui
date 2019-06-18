@@ -8,13 +8,13 @@ mod_configure_ui <- function(id) {
     shiny::uiOutput(ns("status_model")),
     shiny::h3("Link"),
     shiny::uiOutput(ns("link")),
-    shiny::textOutput(ns("status_link")))
+    shiny::uiOutput(ns("status_link")))
 }
 
 
 mod_configure_server <- function(input, output, session, data, model,
                                  configure_status_body = NULL) {
-  rv <- shiny::reactiveValues(link = NULL)
+  rv <- shiny::reactiveValues()
 
   output$status_data <- shiny::renderUI({
     data()$status$ui
@@ -24,96 +24,91 @@ mod_configure_server <- function(input, output, session, data, model,
     model()$status$ui
   })
 
-  output$status_link <- shiny::renderText({
-    configure_link_status(rv$label)
+  output$status_link <- shiny::renderUI({
+    rv$status$ui
+  })
+
+  shiny::observe({
+    rv$configuration <- configure_configuration(data(), model())
   })
 
   output$link <- shiny::renderUI({
-    configure_link_ui(session$ns, input, rv, data(), model(), NULL)
+    ## TODO: get previous first
+    configure_link_ui(rv$configuration, session$ns)
   })
 
   shiny::observe({
-    rv$status <- configure_status(rv$configured, configure_status_body)
+    vars <- rv$configuration$vars
+    link <- get_inputs(input, vars$id, vars$data)
+    rv$result <- configure_result(link)
   })
 
   shiny::observe({
-    if (is.null(rv$map)) {
-      rv$link <- NULL
-      rv$label <- character(0)
-      rv$configured <- FALSE
-    } else {
-      link <- lapply(rv$map, function(x) input[[x]])
-      rv$link <- link[vlapply(link, function(x) !is.null(x) && nzchar(x))]
-      rv$label <- sprintf("%s ~ %s",
-                          names(rv$link), vcapply(rv$link, identity))
-      rv$configured <- length(rv$link) > 0
-    }
+    rv$status <- configure_status(rv$result, configure_status_body)
   })
 
   get_state <- function() {
-    message("configure state")
-    list(link = rv$link)
+    list(result = rv$result)
   }
 
   set_state <- function(state) {
+    browser()
     output$link <- shiny::renderUI(
       configure_link_ui(session$ns, input, rv, data(), model(), state$link))
   }
 
   shiny::outputOptions(output, "link", suspendWhenHidden = FALSE)
 
-  list(result = shiny::reactive(list(
-         link = rv$link,
-         label = rv$label,
-         configured = rv$configured,
-         status = rv$status)),
+  list(result = shiny::reactive(c(rv$result, list(status = rv$status))),
        get_state = get_state,
        set_state = set_state)
 }
 
 
-configure_link_ui <- function(ns, input, rv, data, model, restore) {
-  res <- configure_link_ui_update(rv$map, input, data, model, restore)
-  rv$map <- res$map
-  if (!is.null(rv$map)) {
-    opts <- list(
-      placeholder = "Select variable",
-      onInitialize = I('function() { this.setValue(""); }'))
-    lapply(res$vars_data, function(x)
-      shiny::selectizeInput(
-        ns(res$map[[x]]), x,
-        selected = res$selected[[x]], choices = res$vars_model,
-        options = if (is.null(res$selected[[x]])) opts))
+configure_link_ui <- function(configuration, ns, restore = NULL) {
+  if (is.null(configuration)) {
+    return(NULL)
   }
+  opts <- list(
+    placeholder = "Select variable",
+    onInitialize = I('function() { this.setValue(""); }'))
+  vars <- configuration$vars
+  selected <- rep(NA, length(vars$id))
+  choices <- vars$model
+  input <- function(id, name, selected) {
+    shiny::selectizeInput(id, name, selected = selected, choices = choices,
+                          options = if (is.na(selected)) opts)
+  }
+  Map(input, ns(vars$id), vars$data, selected)
 }
 
 
-configure_link_ui_update <- function(map, input, data, model, restore) {
-  if (!isTRUE(data$configured) || is.null(model)) {
-    return(list(map = NULL, selected = NULL))
-  }
+## configure_link_ui_update <- function(map, input, data, model, restore) {
+##   if (!isTRUE(data$configured) || is.null(model)) {
+##     return(list(map = NULL, selected = NULL))
+##   }
 
-  if (is.null(restore)) {
-    prev <- lapply(map, function(x) input[[x]])
-  } else {
-    prev <- restore
-  }
+##   if (is.null(restore)) {
+##     prev <- lapply(map, function(x) input[[x]])
+##   } else {
+##     prev <- restore
+##   }
 
-  vars_data <- data$name_vars
-  vars_model <- model$result$info$vars$name
+##   vars_data <- data$name_vars
+##   vars_model <- model$result$info$vars$name
 
-  ## Are any of these still current?
-  fmt <- "link_data_%s"
-  map <- set_names(sprintf(fmt, vars_data), vars_data)
+##   ## Are any of these still current?
+##   fmt <- "link_data_%s"
+##   map <- set_names(sprintf(fmt, vars_data), vars_data)
 
-  selected <- set_names(rep(list(NULL), length(vars_data)), vars_data)
-  i <- names(prev) %in% vars_data &
-    unlist(prev, FALSE, FALSE) %in% vars_model
-  selected[names(prev)[i]] <- prev[i]
+##   selected <- set_names(rep(list(NULL), length(vars_data)), vars_data)
+##   i <- names(prev) %in% vars_data &
+##     unlist(prev, FALSE, FALSE) %in% vars_model
+##   selected[names(prev)[i]] <- prev[i]
 
-  list(map = map, selected = selected,
-       vars_data = vars_data, vars_model = vars_model)
-}
+##   list(map = map, selected = selected,
+##        vars_data = vars_data, vars_model = vars_model)
+## }
 
 
 configure_link_status <- function(label) {
@@ -125,14 +120,36 @@ configure_link_status <- function(label) {
 }
 
 
-configure_status <- function(configured, body) {
-  if (isTRUE(configured)) {
+configure_status <- function(result, body) {
+  if (isTRUE(result$configured)) {
     class <- "success"
     title <- "Model/Data link is configured"
-    body <- NULL
+    body <- paste(result$label, collapse = " & ")
   } else {
     class <- "danger"
     title <- "Model/Data link is not configured"
+    body <- NULL
   }
   module_status(class, title, body)
+}
+
+
+configure_configuration <- function(data, model) {
+  if (!isTRUE(model$result$success) || !isTRUE(data$configured)) {
+    return(NULL)
+  }
+
+  vars_data <- data$name_vars
+  vars_model <- model$result$info$vars$name
+  vars_id <- sprintf("link_data_%s", vars_data)
+
+  list(data = data, model = model,
+       vars = list(data = vars_data, model = vars_model, id = vars_id))
+}
+
+
+configure_result <- function(link) {
+  link <- link[!vlapply(link, is_missing)]
+  label <- sprintf("%s ~ %s", names(link), list_to_character(link))
+  list(link = link, label = label, configured = length(link) > 0L)
 }
