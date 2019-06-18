@@ -116,13 +116,11 @@ odin_prototype_server <- function(initial_code) {
     shiny::observeEvent(
       input$restore, {
         state <- readRDS(input$restore$datapath)
-        shiny::isolate({
-          data$set_state(state$data)
-          model$set_state(state$model)
-          configure$set_state(state$configure)
-          vis$set_state(state$vis)
-          fit$set_state(state$fit)
-        })
+        data$set_state(state$data)
+        model$set_state(state$model)
+        configure$set_state(state$configure)
+        fit$set_state(state$fit)
+        vis$set_state(state$vis)
       })
   }
 }

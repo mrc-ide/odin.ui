@@ -67,8 +67,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
 
   ## TODO: this should *only* include
   output$control_graph <- shiny::renderUI({
-    common_control_graph(
-      rv$configuration, session$ns, "Plot on second y axis")
+    fit_control_graph(rv$configuration, session$ns)
   })
 
   shiny::observeEvent(
@@ -127,11 +126,35 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
     })
 
   get_state <- function() {
-    browser()
+    if (is.null(rv$configuration)) {
+      return(NULL)
+    }
+    pars <- rv$configuration$pars
+    ## TODO: I wonder if we can strip this down earlier?
+    vars <- rv$configuration$vars[rv$configuration$vars$include, ]
+    user <- get_inputs(input, pars$id_value, pars$name)
+    vary <- get_inputs(input, pars$id_vary, pars$name)
+    control_graph <-
+      list(option = get_inputs(input, vars$id_graph_option, vars$name),
+           logscale_y = input$logscale_y)
+    list(fit = rv$fit,
+         control_parameters = list(value = user, vary = vary),
+         control_target = input$target,
+         control_graph = control_graph)
   }
 
   set_state <- function(state) {
-    ## browser()
+    if (is.null(state)) {
+      return()
+    }
+    rv$configuration <- fit_configuration(model(), data(), configure())
+    rv$fit <- state$fit
+    output$control_target <- shiny::renderUI(fit_control_target(
+      rv$configuration, session$ns, state$control_target))
+    output$control_parameters <- shiny::renderUI(fit_control_parameters(
+      rv$configuration$pars, session$ns, state$control_parameters))
+    output$control_graph <- shiny::renderUI(
+      fit_control_graph(rv$configuration, session$ns, state$control_graph))
   }
 
   shiny::outputOptions(output, "control_parameters", suspendWhenHidden = FALSE)
@@ -143,8 +166,9 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
 }
 
 
-fit_configuration <- function(model, data, link) {
-  configuration <- common_model_data_configuration(model, data, link$link)
+fit_configuration <- function(model, data, configure) {
+  link <- configure$link
+  configuration <- common_model_data_configuration(model, data, configure)
   if (!is.null(configuration$pars)) {
     configuration$pars$id_vary <-
       sprintf("par_vary_%s",configuration$pars$name)
@@ -152,23 +176,22 @@ fit_configuration <- function(model, data, link) {
     ## TODO: remove this cheat later
     configuration$pars$vary <-
       configuration$pars$name %in% c("I0", "cfr", "R0_before", "R0_after")
-
     configuration$vars$include <-
-      configuration$vars$name %in% list_to_character(link$link)
+      configuration$vars$name %in% list_to_character(configure$link)
     ## TODO: this would be improved by passing the whole link through
     ## above
-    configuration$link_label <- link$label
+    configuration$link_label <- configure$link$label
   }
   configuration
 }
 
 
-fit_control_target <- function(configuration, ns) {
+fit_control_target <- function(configuration, ns, restore = NULL) {
   if (is.null(configuration$link)) {
     return(NULL)
   }
   choices <- set_names(names(configuration$link), configuration$link_label)
-  selected <- NA
+  selected <- restore %||% NA
   mod_model_control_section(
     "Optimisation",
     horizontal_form_group(
@@ -179,7 +202,7 @@ fit_control_target <- function(configuration, ns) {
 }
 
 
-fit_control_parameters <- function(pars, ns) {
+fit_control_parameters <- function(pars, ns, restore = NULL) {
   if (is.null(pars)) {
     return(NULL)
   }
@@ -191,10 +214,11 @@ fit_control_parameters <- function(pars, ns) {
       shiny::column(
         2, shiny::checkboxInput(id_vary, "", vary)))
   }
+  value <- restore$value %||% pars$value
+  vary <- restore$vary %||% pars$vary
   mod_model_control_section(
     "Model parameters",
-    Map(f, pars$name, ns(pars$id_value), pars$value,
-        ns(pars$id_vary), pars$vary),
+    Map(f, pars$name, ns(pars$id_value), value, ns(pars$id_vary), vary),
     ns = ns)
 }
 
@@ -297,4 +321,9 @@ fit_plot_series <- function(result, target, y2_model) {
 
 fit_plot <- function(result, target, y2_model, logscale_y) {
   plot_plotly(fit_plot_series(result, target, y2_model), logscale_y)
+}
+
+
+fit_control_graph <- function(configuration, ns, restore = NULL) {
+  common_control_graph(configuration, ns, "Plot on second y axis", restore)
 }

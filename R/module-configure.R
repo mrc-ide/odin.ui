@@ -52,14 +52,15 @@ mod_configure_server <- function(input, output, session, data, model,
   }
 
   set_state <- function(state) {
-    browser()
-    output$link <- shiny::renderUI(
-      configure_link_ui(session$ns, input, rv, data(), model(), state$link))
+    rv$configuration <- configure_configuration(data(), model())
+    output$link <- shiny::renderUI(configure_link_ui(
+      rv$configuration, session$ns, state))
+    rv$result <- state$result
   }
 
   shiny::outputOptions(output, "link", suspendWhenHidden = FALSE)
 
-  list(result = shiny::reactive(c(rv$result, list(status = rv$status))),
+  list(result = shiny::reactive(add_status(rv$result, rv$status)),
        get_state = get_state,
        set_state = set_state)
 }
@@ -73,7 +74,13 @@ configure_link_ui <- function(configuration, ns, restore = NULL) {
     placeholder = "Select variable",
     onInitialize = I('function() { this.setValue(""); }'))
   vars <- configuration$vars
+
   selected <- rep(NA, length(vars$id))
+  if (!is.null(restore)) {
+    i <- !vlapply(restore$result$link, is_missing)
+    selected[i] <- list_to_character(restore$result$link[i])
+  }
+
   choices <- vars$model
   input <- function(id, name, selected) {
     shiny::selectizeInput(id, name, selected = selected, choices = choices,
@@ -152,4 +159,13 @@ configure_result <- function(link) {
   link <- link[!vlapply(link, is_missing)]
   label <- sprintf("%s ~ %s", names(link), list_to_character(link))
   list(link = link, label = label, configured = length(link) > 0L)
+}
+
+
+module_return <- function(result, status) {
+  if (identical(names(result), "result")) {
+    stop("fixme")
+    result <- result$result
+  }
+  c(result, list(status = status))
 }

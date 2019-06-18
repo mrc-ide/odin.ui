@@ -247,10 +247,12 @@ common_download_data <- function(filename, simulation, type) {
 }
 
 
-common_model_data_configuration <- function(model, data, link) {
+common_model_data_configuration <- function(model, data, configure) {
   if (!isTRUE(model$result$success) || !isTRUE(data$configured)) {
     return(NULL)
   }
+
+  link <- configure$link
 
   pars <- model$result$info$pars
   pars$value <- vnapply(pars$default_value, function(x) x %||% NA_real_)
@@ -263,4 +265,9 @@ common_model_data_configuration <- function(model, data, link) {
 
   list(data = data, model = model, link = link,
        pars = pars, vars = vars, cols = cols)
+}
+
+
+add_status <- function(x, status) {
+  c(x, list(status = status))
 }

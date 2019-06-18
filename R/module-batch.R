@@ -45,7 +45,7 @@ mod_batch_server <- function(input, output, session, model, data, configure,
 
   shiny::observe({
     rv$configuration <- common_model_data_configuration(
-      model(), data(), configure()$link)
+      model(), data(), configure())
   })
 
   output$control_parameters <- shiny::renderUI({

@@ -63,7 +63,7 @@ mod_vis_server <- function(input, output, session, data, model, configure,
 
   shiny::observe({
     rv$configuration <- common_model_data_configuration(
-      model(), data(), configure()$link)
+      model(), data(), configure())
   })
 
   output$control_parameters <- shiny::renderUI({
@@ -137,7 +137,7 @@ mod_vis_server <- function(input, output, session, data, model, configure,
     }
     shiny::isolate({
       rv$configuration <- common_model_data_configuration(
-        model(), data(), configure()$link)
+        model(), data(), configure())
       rv$result <- vis_run(rv$configuration, state$user_result)
       output$control_parameters <- shiny::renderUI(
         common_control_parameters(rv$configuration$pars, session$ns,
