@@ -23,7 +23,9 @@ mod_batch_ui <- function(id) {
       shiny::mainPanel(
         shiny::div(class = "plotly-graph-wrapper",
                    plotly::plotlyOutput(ns("odin_output"))),
-        shiny::uiOutput(ns("control_graph")))))
+        shiny::uiOutput(ns("control_graph")),
+        shiny::fluidRow(
+          shiny::column(4, shiny::uiOutput(ns("status_batch")))))))
 }
 
 
@@ -41,6 +43,12 @@ mod_batch_server <- function(input, output, session, model, data, configure,
 
   output$status_focal <- shiny::renderText({
     batch_status_focal(rv$focal)
+  })
+
+  output$status_batch <- shiny::renderUI({
+    vars <- rv$configuration$vars
+    include <- get_inputs(input, vars$id_graph_option, vars$name)
+    batch_status(rv$result, include)
   })
 
   shiny::observe({
@@ -62,7 +70,7 @@ mod_batch_server <- function(input, output, session, model, data, configure,
 
   shiny::observeEvent(
     input$go_button, {
-      rv$result <- batch_run(rv$configuration, rv$focal)
+      rv$result <- with_success(batch_run(rv$configuration, rv$focal))
     })
 
   shiny::observe({
@@ -87,15 +95,15 @@ mod_batch_server <- function(input, output, session, model, data, configure,
         set_inputs(session, pars$id_value, user)
         rv$focal <- batch_focal(
           input$focal_name, input$focal_pct, input$focal_n, user)
-        rv$result <- batch_run(rv$configuration, rv$focal)
+        rv$result <- with_success(batch_run(rv$configuration, rv$focal))
       }
     })
 
   output$odin_output <- plotly::renderPlotly({
-    if (!is.null(rv$result)) {
+    if (!is.null(rv$result$value)) {
       vars <- rv$configuration$vars
       include <- get_inputs(input, vars$id_graph_option, vars$name)
-      batch_plot(rv$result, include, input$logscale_y)
+      batch_plot(rv$result$value, include, input$logscale_y)
     }
   })
 
@@ -105,7 +113,8 @@ mod_batch_server <- function(input, output, session, model, data, configure,
                                "batch")
     },
     content = function(filename) {
-      common_download_data(filename, rv$result$simulation, input$download_type)
+      common_download_data(filename, rv$result$value$simulation,
+                           input$download_type)
     })
 
   get_state <- function() {
@@ -115,7 +124,7 @@ mod_batch_server <- function(input, output, session, model, data, configure,
     pars <- rv$configuration$pars
     vars <- rv$configuration$vars
     user <- get_inputs(input, pars$id_value, pars$name)
-    focal <- rv$result$focal
+    focal <- rv$result$value$focal
     control_graph <-
       list(option = get_inputs(input, vars$id_graph_option, vars$name),
            logscale_y = input$logscale_y)
@@ -134,7 +143,7 @@ mod_batch_server <- function(input, output, session, model, data, configure,
     }
     rv$configuration <- common_model_data_configuration(
       model(), data(), configure())
-    rv$result <- batch_run(rv$configuration, state$focal)
+    rv$result <- with_success(batch_run(rv$configuration, state$focal))
     output$control_parameters <- shiny::renderUI(
       common_control_parameters(rv$configuration$pars, session$ns, state$user))
     output$control_graph <- shiny::renderUI(
@@ -289,5 +298,17 @@ batch_status_focal <- function(focal) {
   if (!is.null(focal)) {
     sprintf("%s - %s - %s",
             focal$from, focal$value, focal$to)
+  }
+}
+
+
+batch_status <- function(result, include) {
+  if (!is.null(result$error)) {
+    simple_panel("danger", "Error running model", result$error)
+  } else if (isTRUE(result$success) && !any(vlapply(include, isTRUE))) {
+    simple_panel("info", "Select a series to show plot",
+                 paste("Drawing these plots can be slow, so start by",
+                       "selecting a series by opening the 'Graph settings'",
+                       "by clicking the cog icon"))
   }
 }
