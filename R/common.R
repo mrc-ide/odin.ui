@@ -272,3 +272,19 @@ common_model_data_configuration <- function(model, data, configure) {
 add_status <- function(x, status) {
   c(x, list(status = status))
 }
+
+
+with_success <- function(expr) {
+  res <- tryCatch(
+    force(expr),
+    error = identity)
+  if (inherits(res, "error")) {
+    list(error = res$message,
+         value = NULL,
+         success = FALSE)
+  } else {
+    list(error = NULL,
+         value = res,
+         success = TRUE)
+  }
+}

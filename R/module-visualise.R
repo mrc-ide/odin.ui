@@ -40,7 +40,9 @@ mod_vis_ui <- function(id) {
       shiny::mainPanel(
         shiny::div(class = "plotly-graph-wrapper",
                    plotly::plotlyOutput(ns("odin_output"))),
-        shiny::uiOutput(ns("control_graph")))))
+        shiny::uiOutput(ns("control_graph")),
+        shiny::fluidRow(
+          shiny::column(4, shiny::uiOutput(ns("status_vis")))))))
 }
 
 
@@ -61,6 +63,10 @@ mod_vis_server <- function(input, output, session, data, model, configure,
     show_module_status_if_not_ok(model()$status)
   })
 
+  output$status_vis <- shiny::renderUI({
+    vis_status(rv$result)
+  })
+
   shiny::observe({
     rv$configuration <- common_model_data_configuration(
       model(), data(), configure())
@@ -78,7 +84,7 @@ mod_vis_server <- function(input, output, session, data, model, configure,
     input$go_button, {
       pars <- rv$configuration$pars
       user <- get_inputs(input, pars$id_value, pars$name)
-      rv$result <- vis_run(rv$configuration, user)
+      rv$result <- with_success(vis_run(rv$configuration, user))
     })
 
   output$import_button <- shiny::renderUI({
@@ -94,15 +100,15 @@ mod_vis_server <- function(input, output, session, data, model, configure,
       pars <- rv$configuration$pars
       if (identical(names(user), pars$name)) {
         set_inputs(session, pars$id_value, user)
-        rv$result <- vis_run(rv$configuration, user)
+        rv$result <- with_success(vis_run(rv$configuration, user))
       }
     })
 
   output$odin_output <- plotly::renderPlotly({
-    if (!is.null(rv$result)) {
+    if (!is.null(rv$result$value)) {
       vars <- rv$configuration$vars
       y2_model <- get_inputs(input, vars$id_graph_option, vars$name)
-      vis_plot(rv$result, y2_model, input$logscale_y)
+      vis_plot(rv$result$value, y2_model, input$logscale_y)
     }
   })
 
@@ -112,7 +118,8 @@ mod_vis_server <- function(input, output, session, data, model, configure,
                                "visualise")
     },
     content = function(filename) {
-      common_download_data(filename, rv$result$simulation, input$download_type)
+      common_download_data(filename, rv$result$value$simulation,
+                           input$download_type)
     })
 
   get_state <- function() {
@@ -122,7 +129,7 @@ mod_vis_server <- function(input, output, session, data, model, configure,
     pars <- rv$configuration$pars
     vars <- rv$configuration$vars
     user_display <- get_inputs(input, pars$id_value, pars$name)
-    user_result <- df_to_list(rv$result$simulation$user)
+    user_result <- df_to_list(rv$result$value$simulation$user)
     control_graph <-
       list(option = get_inputs(input, vars$id_graph_option, vars$name),
            logscale_y = input$logscale_y)
@@ -138,7 +145,7 @@ mod_vis_server <- function(input, output, session, data, model, configure,
     shiny::isolate({
       rv$configuration <- common_model_data_configuration(
         model(), data(), configure())
-      rv$result <- vis_run(rv$configuration, state$user_result)
+      rv$result <- with_success(vis_run(rv$configuration, state$user_result))
       output$control_parameters <- shiny::renderUI(
         common_control_parameters(rv$configuration$pars, session$ns,
                                   state$user_display))
@@ -232,4 +239,11 @@ vis_plot <- function(result, y2_model, logscale_y) {
 
 vis_control_graph <- function(configuration, ns, restore = NULL) {
   common_control_graph(configuration, ns, "Plot on second y axis", restore)
+}
+
+
+vis_status <- function(result) {
+  if (!is.null(result$error)) {
+    simple_panel("danger", "Error running model", result$error)
+  }
 }
