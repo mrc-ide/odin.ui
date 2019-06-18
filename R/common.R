@@ -55,9 +55,10 @@ odin_colours_model <- function(model) {
 
 
 odin_y2 <- function(y2_model, name_data, link) {
+  y2_model <- vlapply(y2_model, isTRUE)
   y2_data <- set_names(rep(FALSE, length(name_data)), name_data)
   y2_data[names(link)] <- y2_model[list_to_character(link)]
-  list(model = list_to_logical(y2_model, TRUE), data = y2_data)
+  list(model = y2_model, data = y2_data)
 }
 
 
@@ -88,7 +89,7 @@ plot_plotly <- function(series, logscale_y = FALSE) {
     }
   }
 
-  if (logscale_y) {
+  if (isTRUE(logscale_y)) {
     p <- plotly::layout(p, yaxis = list(type = "log"))
   }
 

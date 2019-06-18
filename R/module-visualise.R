@@ -144,9 +144,6 @@ mod_vis_server <- function(input, output, session, data, model, configure,
                                   state$user_display))
       output$control_graph <- shiny::renderUI(
         vis_control_graph(rv$configuration, session$ns, state$control_graph))
-      output$odin_output <- plotly::renderPlotly(
-        vis_plot(rv$result, state$control_graph$option,
-                 state$control_graph$logscale_y))
     })
   }
 
