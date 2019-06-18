@@ -151,6 +151,11 @@ list_to_df <- function(x) {
 }
 
 
+df_to_list <- function(x) {
+  set_names(as.list(x$value), x$name)
+}
+
+
 constrain <- function(x, min, max) {
   min(max(x, min), max)
 }

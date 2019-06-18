@@ -108,6 +108,7 @@ odin_prototype_server <- function(initial_code) {
         dat <- list(data = data$get_state(),
                     model = model$get_state(),
                     configure = configure$get_state(),
+                    vis = vis$get_state(),
                     fit = fit$get_state())
         saveRDS(dat, con)
       })
@@ -119,6 +120,7 @@ odin_prototype_server <- function(initial_code) {
           data$set_state(state$data)
           model$set_state(state$model)
           configure$set_state(state$configure)
+          vis$set_state(state$vis)
           fit$set_state(state$fit)
         })
       })

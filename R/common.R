@@ -143,13 +143,14 @@ plot_plotly_series_bulk <- function(x, y, col, points, y2,
 }
 
 
-common_control_parameters <- function(pars, ns) {
+common_control_parameters <- function(pars, ns, restore = NULL) {
   if (is.null(pars)) {
     return(NULL)
   }
+  value <- restore %||% pars$value
   mod_model_control_section(
     "Model parameters",
-    Map(simple_numeric_input, pars$name, ns(pars$id_value), pars$value),
+    Map(simple_numeric_input, pars$name, ns(pars$id_value), value),
     ns = ns)
 }
 
@@ -171,7 +172,8 @@ common_control_graph_downloads <- function(ns) {
 }
 
 
-common_control_graph <- function(configuration, ns, check_title) {
+common_control_graph <- function(configuration, ns, check_title,
+                                 restore = NULL) {
   if (is.null(configuration)) {
     return(NULL)
   }
@@ -179,11 +181,12 @@ common_control_graph <- function(configuration, ns, check_title) {
   shiny::div(
     class = "pull-right",
     common_control_graph_downloads(ns),
-    common_control_graph_settings(configuration, ns, check_title))
+    common_control_graph_settings(configuration, ns, check_title, restore))
 }
 
 
-common_control_graph_settings <- function(configuration, ns, check_title) {
+common_control_graph_settings <- function(configuration, ns, check_title,
+                                          restore) {
   title <- "Graph settings"
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
 
@@ -195,11 +198,20 @@ common_control_graph_settings <- function(configuration, ns, check_title) {
     shiny::span(lab, style = paste0("color:", col)),
     vars$name, configuration$cols$model[vars$name])
 
+  if (!is.null(restore)) {
+    value_option <- restore$option
+    value_logscale_y <- restore$logscale_y
+  } else {
+    value_option <- FALSE
+    value_logscale_y <- FALSE
+  }
+
   tags <- shiny::div(class = "form-group",
-                     raw_checkbox_input(ns("logscale_y"), "Log scale y axis"),
+                     raw_checkbox_input(ns("logscale_y"), "Log scale y axis",
+                                        value_logscale_y),
                      shiny::tags$label(check_title),
                      Map(raw_checkbox_input, ns(vars$id_graph_option),
-                         labels, value = FALSE))
+                         labels, value_option))
 
   head <- shiny::a(style = "text-align: right; display: block;",
                    "data-toggle" = "collapse",

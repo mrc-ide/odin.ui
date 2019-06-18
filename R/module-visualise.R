@@ -71,8 +71,7 @@ mod_vis_server <- function(input, output, session, data, model, configure,
   })
 
   output$control_graph <- shiny::renderUI({
-    common_control_graph(
-      rv$configuration, session$ns, "Plot on second y axis")
+    vis_control_graph(rv$configuration, session$ns)
   })
 
   shiny::observeEvent(
@@ -101,8 +100,8 @@ mod_vis_server <- function(input, output, session, data, model, configure,
 
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result)) {
-      y2_model <- get_inputs(input, rv$configuration$vars$id_graph_option,
-                       rv$configuration$vars$name)
+      vars <- rv$configuration$vars
+      y2_model <- get_inputs(input, vars$id_graph_option, vars$name)
       vis_plot(rv$result, y2_model, input$logscale_y)
     }
   })
@@ -116,7 +115,43 @@ mod_vis_server <- function(input, output, session, data, model, configure,
       common_download_data(filename, rv$result$simulation, input$download_type)
     })
 
-  ## TODO: save/load state
+  get_state <- function() {
+    if (is.null(rv$configuration)) {
+      return(NULL)
+    }
+    pars <- rv$configuration$pars
+    vars <- rv$configuration$vars
+    user_display <- get_inputs(input, pars$id_value, pars$name)
+    user_result <- df_to_list(rv$result$simulation$user)
+    control_graph <-
+      list(option = get_inputs(input, vars$id_graph_option, vars$name),
+           logscale_y = input$logscale_y)
+    list(user_display = user_display,
+         user_result = user_result,
+         control_graph = control_graph)
+  }
+
+  set_state <- function(state) {
+    if (is.null(state)) {
+      return()
+    }
+    shiny::isolate({
+      rv$configuration <- common_model_data_configuration(
+        model(), data(), configure()$link)
+      rv$result <- vis_run(rv$configuration, state$user_result)
+      output$control_parameters <- shiny::renderUI(
+        common_control_parameters(rv$configuration$pars, session$ns,
+                                  state$user_display))
+      output$control_graph <- shiny::renderUI(
+        vis_control_graph(rv$configuration, session$ns, state$control_graph))
+      output$odin_output <- plotly::renderPlotly(
+        vis_plot(rv$result, state$control_graph$option,
+                 state$control_graph$logscale_y))
+    })
+  }
+
+  list(get_state = get_state,
+       set_state = set_state)
 }
 
 
@@ -195,4 +230,9 @@ vis_plot_series <- function(result, y2_model) {
 
 vis_plot <- function(result, y2_model, logscale_y) {
   plot_plotly(vis_plot_series(result, y2_model), logscale_y)
+}
+
+
+vis_control_graph <- function(configuration, ns, restore = NULL) {
+  common_control_graph(configuration, ns, "Plot on second y axis", restore)
 }
