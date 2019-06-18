@@ -57,8 +57,7 @@ mod_batch_server <- function(input, output, session, model, data, configure,
   })
 
   output$control_graph <- shiny::renderUI({
-    common_control_graph(
-      rv$configuration, session$ns, "Display series in plot")
+    batch_control_graph(rv$configuration, session$ns)
   })
 
   shiny::observeEvent(
@@ -109,22 +108,63 @@ mod_batch_server <- function(input, output, session, model, data, configure,
       common_download_data(filename, rv$result$simulation, input$download_type)
     })
 
-  ## TODO: save/load state
+  get_state <- function() {
+    if (is.null(rv$configuration)) {
+      return(NULL)
+    }
+    pars <- rv$configuration$pars
+    vars <- rv$configuration$vars
+    user <- get_inputs(input, pars$id_value, pars$name)
+    focal <- rv$result$focal
+    control_graph <-
+      list(option = get_inputs(input, vars$id_graph_option, vars$name),
+           logscale_y = input$logscale_y)
+    control_focal <- list(name = input$focal_n,
+                          pct = input$focal_pct,
+                          n = input$focal_n)
+    list(user = user,
+         focal = focal,
+         control_focal = control_focal,
+         control_graph = control_graph)
+  }
+
+  set_state <- function(state) {
+    if (is.null(state)) {
+      return()
+    }
+    rv$configuration <- common_model_data_configuration(
+      model(), data(), configure())
+    rv$result <- batch_run(rv$configuration, state$focal)
+    output$control_parameters <- shiny::renderUI(
+      common_control_parameters(rv$configuration$pars, session$ns, state$user))
+    output$control_graph <- shiny::renderUI(
+      batch_control_graph(rv$configuration, session$ns, state$control_graph))
+    output$control_focal <- shiny::renderUI(
+      batch_control_focal(rv$configuration, session$ns, state$control_focal))
+  }
+
+  list(get_state = get_state,
+       set_state = set_state)
 }
 
 
-batch_control_focal <- function(configuration, ns) {
+batch_control_focal <- function(configuration, ns, restore = NULL) {
   if (is.null(configuration)) {
     return(NULL)
   }
+
+  pct <- restore$pct %||% 10
+  n <- restore$n %||% 10
+  name <- restore$name %||% configuration$pars$name[[1]]
+
   mod_model_control_section(
     "Vary parameter",
     horizontal_form_group(
       "Parameter to vary",
       raw_select_input(
-        ns("focal_name"), configuration$pars$name, selected = NA)),
-    simple_numeric_input("Variation (%)", ns("focal_pct"), 10),
-    simple_numeric_input("Number of runs", ns("focal_n"), 10),
+        ns("focal_name"), configuration$pars$name, selected = name)),
+    simple_numeric_input("Variation (%)", ns("focal_pct"), pct),
+    simple_numeric_input("Number of runs", ns("focal_n"), n),
     shiny::textOutput(ns("status_focal")),
     ns = ns)
 }
@@ -194,6 +234,7 @@ batch_run <- function(configuration, focal) {
   configuration$focal <- list(name = name, value = value, base = user)
 
   list(configuration = configuration,
+       focal = focal,
        simulation = simulation)
 }
 
@@ -201,13 +242,7 @@ batch_run <- function(configuration, focal) {
 batch_plot_series <- function(result, include) {
   cfg <- result$configuration
   cols <- cfg$cols
-  include <- names(include)[list_to_logical(include)]
-
-  ## TODO: remove cheat:
-  if (length(include) == 0L) {
-    include <- intersect(c("weekly_onset", "weekly_death_h"),
-                         result$configuration$vars$name)
-  }
+  include <- names(include)[vlapply(include, isTRUE)]
 
   if (length(include) == 0L) {
     return(NULL)
@@ -242,6 +277,11 @@ batch_plot_series <- function(result, include) {
 
 batch_plot <- function(result, include, logscale_y) {
   plot_plotly(batch_plot_series(result, include), logscale_y)
+}
+
+
+batch_control_graph <- function(configuration, ns, restore = NULL) {
+  common_control_graph(configuration, ns, "Display series in plot", restore)
 }
 
 

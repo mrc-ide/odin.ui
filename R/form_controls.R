@@ -23,6 +23,9 @@ raw_select_input <- function (inputId, choices, selected = NULL, size = NULL) {
   } else {
     selected <- as.character(selected)
   }
+  if (is.na(selected)) {
+    selected <- ""
+  }
 
   ## NOTE: for the selected case we want
   ##
