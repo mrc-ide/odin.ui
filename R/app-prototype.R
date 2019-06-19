@@ -35,7 +35,9 @@ odin_prototype_ui <- function(initial_code) {
         icon = shiny::icon("bars"),
         mod_batch_ui("odin_batch")),
       shiny::tabPanel(
-        shiny::uiOutput("status", inline = TRUE),
+        shiny::tagList(
+          "Status",
+          shiny::uiOutput("status", inline = TRUE)),
         icon = shiny::icon("list"),
         shiny::tagList(
           shiny::h2("Status"),
@@ -63,20 +65,15 @@ odin_prototype_ui <- function(initial_code) {
 
 odin_prototype_server <- function(initial_code) {
   function(input, output, session) {
-    state <- shiny::reactiveValues(state = NULL)
-
-    rv <- shiny::reactiveValues(status = NULL)
-
-    data_tab <- "Return to the Data tab"
-    editor_tab <- "Return to the Editor tab"
-    configure_tab <- "Return to the Configure tab"
-
-    data <- shiny::callModule(mod_csv_server, "odin_csv", data_tab)
+    data <- shiny::callModule(
+      mod_csv_server, "odin_csv",
+      "Return to the Data tab")
     model <- shiny::callModule(
-      mod_editor_simple_server, "odin_editor", initial_code, editor_tab)
+      mod_editor_simple_server, "odin_editor", initial_code,
+      "Return to the Editor tab")
     configure <- shiny::callModule(
       mod_configure_server, "odin_configure", data$result, model$result,
-      configure_tab)
+      "Return to the Configure tab")
 
     fit <- shiny::callModule(
       mod_fit_server, "odin_fit", data$result, model$result, configure$result)
@@ -87,13 +84,15 @@ odin_prototype_server <- function(initial_code) {
       mod_batch_server, "odin_batch", model$result, data$result,
       configure$result, fit$user)
 
+    modules <- list(date = data, model = model, configure = configure,
+                    vis = vis, fit = fit, batch = batch)
+
     output$status <- shiny::renderUI({
       class_data <- text_module_status(data$result()$status)
       class_model <- text_module_status(model$result()$status)
       class_configure <- text_module_status(configure$result()$status)
       class_fit <- text_module_status(fit$result()$status)
       shiny::tagList(
-        "Status",
         shiny::icon("table", class = class_data),
         shiny::icon("edit", class = class_model),
         shiny::icon("random", class = class_configure),
@@ -102,37 +101,37 @@ odin_prototype_server <- function(initial_code) {
 
     output$download_everything <- shiny::downloadHandler(
       filename = function() {
-        state_filename(input$download_filename)
+        app_filename(input$download_filename)
       },
       content = function(con) {
-        dat <- list(data = data$get_state(),
-                    model = model$get_state(),
-                    configure = configure$get_state(),
-                    vis = vis$get_state(),
-                    fit = fit$get_state(),
-                    batch = batch$get_state())
-        saveRDS(dat, con)
+        saveRDS(app_get_state(modules), con)
       })
 
     shiny::observeEvent(
       input$restore, {
-        state <- readRDS(input$restore$datapath)
-        data$set_state(state$data)
-        model$set_state(state$model)
-        configure$set_state(state$configure)
-        fit$set_state(state$fit)
-        vis$set_state(state$vis)
-        batch$set_state(state$batch)
+        app_set_state(readRDS(input$restore$datapath), modules)
       })
   }
 }
 
 
-state_filename <- function(filename) {
+app_filename <- function(filename, prefix = "odin") {
   if (!is.null(filename) && nzchar(filename)) {
     filename <- ensure_extension(filename, "rds")
   } else {
-    filename <- sprintf("odin-%s.rds", date_string())
+    filename <- sprintf("%s-%s.rds", prefix, date_string())
   }
   filename
+}
+
+
+app_get_state <- function(modules) {
+  lapply(modules, function(m) m$get_state())
+}
+
+
+app_set_state <- function(state, modules) {
+  for (i in names(modules)) {
+    modules[[i]]$set_state(state[[i]])
+  }
 }
