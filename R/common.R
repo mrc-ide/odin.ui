@@ -279,12 +279,32 @@ with_success <- function(expr) {
     force(expr),
     error = identity)
   if (inherits(res, "error")) {
-    list(error = res$message,
+    list(success = FALSE,
          value = NULL,
-         success = FALSE)
+         error = res$message)
   } else {
-    list(error = NULL,
+    list(success = TRUE,
          value = res,
-         success = TRUE)
+         error = NULL)
   }
+}
+
+
+## Standard data structure for a data set that knows what is going on
+## with time.
+odin_data_source <- function(data, filename, name_time) {
+  vars <- names(data)
+  if (is_missing(name_time) || !(name_time %in% vars)) {
+    name_time <- NULL
+  }
+  configured <- !is.null(data) && !is.null(name_time)
+  result <- list(data = data, filename = filename, configured = configured)
+
+  if (configured) {
+    result$name_time <- name_time
+    result$name_vars <- setdiff(vars, name_time)
+    result$cols <- odin_colours_data(result$name_vars)
+  }
+
+  result
 }

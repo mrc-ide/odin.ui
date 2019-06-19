@@ -92,3 +92,24 @@ test_that("configuration", {
   expect_equal(res$cols,
                odin_colours(c("X", "Y"), c("x", "y"), configure$link))
 })
+
+
+test_that("odin_data_source handles unconfigured data", {
+  d <- data_frame(a = 1:10, b = runif(10), c = runif(10))
+  f <- "myfile.csv"
+  cmp <- list(data = d, filename = f, configured = FALSE)
+  expect_equal(odin_data_source(d, f, NULL), cmp)
+  expect_equal(odin_data_source(d, f, NA), cmp)
+  expect_equal(odin_data_source(d, f, ""), cmp)
+  expect_equal(odin_data_source(d, f, "x"), cmp)
+})
+
+
+test_that("odin_data_source handles configured data", {
+  d <- data_frame(a = 1:10, b = runif(10), c = runif(10))
+  f <- "myfile.csv"
+  expect_equal(
+    odin_data_source(d, f, "b"),
+    list(data = d, filename = f, configured = TRUE, name_time = "b",
+         name_vars = c("a", "c"), cols = odin_colours_data(c("a", "c"))))
+})

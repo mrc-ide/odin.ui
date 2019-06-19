@@ -31,23 +31,23 @@ mod_csv_server <- function(input, output, session, csv_status_body) {
   rv <- shiny::reactiveValues()
 
   shiny::observe({
-    rv$configured <- csv_configure(rv$imported, input$name_time)
+    rv$result <- csv_result(rv$imported$value, input$name_time)
   })
 
   shiny::observe({
-    rv$status <- csv_status(rv$configured, csv_status_body)
+    rv$status <- csv_status(rv$result, csv_status_body)
   })
 
   output$summary <- shiny::renderUI({
-    csv_summary(rv$imported, rv$configured)
+    csv_summary(rv$imported, rv$result)
   })
 
   output$data_plot <- plotly::renderPlotly({
-    csv_plot(rv$configured)
+    csv_plot(rv$result)
   })
 
   output$data_table <- shiny::renderDataTable(
-    rv$imported$data,
+    rv$imported$value$data,
     options = list(paging = FALSE, dom = "t", searching = FALSE))
 
   shiny::observe({
@@ -55,11 +55,10 @@ mod_csv_server <- function(input, output, session, csv_status_body) {
       ## NOTE: the isolate here breaks a cyclic dependency and allows
       ## the "clear" to work
       shiny::isolate({
-        rv$imported <- csv_process(input$filename$datapath, input$filename$name)
+        rv$imported <- csv_import(input$filename$datapath, input$filename$name,
+                                  min_cols = 2, min_rows = 10)
         if (rv$imported$success) {
-          shiny::updateSelectInput(session, "name_time",
-                                   choices = rv$imported$vars,
-                                   selected = rv$imported$guess)
+          update_select_input(session, "name_time", rv$imported$value$info)
         }
       })
     }
@@ -68,61 +67,42 @@ mod_csv_server <- function(input, output, session, csv_status_body) {
   shiny::observeEvent(
     input$clear, {
       shinyjs::reset("filename")
-      rv$configured <- NULL
+      rv$result <- NULL
       rv$imported <- NULL
-      shiny::updateSelectInput(session, "name_time", choices = character(0))
+      update_select_input(session, "name_time", NULL)
     })
 
   get_state <- function() {
-    list(imported = rv$imported, configured = rv$configured)
+    list(imported = rv$imported, configured = rv$result)
   }
 
   set_state <- function(state) {
     ## TODO: can't yet set the filename in the upload widget
     rv$imported <- state$imported
-    rv$configured <- state$configured
+    rv$result <- state$configured
+    browser()
     shiny::updateSelectInput(session, "name_time",
                              choices = state$imported$vars,
                              selected = state$configured$name_time)
   }
 
-  list(result = shiny::reactive(c(rv$configured, list(status = rv$status))),
+  list(result = shiny::reactive(add_status(rv$result, rv$status)),
        get_state = get_state,
        set_state = set_state)
 }
 
 
-csv_process <- function(path, filename, min_cols = 2, min_rows = 10) {
-  result <- csv_validate(path, min_cols, min_rows)
-  result$filename <- filename
-
-  if (result$success) {
-    vars <- names(result$data)
-
-    name_times <- c("t", "time", "day", "date", "week", "year")
-    i <- which(tolower(vars) %in% name_times)
-    if (length(i) == 1L) {
-      guess <- vars[[i]]
-    } else {
-      guess <- NA
-    }
-
-    result$vars <- vars
-    result$guess <- guess
+csv_import <- function(path, filename, min_cols = 2, min_rows = 10) {
+  result <- with_success(read_csv(path))
+  if (!result$success) {
+    return(result)
   }
-
-  result
+  csv_validate(result$value, filename, min_cols, min_rows)
 }
 
 
-csv_validate <- function(filename, min_cols, min_rows) {
-  data <- tryCatch(read_csv(filename), error = identity)
-  if (inherits(data, "error")) {
-    return(list(success = FALSE, data = NULL, error = data$message))
-  }
-
+csv_validate <- function(data, filename, min_cols, min_rows) {
   error <- NULL
-
   if (any(duplicated(names(data)))) {
     dup <- unique(names(data)[duplicated(names(data))])
     error <- c(error, sprintf("Data contains duplicate names (%s)",
@@ -142,43 +122,30 @@ csv_validate <- function(filename, min_cols, min_rows) {
 
   success <- length(error) == 0L
   if (!success) {
-    data <- NULL
+    csv_import_error(error)
+  } else {
+    csv_import_result(data, filename)
   }
-
-  list(success = success, data = data, error = error)
 }
 
 
-csv_configure <- function(data, name_time) {
-  if (identical(name_time, "") || !any(data$vars == name_time)) {
-    name_time <- NULL
-  }
-  result <- list(data = data$data,
-                 name_time = name_time,
-                 configured = !is.null(data$data) && !is.null(name_time))
-  if (result$configured) {
-    result$name_vars <- setdiff(data$vars, name_time)
-    result$cols <- odin_colours_data(result$name_vars)
-  }
-  result
-}
-
-
-csv_summary <- function(imported, configured) {
-  if (!is.null(imported$error)) {
-    class <- "danger"
-    head <- "Error loading csv"
-    body <- unordered_list(imported$error)
-  } else if (is.null(imported)) {
+## The summary depends on both the import and the configured; we'll
+## lift errors out of one and results out of the other.
+csv_summary <- function(imported, result) {
+  if (is.null(imported$success)) {
     class <- "info"
     head <- "Upload a data set to begin"
     body <- NULL
+  } else if (!imported$success) {
+    class <- "danger"
+    head <- "Error loading csv"
+    body <- unordered_list(imported$error)
   } else {
     head <- sprintf("Uploaded %d rows and %d columns",
-                    nrow(configured$data), ncol(configured$data))
-    if (isTRUE(configured$configured)) {
+                    nrow(imported$value$data), ncol(imported$value$data))
+    if (isTRUE(result$configured)) {
       body <- sprintf("Response variables: %s",
-                      paste(configured$name_vars, collapse = ", "))
+                      paste(result$name_vars, collapse = ", "))
       class <- "success"
     } else {
       body <- "Select a time variable to view plot"
@@ -189,16 +156,16 @@ csv_summary <- function(imported, configured) {
 }
 
 
-csv_status <- function(data, body = NULL) {
-  if (isTRUE(data$configured)) {
+csv_status <- function(result, body = NULL) {
+  if (isTRUE(result$configured)) {
     ok <- TRUE
     class <- "success"
-    title <- sprintf("%d rows of data have been uploaded", nrow(data$data))
+    title <- sprintf("%d rows of data have been uploaded", nrow(result$data))
     body <- NULL
   } else {
     ok <- FALSE
     class <- "danger"
-    if (is.null(data$data)) {
+    if (is.null(result$data)) {
       title <- "Data not present"
     } else {
       title <- "Please select time variable for your data"
@@ -208,13 +175,48 @@ csv_status <- function(data, body = NULL) {
 }
 
 
-csv_plot <- function(result) {
+csv_plot_series <- function(result) {
   if (!isTRUE(result$configured)) {
     return(NULL)
   }
-  series <- plot_plotly_series_bulk(
+  plot_plotly_series_bulk(
     result$data[[result$name_time]],
     result$data[result$name_vars],
     col = result$cols, points = TRUE, y2 = FALSE)
-  plot_plotly(series)
+}
+
+
+csv_plot <- function(result) {
+  plot_plotly(csv_plot_series(result))
+}
+
+
+csv_import_error <- function(message) {
+  list(success = FALSE, value = NULL, error = message)
+}
+
+
+csv_import_result <- function(data, filename) {
+  value <- list(data = data,
+                filename = filename,
+                info = csv_guess_time(data))
+  list(success = TRUE, value = value, error = NULL)
+}
+
+
+csv_guess_time <- function(data) {
+  vars <- names(data)
+  name_times <- c("t", "time", "day", "date", "week", "year")
+  i <- which(tolower(vars) %in% name_times)
+  if (length(i) == 1L) {
+    guess <- vars[[i]]
+  } else {
+    guess <- NA
+  }
+  list(choices = vars, selected = guess)
+}
+
+
+csv_result <- function(value, name_time) {
+  odin_data_source(value$data, value$filename, name_time)
 }

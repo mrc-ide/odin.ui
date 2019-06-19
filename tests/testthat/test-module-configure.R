@@ -1,5 +1,11 @@
 context("module: configure")
 
+
+test_that("ui requires a configuration", {
+  expect_null(configure_link_ui(NULL, identity))
+})
+
+
 test_that("link status", {
   expect_equal(configure_link_status(character(0)), "No linked variables")
   expect_equal(configure_link_status("a"), "a")
