@@ -58,28 +58,37 @@ test_that("configuration", {
   expect_equal(res$data, data)
   expect_equal(res$model, model)
   expect_equal(res$link, link)
-  expect_equal(res$pars, cbind(model$result$info$pars,
-                               value = 1:2,
-                               id_value = paste0("par_value_", c("a", "b")),
-                               stringsAsFactors = FALSE))
-  expect_equal(res$vars, cbind(model$result$info$vars,
-                               id_y2 = paste0("var_y2_", c("X", "Y")),
-                               stringsAsFactors = FALSE))
+  expect_equal(
+    res$pars,
+    cbind(model$result$info$pars,
+          value = 1:2,
+          id_value = paste0("par_value_", c("a", "b")),
+          stringsAsFactors = FALSE))
+  expect_equal(
+    res$vars,
+    cbind(model$result$info$vars,
+          id_graph_option = paste0("var_graph_option_", c("X", "Y")),
+          stringsAsFactors = FALSE))
   expect_equal(res$link, link)
   expect_equal(res$cols, odin_colours(c("X", "Y"), c("x", "y"), link))
 
-  link <- list(X = "x")
-  res <- common_model_data_configuration(model, data, link)
+  configure <- list(link = list(x = "X"))
+  res <- common_model_data_configuration(model, data, configure)
   expect_equal(res$data, data)
   expect_equal(res$model, model)
-  expect_equal(res$link, link)
-  expect_equal(res$pars, cbind(model$result$info$pars,
-                               value = 1:2,
-                               id_value = paste0("par_value_", c("a", "b")),
-                               stringsAsFactors = FALSE))
-  expect_equal(res$vars, cbind(model$result$info$vars,
-                               id_y2 = paste0("var_y2_", c("X", "Y")),
-                               stringsAsFactors = FALSE))
-  expect_equal(res$link, link)
-  expect_equal(res$cols, odin_colours(c("X", "Y"), c("x", "y"), link))
+  expect_equal(res$link, configure$link)
+  expect_equal(
+    res$pars,
+    cbind(model$result$info$pars,
+          value = 1:2,
+          id_value = paste0("par_value_", c("a", "b")),
+          stringsAsFactors = FALSE))
+  expect_equal(
+    res$vars,
+    cbind(model$result$info$vars,
+          id_graph_option = paste0("var_graph_option_", c("X", "Y")),
+          stringsAsFactors = FALSE))
+  expect_equal(res$link, configure$link)
+  expect_equal(res$cols,
+               odin_colours(c("X", "Y"), c("x", "y"), configure$link))
 })
