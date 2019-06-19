@@ -73,17 +73,16 @@ mod_csv_server <- function(input, output, session, csv_status_body) {
     })
 
   get_state <- function() {
-    list(imported = rv$imported, configured = rv$result)
+    list(imported = rv$imported, result = rv$result,
+         name_time = list(choices = names(rv$result$data),
+                          selected = rv$result$name_time))
   }
 
   set_state <- function(state) {
     ## TODO: can't yet set the filename in the upload widget
     rv$imported <- state$imported
-    rv$result <- state$configured
-    browser()
-    shiny::updateSelectInput(session, "name_time",
-                             choices = state$imported$vars,
-                             selected = state$configured$name_time)
+    rv$result <- state$result
+    update_select_input(session, "name_time", state$name_time)
   }
 
   list(result = shiny::reactive(add_status(rv$result, rv$status)),
