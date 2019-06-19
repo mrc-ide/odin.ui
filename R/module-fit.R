@@ -26,6 +26,8 @@ mod_fit_ui <- function(id) {
         shiny::uiOutput(ns("control_graph")),
         shiny::textOutput(ns("goodness_of_fit")),
         shiny::fluidRow(
+          shiny::column(4, shiny::uiOutput(ns("status_run")))),
+        shiny::fluidRow(
           shiny::column(4, shiny::uiOutput(ns("status_fit")))))))
 }
 
@@ -47,6 +49,10 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
 
   output$status_fit <- shiny::renderUI({
     rv$fit$status$ui
+  })
+
+  output$status_run <- shiny::renderUI({
+    vis_status(rv$result)
   })
 
   shiny::observe({
@@ -82,30 +88,30 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
         fit_run(rv$configuration, input$target, user, vary))
       if (rv$fit$success) {
         set_inputs(session, pars$id_value, rv$fit$result$user)
-        rv$result <- vis_run(rv$configuration, rv$fit$result$user)
       }
     })
 
   shiny::observe({
-    target <- input$target
     pars <- rv$configuration$pars
     user <- get_inputs(input, pars$id_value, pars$name)
-    if (!is.null(target) && !any(is.na(list_to_numeric(user)))) {
-      compare <- fit_make_compare(rv$configuration, target)
-      rv$result <- vis_run(rv$configuration, user)
-      rv$goodness_of_fit <- compare(rv$result$simulation$data)
+    rv$result <- with_success(vis_run(rv$configuration, user))
+  })
+
+  shiny::observe({
+    if (!is.null(input$target) && !is.null(rv$result$value)) {
+      compare <- fit_make_compare(rv$configuration, input$target)
+      rv$goodness_of_fit <- compare(rv$result$value$simulation$data)
     } else {
-      rv$result <- NULL
       rv$goodness_of_fit <- NULL
     }
   })
 
   output$odin_output <- plotly::renderPlotly({
-    if (!is.null(rv$result)) {
+    if (!is.null(rv$result$value) && !is.null(input$target)) {
       ## TODO: I wonder if we can strip this down earlier?
       vars <- rv$configuration$vars[rv$configuration$vars$include, ]
       y2_model <- get_inputs(input, vars$id_graph_option, vars$name)
-      fit_plot(rv$result, input$target, y2_model, input$logscale_y)
+      fit_plot(rv$result$value, input$target, y2_model, input$logscale_y)
     }
   })
 
@@ -122,7 +128,8 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
                                "fit")
     },
     content = function(filename) {
-      common_download_data(filename, rv$result$simulation, input$download_type)
+      common_download_data(filename, rv$result$value$simulation,
+                           input$download_type)
     })
 
   get_state <- function() {
@@ -223,31 +230,33 @@ fit_control_parameters <- function(pars, ns, restore = NULL) {
 }
 
 
-fit_result <- function(success, result, message) {
-  class <- if (success) "success" else "danger"
-  list(success = success,
+fit_result <- function(result) {
+  msg <- sprintf("Fit model in %2.2f s", result$elapsed)
+  list(success = TRUE,
        result = result,
-       message = message,
-       status = module_status(class, message, NULL))
+       status = module_status("success", msg, NULL))
+}
+
+
+fit_error <- function(message) {
+  list(success = FALSE,
+       result = NULL,
+       status = module_status("danger", "Error fitting model to data",
+                              message))
 }
 
 
 fit_run <- function(configuration, target, user, vary) {
   user <- list_to_numeric(user, TRUE)
   if (any(is.na(user))) {
-    return(fit_result(
-      success = FALSE,
-      result = NULL,
-      message = sprintf("Starting parameter value needed for %s",
-                        paste(names(user)[is.na(user)], collapse = ", "))))
+    return(fit_error(sprintf(
+      "Starting parameter value needed for %s",
+      paste(names(user)[is.na(user)], collapse = ", "))))
   }
 
   vary <- names(vary)[list_to_logical(vary)]
   if (length(vary) == 0L) {
-    return(fit_result(
-      success = FALSE,
-      result = NULL,
-      message = "Select at least one parameter to vary"))
+    return(fit_error("Select at least one parameter to vary"))
   }
 
   pars <- configuration$model$result$info$pars
@@ -255,17 +264,21 @@ fit_run <- function(configuration, target, user, vary) {
   lower <- pars$min[i]
   upper <- pars$max[i]
 
-  objective <- fit_make_objective(configuration, target, user, vary)
-  result <- do_fit(user[vary], objective, lower, upper,
-                   tolerance = 1e-6, method = "nmkb")
-  user[vary] <- result$par
-  result$user <- as.list(user)
-  result$target <- target
+  result <- with_success({
+    objective <- fit_make_objective(configuration, target, user, vary)
+    result <- do_fit(user[vary], objective, lower, upper,
+                     tolerance = 1e-6, method = "nmkb")
+  })
 
-  fit_result(
-    success = TRUE,
-    result = result,
-    message = sprintf("Ran optimisation in %2.2f s", result$elapsed))
+  if (!result$success) {
+    return(fit_error(result$error))
+  }
+
+  value <- result$value
+  user[vary] <- value$par
+  value$user <- as.list(user)
+  value$target <- target
+  fit_result(value)
 }
 
 
