@@ -25,7 +25,9 @@ mod_configure_server <- function(input, output, session, data, model,
   })
 
   output$status_link <- shiny::renderUI({
-    rv$status$ui
+    ## Don't show this if not OK because it refers us back to this tab
+    ## perhaps!
+    show_module_status_if_ok(rv$status)
   })
 
   shiny::observe({
@@ -102,7 +104,7 @@ configure_link_ui <- function(configuration, ns, restore = NULL) {
 ##   }
 
 ##   vars_data <- data$name_vars
-##   vars_model <- model$result$info$vars$name
+##   vars_model <- model$info$vars$name
 
 ##   ## Are any of these still current?
 ##   fmt <- "link_data_%s"
@@ -118,15 +120,6 @@ configure_link_ui <- function(configuration, ns, restore = NULL) {
 ## }
 
 
-configure_link_status <- function(label) {
-  if (length(label) == 0L) {
-    "No linked variables"
-  } else {
-    paste(label, collapse = " & ")
-  }
-}
-
-
 configure_status <- function(result, body) {
   if (isTRUE(result$configured)) {
     class <- "success"
@@ -135,19 +128,18 @@ configure_status <- function(result, body) {
   } else {
     class <- "danger"
     title <- "Model/Data link is not configured"
-    body <- NULL
   }
   module_status(class, title, body)
 }
 
 
 configure_configuration <- function(data, model) {
-  if (!isTRUE(model$result$success) || !isTRUE(data$configured)) {
+  if (!isTRUE(model$success) || !isTRUE(data$configured)) {
     return(NULL)
   }
 
   vars_data <- data$name_vars
-  vars_model <- model$result$info$vars$name
+  vars_model <- model$info$vars$name
   vars_id <- sprintf("link_data_%s", vars_data)
 
   list(data = data, model = model,
@@ -155,17 +147,11 @@ configure_configuration <- function(data, model) {
 }
 
 
+## `link` here must be a named list where names are the *data*
+## elements, and values are the *model* elements (possibly null or NA,
+## which will be filtered)
 configure_result <- function(link) {
   link <- link[!vlapply(link, is_missing)]
   label <- sprintf("%s ~ %s", names(link), list_to_character(link))
   list(link = link, label = label, configured = length(link) > 0L)
-}
-
-
-module_return <- function(result, status) {
-  if (identical(names(result), "result")) {
-    stop("fixme")
-    result <- result$result
-  }
-  c(result, list(status = status))
 }

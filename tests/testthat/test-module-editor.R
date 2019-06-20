@@ -101,6 +101,21 @@ test_that("editor compilation info: success", {
 })
 
 
+test_that("editor compilation info: success with no output", {
+  d1 <- list(
+    result = list(success = TRUE,
+                  elapsed = list(elapsed = 1.2),
+                  output = NULL,
+                  error = NULL),
+    is_current = TRUE)
+  expect_equal(editor_compilation_info(d1),
+               simple_panel(
+                 "success",
+                 "Compilation: success, 1.20 s elapsed",
+                 shiny::pre("a\nb")))
+})
+
+
 test_that("model status: no callback", {
   m <- list(result = list(info = list(pars = matrix(0, 3, 0),
                                       vars = matrix(0, 4, 0))),

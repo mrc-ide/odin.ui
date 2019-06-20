@@ -12,6 +12,13 @@ show_module_status_if_not_ok <- function(x) {
 }
 
 
+show_module_status_if_ok <- function(x) {
+  if (isTRUE(x$ok)) {
+    x$ui
+  }
+}
+
+
 text_module_status <- function(x) {
   paste0("text-", x$class %||% "danger")
 }
@@ -347,4 +354,9 @@ common_odin_compile <- function(validation) {
     result <- NULL
   }
   odin_model(result, validation$code)
+}
+
+
+common_odin_compile_from_code <- function(code) {
+  common_odin_compile(common_odin_validate(code))
 }

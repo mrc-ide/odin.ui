@@ -186,7 +186,11 @@ editor_result_info <- function(result) {
       icon_name <- "check-circle"
       ## TODO: this should be hideable, and hidden by default
       ## TODO: only do this if it's nonempty
-      body <- shiny::pre(paste(result$output, collapse = "\n"))
+      if (is_missing(result$output)) {
+        body <- NULL
+      } else {
+        body <- shiny::pre(paste(result$output, collapse = "\n"))
+      }
     } else {
       class <- if (is_current) "danger" else "warning"
       icon_name <- "times-circle"
