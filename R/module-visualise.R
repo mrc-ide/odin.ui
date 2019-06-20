@@ -180,19 +180,22 @@ vis_run <- function(configuration, user) {
   model <- configuration$model
 
   name_time <- data$name_time
-  mod <- model$result$model(user = user)
+  mod <- model$model(user = user)
 
   ## 1. Result aligned with the data
-  t <- data$data[[name_time]]
-  t_after_zero <- t[[1]] > 0
-  result_data <- mod$run(if (t_after_zero) c(0, t) else t)
+  t_data <- data$data[[name_time]]
+  t_after_zero <- t_data[[1]] > 0
+  t_smooth <- seq(min(t_data), max(t_data), length.out = 501)
+
+  result_data <- mod$run(c(if (t_after_zero) 0, t_data))
+  result_smooth <- mod$run(c(if (t_after_zero) 0, t_smooth))
+
   if (t_after_zero) {
     result_data <- result_data[-1, , drop = FALSE]
+    result_smooth <- result_smooth[-1, , drop = FALSE]
   }
 
-  ## 2. Result smoothly computed
-  result_smooth <- mod$run(seq(0, max(t), length.out = 501))
-
+  ## Relevant only for the fitting:
   if ("include" %in% names(configuration$vars)) {
     i <- c(1, which(configuration$vars$include) + 1)
     result_data <- result_data[, i, drop = FALSE]
@@ -212,10 +215,10 @@ vis_run <- function(configuration, user) {
 
 vis_plot_series <- function(result, y2_model) {
   cfg <- result$configuration
-  y2 <- odin_y2(y2_model, cfg$data$name_vars, result$configuration$link)
+  y2 <- odin_y2(y2_model, cfg$data$name_vars, result$configuration$link$map)
   cols <- result$configuration$cols
 
-  model_vars <- cfg$model$result$info$vars$name
+  model_vars <- cfg$model$info$vars$name
   ## TODO: don't use names(cols) here and in the data section
   model_data <- result$simulation$smooth
   series_model <- plot_plotly_series_bulk(

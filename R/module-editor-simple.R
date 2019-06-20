@@ -234,12 +234,12 @@ editor_validate_initial_code <- function(initial_code) {
 
 
 editor_status <- function(model, body) {
-  if (is.null(model)) {
+  if (is.null(model$model)) {
     class <- "danger"
     title <- "Please compile a model"
   } else {
-    np <- nrow(model$result$info$pars)
-    nv <- nrow(model$result$info$vars)
+    np <- nrow(model$info$pars)
+    nv <- nrow(model$info$vars)
     title <- sprintf("Model with %d parameters and %d variables/outputs",
                      np, nv)
     if (model$is_current) {

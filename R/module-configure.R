@@ -41,8 +41,8 @@ mod_configure_server <- function(input, output, session, data, model,
 
   shiny::observe({
     vars <- rv$configuration$vars
-    link <- get_inputs(input, vars$id, vars$data)
-    rv$result <- configure_result(link)
+    map <- get_inputs(input, vars$id, vars$data)
+    rv$result <- configure_result(map)
   })
 
   shiny::observe({
@@ -79,8 +79,8 @@ configure_link_ui <- function(configuration, ns, restore = NULL) {
 
   selected <- rep(NA, length(vars$id))
   if (!is.null(restore)) {
-    i <- !vlapply(restore$result$link, is_missing)
-    selected[i] <- list_to_character(restore$result$link[i])
+    i <- !vlapply(restore$result$map, is_missing)
+    selected[i] <- list_to_character(restore$result$map[i])
   }
 
   choices <- vars$model
@@ -150,8 +150,8 @@ configure_configuration <- function(data, model) {
 ## `link` here must be a named list where names are the *data*
 ## elements, and values are the *model* elements (possibly null or NA,
 ## which will be filtered)
-configure_result <- function(link) {
-  link <- link[!vlapply(link, is_missing)]
-  label <- sprintf("%s ~ %s", names(link), list_to_character(link))
-  list(link = link, label = label, configured = length(link) > 0L)
+configure_result <- function(map) {
+  map <- map[!vlapply(map, is_missing)]
+  label <- sprintf("%s ~ %s", names(map), list_to_character(map))
+  list(map = map, label = label, configured = length(map) > 0L)
 }

@@ -259,7 +259,7 @@ fit_run <- function(configuration, target, user, vary) {
     return(fit_error("Select at least one parameter to vary"))
   }
 
-  pars <- configuration$model$result$info$pars
+  pars <- configuration$model$info$pars
   i <- match(vary, pars$name)
   lower <- pars$min[i]
   upper <- pars$max[i]
@@ -283,7 +283,7 @@ fit_run <- function(configuration, target, user, vary) {
 
 
 fit_make_objective <- function(configuration, target, user, vary) {
-  mod <- configuration$model$result$model(user = as.list(user))
+  mod <- configuration$model$model(user = as.list(user))
   time <- configuration$data$data[[configuration$data$name_time]]
   compare <- fit_make_compare(configuration, target)
   force(vary)

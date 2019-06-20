@@ -167,7 +167,8 @@ squote <- function(x) {
 
 
 is_missing <- function(x) {
-  is.null(x) || is.na(x) || identical(x, "")
+  is.null(x) || length(x) == 0 || identical(x, "") ||
+    (length(x) == 1 && is.na(x))
 }
 
 

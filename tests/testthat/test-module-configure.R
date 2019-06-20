@@ -8,19 +8,19 @@ test_that("ui requires a configuration", {
 
 test_that("link result with empty inputs", {
   expect_equal(configure_result(NULL),
-               list(link = NULL, label = character(0), configured = FALSE))
+               list(map = NULL, label = character(0), configured = FALSE))
   empty <- set_names(list(), character())
   expect_equal(configure_result(list(a = NA)),
-               list(link = empty, label = character(0), configured = FALSE))
+               list(map = empty, label = character(0), configured = FALSE))
   expect_equal(configure_result(list(a = NULL, b = NULL)),
-               list(link = empty, label = character(0), configured = FALSE))
+               list(map = empty, label = character(0), configured = FALSE))
 })
 
 
 test_that("link result with nonempty inputs", {
   expect_equal(
     configure_result(list(a = NA, b = "Y", c = "Z")),
-    list(link = list(b = "Y", c = "Z"),
+    list(map = list(b = "Y", c = "Z"),
          label = c("b ~ Y", "c ~ Z"),
          configured = TRUE))
 })

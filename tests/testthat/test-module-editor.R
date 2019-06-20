@@ -56,34 +56,40 @@ test_that("editor compilation info: empty", {
 
 
 test_that("editor compilation info: success", {
-  d1 <- list(
-    result = list(success = TRUE,
-                  elapsed = list(elapsed = 1.2),
-                  output = c("a", "b"),
-                  error = NULL),
-    is_current = TRUE)
-  expect_equal(editor_compilation_info(d1),
+  d1 <- list(success = TRUE,
+             elapsed = list(elapsed = 1.2),
+             output = c("a", "b"),
+             error = NULL,
+             is_current = TRUE)
+  expect_equal(editor_result_info(d1),
                simple_panel(
                  "success",
                  "Compilation: success, 1.20 s elapsed",
                  shiny::pre("a\nb")))
 
   d1$is_current <- FALSE
-  expect_equal(editor_compilation_info(d1),
+  expect_equal(editor_result_info(d1),
                simple_panel(
                  "default",
                  paste("Compilation: success, 1.20 s elapsed",
                        "(code has changed since this was run)"),
                  shiny::pre("a\nb"),
                  "check-circle"))
+  d1$output <- character(0)
+  expect_equal(editor_result_info(d1),
+               simple_panel(
+                 "default",
+                 paste("Compilation: success, 1.20 s elapsed",
+                       "(code has changed since this was run)"),
+                 NULL,
+                 "check-circle"))
 
-  d2 <- list(
-    result = list(success = FALSE,
-                  elapsed = list(elapsed = 1.2),
-                  output = NULL,
-                  error = "failure"),
-    is_current = TRUE)
-  expect_equal(editor_compilation_info(d2),
+  d2 <- list(success = FALSE,
+             elapsed = list(elapsed = 1.2),
+             output = NULL,
+             error = "failure",
+             is_current = TRUE)
+  expect_equal(editor_result_info(d2),
                simple_panel(
                  "danger",
                  "Compilation: error, 1.20 s elapsed",
@@ -91,7 +97,7 @@ test_that("editor compilation info: success", {
                  "times-circle"))
 
   d2$is_current <- FALSE
-  expect_equal(editor_compilation_info(d2),
+  expect_equal(editor_result_info(d2),
                simple_panel(
                  "warning",
                  paste("Compilation: error, 1.20 s elapsed",
@@ -101,24 +107,10 @@ test_that("editor compilation info: success", {
 })
 
 
-test_that("editor compilation info: success with no output", {
-  d1 <- list(
-    result = list(success = TRUE,
-                  elapsed = list(elapsed = 1.2),
-                  output = NULL,
-                  error = NULL),
-    is_current = TRUE)
-  expect_equal(editor_compilation_info(d1),
-               simple_panel(
-                 "success",
-                 "Compilation: success, 1.20 s elapsed",
-                 shiny::pre("a\nb")))
-})
-
-
 test_that("model status: no callback", {
-  m <- list(result = list(info = list(pars = matrix(0, 3, 0),
-                                      vars = matrix(0, 4, 0))),
+  m <- list(info = list(pars = matrix(0, 3, 0),
+                        vars = matrix(0, 4, 0)),
+            model = TRUE,
             is_current = FALSE)
   expect_equal(
     editor_status(NULL, NULL),

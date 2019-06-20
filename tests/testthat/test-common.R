@@ -38,17 +38,18 @@ test_that("odin_colours", {
 
 
 test_that("configuration", {
-  model <- list(result = list(
-                  success = TRUE,
-                  info = list(pars = data_frame(
-                                name = c("a", "b"),
-                                default_value = I(as.list(1:2))),
-                              vars = data_frame(
-                                name = c("X", "Y")))))
+  code <- c("deriv(x) <- 1",
+            "initial(x) <- a",
+            "a <- user(3, min = 0)",
+            "b <- user(max = 1)",
+            "deriv(y) <- 2",
+            "initial(y) <- 2")
+  model <- common_odin_compile_from_code(code)
 
-  data <- list(configured = TRUE,
-               name_vars = c("x", "y"))
-  link <- NULL
+  d <- data.frame(t = 1:10, a = runif(10), b = runif(10), c = runif(10))
+  data <- odin_data_source(d, "file.csv", "t")
+
+  link <- configure_result(list(a = "x", c = "y"))
 
   expect_null(common_model_data_configuration(NULL, NULL, NULL))
   expect_null(common_model_data_configuration(model, NULL, NULL))
@@ -60,37 +61,18 @@ test_that("configuration", {
   expect_equal(res$link, link)
   expect_equal(
     res$pars,
-    cbind(model$result$info$pars,
-          value = 1:2,
-          id_value = paste0("par_value_", c("a", "b")),
+    cbind(model$info$pars,
+          value = c(NA, 3),
+          id_value = paste0("par_value_", c("b", "a")),
           stringsAsFactors = FALSE))
   expect_equal(
     res$vars,
-    cbind(model$result$info$vars,
-          id_graph_option = paste0("var_graph_option_", c("X", "Y")),
+    cbind(model$info$vars,
+          id_graph_option = paste0("var_graph_option_", c("x", "y")),
           stringsAsFactors = FALSE))
   expect_equal(res$link, link)
-  expect_equal(res$cols, odin_colours(c("X", "Y"), c("x", "y"), link))
-
-  configure <- list(link = list(x = "X"))
-  res <- common_model_data_configuration(model, data, configure)
-  expect_equal(res$data, data)
-  expect_equal(res$model, model)
-  expect_equal(res$link, configure$link)
-  expect_equal(
-    res$pars,
-    cbind(model$result$info$pars,
-          value = 1:2,
-          id_value = paste0("par_value_", c("a", "b")),
-          stringsAsFactors = FALSE))
-  expect_equal(
-    res$vars,
-    cbind(model$result$info$vars,
-          id_graph_option = paste0("var_graph_option_", c("X", "Y")),
-          stringsAsFactors = FALSE))
-  expect_equal(res$link, configure$link)
   expect_equal(res$cols,
-               odin_colours(c("X", "Y"), c("x", "y"), configure$link))
+               odin_colours(c("x", "y"), c("a", "b", "c"), link$map))
 })
 
 
@@ -215,4 +197,34 @@ test_that("validate: note", {
   expect_null(res$error)
   expect_equal(res$messages, "Unused equation: a\n\ta <- 1 # (line 1)")
   expect_is(res$result, "json")
+})
+
+
+test_that("download filename", {
+  re <- "^odin-prefix-type-[0-9]{8}-[0-9]{6}.csv$"
+  expect_match(common_download_filename(NULL, "type", "prefix"), re)
+  expect_match(common_download_filename(NA, "type", "prefix"), re)
+  expect_match(common_download_filename("", "type", "prefix"), re)
+
+  expect_equal(common_download_filename("foo", "type", "prefix"),
+               "foo.csv")
+  expect_equal(common_download_filename("foo.csv", "type", "prefix"),
+               "foo.csv")
+})
+
+
+test_that("download data", {
+  path <- tempfile()
+  on.exit(unlink(path))
+  simulation <- list(smooth = data_frame(x = 1),
+                     combined = data_frame(x = 2),
+                     user = data_frame(x = 3))
+  common_download_data(path, simulation, "modelled")
+  expect_equal(read_csv(path), simulation$smooth)
+
+  common_download_data(path, simulation, "combined")
+  expect_equal(read_csv(path), simulation$combined)
+
+  common_download_data(path, simulation, "parameters")
+  expect_equal(read_csv(path), simulation$user)
 })

@@ -237,10 +237,10 @@ common_control_graph_settings <- function(configuration, ns, check_title,
 
 
 common_download_filename <- function(filename, type, prefix) {
-  if (!is.null(filename) && nzchar(filename)) {
-    filename <- ensure_extension(filename, "csv")
-  } else {
+  if (is_missing(filename)) {
     filename <- sprintf("odin-%s-%s-%s.csv", prefix, type, date_string())
+  } else {
+    filename <- ensure_extension(filename, "csv")
   }
   filename
 }
@@ -255,21 +255,24 @@ common_download_data <- function(filename, simulation, type) {
 }
 
 
-common_model_data_configuration <- function(model, data, configure) {
-  if (!isTRUE(model$result$success) || !isTRUE(data$configured)) {
+common_model_data_configuration <- function(model, data, link) {
+  if (!isTRUE(model$success) || !isTRUE(data$configured)) {
     return(NULL)
   }
 
-  link <- configure$link
-
-  pars <- model$result$info$pars
+  ## Augment parameters with standard ids for working with shiny ui
+  ## elements
+  pars <- model$info$pars
   pars$value <- vnapply(pars$default_value, function(x) x %||% NA_real_)
   pars$id_value <- sprintf("par_value_%s", pars$name)
 
-  vars <- model$result$info$vars
+  ## ...and same for the variables, but we'll do this as a "graph
+  ## option" because the place that this will turn up is the graphing
+  ## options seection.
+  vars <- model$info$vars
   vars$id_graph_option <- sprintf("var_graph_option_%s", vars$name)
 
-  cols <- odin_colours(vars$name, data$name_vars, link)
+  cols <- odin_colours(vars$name, data$name_vars, link$map)
 
   list(data = data, model = model, link = link,
        pars = pars, vars = vars, cols = cols)
