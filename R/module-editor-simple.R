@@ -24,7 +24,7 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
     ## https://github.com/ajaxorg/ace/wiki/Configuring-Ace
     shinyAce::aceEditor(ns("editor"), mode = "r", value = initial_code,
                         debounce = 100),
-    shiny::actionButton(ns("go_button"), "Compile",
+    shiny::actionButton(ns("compile"), "Compile",
                         shiny::icon("cogs"),
                         class = "btn-blue"),
     shiny::actionButton(ns("reset_button"), "Reset",
@@ -46,8 +46,8 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
     ## clever css rule.
     shiny::tags$style(".shiny-file-input-progress {display: none}"),
 
-    shiny::htmlOutput(ns("validation_info")),
-    shiny::htmlOutput(ns("compilation_info")))
+    shiny::uiOutput(ns("validation_info")),
+    shiny::uiOutput(ns("result_info")))
 
   shiny::fluidRow(
     shiny::column(6, editor),
@@ -58,15 +58,65 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
 mod_editor_simple_server <- function(input, output, session, initial_code,
                                      editor_status_body) {
   ns <- session$ns
-  rv <- shiny::reactiveValues(validation = NULL,
-                                compilation = NULL)
+  rv <- shiny::reactiveValues()
 
   initial_code <- editor_validate_initial_code(initial_code)
+
+  output$validation_info <- shiny::renderUI({
+    editor_validation_info(rv$validation)
+  })
+
+  output$result_info <- shiny::renderUI({
+    editor_result_info(rv$result)
+  })
+
+  shiny::observe({
+    rv$status <- editor_status(rv$result, editor_status_body)
+  })
+
+  shiny::observe({
+    shinyAce::updateAceEditor(session, ns("editor"),
+                              border = editor_border(rv$validation))
+  })
+
+  shiny::observeEvent(
+    input$uploaded_file, {
+      if (!is.null(input$uploaded_file)) {
+        code <- editor_read_code(input$uploaded_file$datapath)
+        shinyAce::updateAceEditor(session, ns("editor"), value = code)
+        rv$validation <- common_odin_validate(code)
+      }
+    })
+
+  ## Manual validation
+  shiny::observeEvent(
+    input$validate_button, {
+      rv$validation <- common_odin_validate(input$editor)
+    })
+
+  ## Realtime validation
+  shiny::observe({
+    if (!is.null(rv$result)) {
+      rv$result$is_current <- identical(rv$result$code, input$editor)
+    }
+    if (input$auto_validate) {
+      rv$validation <- common_odin_validate(input$editor)
+    }
+  })
+
+  ## Here is the first part of the exit route out of the module
+  shiny::observeEvent(
+    input$compile, {
+      rv$validation <- common_odin_validate(input$editor)
+      rv$result <- shiny::withProgress(
+        message = "Compiling...", value = 1,
+        common_odin_compile(rv$validation))
+    })
 
   shiny::observeEvent(
     input$reset_button, {
       shinyAce::updateAceEditor(session, ns("editor"), value = initial_code)
-      rv$compilation <- NULL
+      rv$result <- NULL
       rv$validation <- NULL
     })
 
@@ -76,73 +126,20 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
       writeLines(input$editor, con)
     })
 
-  shiny::observeEvent(
-    input$uploaded_file, {
-      if (!is.null(input$uploaded_file)) {
-        code <- editor_read_code(input$uploaded_file$datapath)
-        shinyAce::updateAceEditor(session, ns("editor"), value = code)
-        rv$validation <- editor_validate(code)
-      }
-    })
-
-  ## Manual validation
-  shiny::observeEvent(
-    input$validate_button, {
-      rv$validation <- editor_validate(input$editor)
-    })
-
-  ## Realtime validation
-  shiny::observe({
-    if (!is.null(rv$compilation)) {
-      rv$compilation$is_current <-
-        identical(rv$compilation$code, input$editor)
-    }
-    if (input$auto_validate) {
-      rv$validation <- editor_validate(input$editor)
-    }
-  })
-
-  output$validation_info <- shiny::renderUI({
-    editor_validation_info(rv$validation)
-  })
-
-  output$compilation_info <- shiny::renderUI({
-    editor_compilation_info(rv$compilation)
-  })
-
-  shiny::observe({
-    shinyAce::updateAceEditor(session, ns("editor"),
-                              border = editor_border(rv$validation))
-  })
-
-  shiny::observe({
-    rv$status <- editor_status(rv$compilation, editor_status_body)
-  })
-
-  ## Here is the first part of the exit route out of the module
-  shiny::observeEvent(
-    input$go_button, {
-      res <- shiny::withProgress(
-        message = "Compiling...", value = 1, editor_compile(input$editor))
-      rv$validation <- res$validation
-      rv$compilation <- res$compilation
-    })
-
   get_state <- function() {
     list(editor = input$editor,
-         compilation = rv$compilation$code)
+         result = if (!is.null(rv$result$model)) rv$result$code)
   }
 
   set_state <- function(state) {
-    if (!is.null(state$compilation)) {
-      rv$compilation <- editor_compile(state$compilation)$compilation
+    if (!is.null(state$result)) {
+      rv$result <- common_odin_compile(common_odin_validate(state$result))
     }
     shinyAce::updateAceEditor(session, ns("editor"), value = state$editor)
-    rv$validation <- editor_validate(state$editor)
+    rv$validation <- common_odin_validate(state$editor)
   }
 
-  list(result = shiny::reactive(
-         c(rv$compilation, list(status = rv$status))),
+  list(result = shiny::reactive(add_status(rv$result, rv$status)),
        get_state = get_state,
        set_state = set_state)
 }
@@ -173,31 +170,30 @@ editor_validation_info <- function(status) {
 }
 
 
-editor_compilation_info <- function(status) {
-  if (is.null(status)) {
+editor_result_info <- function(result) {
+  if (is.null(result)) {
     panel <- NULL
   } else {
-    success <- isTRUE(status$result$success)
-    result <- sprintf("%s, %.2f s elapsed",
-                      if (success) "success" else "error",
-                      status$result$elapsed[["elapsed"]])
-    is_current <- status$is_current
+    success <- isTRUE(result$success)
+    title <- sprintf("%s, %.2f s elapsed",
+                     if (success) "success" else "error", result$elapsed)
+    is_current <- result$is_current
     if (!is_current) {
-      result <- paste(result, "(code has changed since this was run)")
+      title <- paste(title, "(code has changed since this was run)")
     }
     if (success) {
       class <- if (is_current) "success" else "default"
       icon_name <- "check-circle"
       ## TODO: this should be hideable, and hidden by default
       ## TODO: only do this if it's nonempty
-      body <- shiny::pre(paste(status$result$output, collapse = "\n"))
+      body <- shiny::pre(paste(result$output, collapse = "\n"))
     } else {
       class <- if (is_current) "danger" else "warning"
       icon_name <- "times-circle"
-      body <- shiny::pre(status$result$error)
+      body <- shiny::pre(result$error)
     }
 
-    title <- sprintf("Compilation: %s", result)
+    title <- sprintf("Compilation: %s", title)
     panel <- simple_panel(class, title, body, icon_name)
   }
 
@@ -205,8 +201,8 @@ editor_compilation_info <- function(status) {
 }
 
 
-editor_border <- function(status) {
-  if (!is.null(status$error)) {
+editor_border <- function(validation) {
+  if (!is.null(validation$error)) {
     "alert"
   } else {
     "normal"
@@ -215,30 +211,7 @@ editor_border <- function(status) {
 
 
 editor_read_code <- function(path) {
-  paste0(readLines(path), "\n", collapse = "")
-}
-
-
-editor_validate <- function(code) {
-  res <- odin::odin_validate(code, "text")
-  if (!is.null(res$error)) {
-    res$error <- res$error$message
-  }
-  res$messages <- vcapply(res$messages, function(x) x$message)
-  res
-}
-
-
-editor_compile <- function(code) {
-  validation <- editor_validate(code)
-  if (validation$success) {
-    result <- odin::odin_build(validation$result)
-    result$info <- model_info(result$model)
-  } else {
-    result <- NULL
-  }
-  compilation <- list(code = code, result = result, is_current = TRUE)
-  list(validation = validation, compilation = compilation)
+  paste0(readLines(path, warn = FALSE), "\n", collapse = "")
 }
 
 

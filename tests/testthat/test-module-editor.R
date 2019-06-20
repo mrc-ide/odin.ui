@@ -18,34 +18,44 @@ test_that("editor_border", {
 })
 
 
-test_that("editor validation info", {
+test_that("editor validation info: empty", {
   expect_null(editor_validation_info(NULL))
-
-  res <- editor_validation_info(list(error = "failure"))
-  expect_equal(res$children[[1]]$attribs$class, "panel panel-danger")
-  expect_match(res$children[[1]]$children[[1]]$children[[1]]$attribs$class,
-               "exclamation-circle")
-  expect_equal(as.character(res$children[[1]]$children[[2]]$children[[1]]),
-               "<pre>failure</pre>")
-
-  res <- editor_validation_info(list(messages = c("a", "b")))
-  expect_equal(res$children[[1]]$attribs$class, "panel panel-info")
-  expect_match(res$children[[1]]$children[[1]]$children[[1]]$attribs$class,
-               "info-circle")
-  expect_equal(as.character(res$children[[1]]$children[[2]]$children[[1]]),
-               "<pre>a\n\nb</pre>")
-
-  res <- editor_validation_info(list())
-  expect_equal(res$children[[1]]$attribs$class, "panel panel-success")
-  expect_match(res$children[[1]]$children[[1]]$children[[1]]$attribs$class,
-               "check-circle")
-  expect_null(res$children[[1]]$children[[2]])
 })
 
 
-test_that("editor compilation info", {
-  expect_null(editor_compilation_info(NULL))
+test_that("editor validation info: error", {
+  validation <- common_odin_validate("")
+  expect_equal(
+    editor_validation_info(validation),
+    simple_panel("danger", "Validation: error", shiny::pre(validation$error)))
+})
 
+
+test_that("editor validation info: notes", {
+  validation <- common_odin_validate(
+    "deriv(a) <- 1; initial(a) <- 1; b <- 1; c <- 1")
+  expect_equal(
+    editor_validation_info(validation),
+    simple_panel("info", "Validation: note",
+                 shiny::pre(paste(validation$messages, collapse = "\n\n"))))
+})
+
+
+test_that("editor validation info: success", {
+  validation <- common_odin_validate(
+    "deriv(a) <- 1; initial(a) <- 1")
+  expect_equal(
+    editor_validation_info(validation),
+    simple_panel("success", "Validation: success", NULL))
+})
+
+
+test_that("editor compilation info: empty", {
+  expect_null(editor_result_info(NULL))
+})
+
+
+test_that("editor compilation info: success", {
   d1 <- list(
     result = list(success = TRUE,
                   elapsed = list(elapsed = 1.2),
@@ -91,63 +101,6 @@ test_that("editor compilation info", {
 })
 
 
-test_that("validate: error", {
-  expect_equal(editor_validate(""),
-               list(success = FALSE,
-                    result = NULL,
-                    error = "Did not find a deriv() or an update() call",
-                    messages = character(0)))
-})
-
-
-test_that("validate: success", {
-  res <- editor_validate(c("initial(x) <- 1", "update(x) <- 1"))
-  expect_true(res$success)
-  expect_null(res$error)
-  expect_equal(res$messages, character(0))
-  expect_is(res$result, "json")
-})
-
-
-test_that("validate: note", {
-  res <- editor_validate(c("a <- 1", "initial(x) <- 1", "update(x) <- 1"))
-  expect_true(res$success)
-  expect_null(res$error)
-  expect_equal(res$messages, "Unused equation: a\n\ta <- 1 # (line 1)")
-  expect_is(res$result, "json")
-})
-
-
-test_that("editor compile: failure", {
-  res <- editor_compile("")
-  expect_equal(
-    res,
-    list(validation = editor_validate(""),
-         compilation = list(code = "", result = NULL, is_current = TRUE)))
-})
-
-
-test_that("editor compile: success", {
-  code <- c("initial(x) <- a", "deriv(x) <- 1", "a <- user(1)")
-  res <- editor_compile(code)
-  expect_equal(res$validation, editor_validate(code))
-  expect_equal(res$compilation$code, code)
-  expect_true(res$compilation$is_current)
-
-  expect_true(res$compilation$result$success)
-  expect_is(res$compilation$result$elapsed[["elapsed"]], "numeric")
-  expect_is(res$compilation$result$output, "character")
-  expect_is(res$compilation$result$model, "odin_generator")
-  expect_identical(res$compilation$result$ir, res$validation$result)
-  expect_null(res$compilation$result$error)
-  expect_equal(res$compilation$result$info$pars,
-               coef(res$compilation$result$model))
-  expect_equal(res$compilation$result$info$vars,
-               data_frame(name = "x", rank = 0, type = "variable"))
-})
-
-
-
 test_that("model status: no callback", {
   m <- list(result = list(info = list(pars = matrix(0, 3, 0),
                                       vars = matrix(0, 4, 0))),
@@ -181,4 +134,21 @@ test_that("model status: no callback", {
     editor_status(m, "solution"),
     module_status("success", "Model with 3 parameters and 4 variables/outputs",
                   NULL))
+})
+
+
+test_that("read code", {
+  p <- tempfile()
+  on.exit(unlink(p))
+
+  file.create(p)
+  expect_equal(editor_read_code(p), "\n")
+
+  writeLines(c("a", "b"), p)
+  expect_equal(editor_read_code(p), "a\nb\n")
+
+  ## silent in the face of no trailing newline:
+  writeBin(charToRaw("a\nb"), p)
+  expect_equal(editor_read_code(p), "a\nb\n")
+  expect_silent(editor_read_code(p))
 })

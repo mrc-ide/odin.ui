@@ -308,3 +308,43 @@ odin_data_source <- function(data, filename, name_time) {
 
   result
 }
+
+
+## result here must be the output of odin::odin_build, which includes:
+##
+## success, elapsed, output, model, ir & error
+odin_model <- function(result, code) {
+  if (is.null(result)) {
+    result <- list(success = FALSE)
+  }
+  if (result$success) {
+    result$info <- model_info(result$model)
+  }
+  if (!is.null(result$elapsed)) {
+    result$elapsed <- result$elapsed[["elapsed"]]
+  }
+  result$code <- code
+  result$is_current <- TRUE
+  result
+}
+
+
+common_odin_validate <- function(code) {
+  res <- odin::odin_validate(code, "text")
+  if (!is.null(res$error)) {
+    res$error <- res$error$message
+  }
+  res$code <- code
+  res$messages <- vcapply(res$messages, function(x) x$message)
+  res
+}
+
+
+common_odin_compile <- function(validation) {
+  if (validation$success) {
+    result <- odin::odin_build(validation$result)
+  } else {
+    result <- NULL
+  }
+  odin_model(result, validation$code)
+}
