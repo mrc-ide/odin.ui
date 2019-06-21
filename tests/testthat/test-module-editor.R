@@ -11,6 +11,8 @@ test_that("validate initial code", {
 })
 
 
+## TODO: compilation failure after validation success
+
 test_that("editor_border", {
   expect_equal(editor_border(NULL), "normal")
   expect_equal(editor_border(list(error = "x")), "alert")

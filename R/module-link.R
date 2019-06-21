@@ -1,7 +1,7 @@
-mod_configure_ui <- function(id) {
+mod_link_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
-    shiny::titlePanel("Configure"),
+    shiny::titlePanel("Link"),
     shiny::h3("Data"),
     shiny::uiOutput(ns("status_data")),
     shiny::h3("Model"),
@@ -12,8 +12,8 @@ mod_configure_ui <- function(id) {
 }
 
 
-mod_configure_server <- function(input, output, session, data, model,
-                                 configure_status_body = NULL) {
+mod_link_server <- function(input, output, session, data, model,
+                                 link_status_body = NULL) {
   rv <- shiny::reactiveValues()
 
   output$status_data <- shiny::renderUI({
@@ -31,22 +31,22 @@ mod_configure_server <- function(input, output, session, data, model,
   })
 
   shiny::observe({
-    rv$configuration <- configure_configuration(data(), model())
+    rv$configuration <- link_configuration(data(), model())
   })
 
   output$link <- shiny::renderUI({
     ## TODO: get previous first
-    configure_link_ui(rv$configuration, session$ns)
+    link_link_ui(rv$configuration, session$ns)
   })
 
   shiny::observe({
     vars <- rv$configuration$vars
     map <- get_inputs(input, vars$id, vars$data)
-    rv$result <- configure_result(map)
+    rv$result <- link_result(map)
   })
 
   shiny::observe({
-    rv$status <- configure_status(rv$result, configure_status_body)
+    rv$status <- link_status(rv$result, link_status_body)
   })
 
   get_state <- function() {
@@ -54,8 +54,8 @@ mod_configure_server <- function(input, output, session, data, model,
   }
 
   set_state <- function(state) {
-    rv$configuration <- configure_configuration(data(), model())
-    output$link <- shiny::renderUI(configure_link_ui(
+    rv$configuration <- link_configuration(data(), model())
+    output$link <- shiny::renderUI(link_link_ui(
       rv$configuration, session$ns, state))
     rv$result <- state$result
   }
@@ -68,7 +68,7 @@ mod_configure_server <- function(input, output, session, data, model,
 }
 
 
-configure_link_ui <- function(configuration, ns, restore = NULL) {
+link_link_ui <- function(configuration, ns, restore = NULL) {
   if (is.null(configuration)) {
     return(NULL)
   }
@@ -92,7 +92,7 @@ configure_link_ui <- function(configuration, ns, restore = NULL) {
 }
 
 
-## configure_link_ui_update <- function(map, input, data, model, restore) {
+## link_link_ui_update <- function(map, input, data, model, restore) {
 ##   if (!isTRUE(data$configured) || is.null(model)) {
 ##     return(list(map = NULL, selected = NULL))
 ##   }
@@ -120,7 +120,7 @@ configure_link_ui <- function(configuration, ns, restore = NULL) {
 ## }
 
 
-configure_status <- function(result, body) {
+link_status <- function(result, body) {
   if (isTRUE(result$configured)) {
     class <- "success"
     title <- "Model/Data link is configured"
@@ -133,7 +133,7 @@ configure_status <- function(result, body) {
 }
 
 
-configure_configuration <- function(data, model) {
+link_configuration <- function(data, model) {
   if (!isTRUE(model$success) || !isTRUE(data$configured)) {
     return(NULL)
   }
@@ -150,7 +150,7 @@ configure_configuration <- function(data, model) {
 ## `link` here must be a named list where names are the *data*
 ## elements, and values are the *model* elements (possibly null or NA,
 ## which will be filtered)
-configure_result <- function(map) {
+link_result <- function(map) {
   map <- map[!vlapply(map, is_missing)]
   label <- sprintf("%s ~ %s", names(map), list_to_character(map))
   list(map = map, label = label, configured = length(map) > 0L)

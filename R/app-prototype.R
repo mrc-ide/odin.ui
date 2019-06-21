@@ -19,9 +19,9 @@ odin_prototype_ui <- function(initial_code) {
         icon = shiny::icon("edit"),
         mod_editor_simple_ui("odin_editor", initial_code, NULL)),
       shiny::tabPanel(
-        "Configure",
+        "Link",
         icon = shiny::icon("random"),
-        mod_configure_ui("odin_configure")),
+        mod_link_ui("odin_link")),
       shiny::tabPanel(
         "Visualise",
         icon = shiny::icon("search"),
@@ -71,31 +71,31 @@ odin_prototype_server <- function(initial_code) {
     model <- shiny::callModule(
       mod_editor_simple_server, "odin_editor", initial_code,
       "Return to the Editor tab")
-    configure <- shiny::callModule(
-      mod_configure_server, "odin_configure", data$result, model$result,
-      "Return to the Configure tab")
+    link <- shiny::callModule(
+      mod_link_server, "odin_link", data$result, model$result,
+      "Return to the Link tab")
 
     fit <- shiny::callModule(
-      mod_fit_server, "odin_fit", data$result, model$result, configure$result)
+      mod_fit_server, "odin_fit", data$result, model$result, link$result)
     vis <- shiny::callModule(
-      mod_vis_server, "odin_vis", data$result, model$result, configure$result,
+      mod_vis_server, "odin_vis", data$result, model$result, link$result,
       fit$user)
     batch <- shiny::callModule(
       mod_batch_server, "odin_batch", model$result, data$result,
-      configure$result, fit$user)
+      link$result, fit$user)
 
-    modules <- list(date = data, model = model, configure = configure,
+    modules <- list(date = data, model = model, link = link,
                     vis = vis, fit = fit, batch = batch)
 
     output$status <- shiny::renderUI({
       class_data <- text_module_status(data$result()$status)
       class_model <- text_module_status(model$result()$status)
-      class_configure <- text_module_status(configure$result()$status)
+      class_link <- text_module_status(link$result()$status)
       class_fit <- text_module_status(fit$result()$status)
       shiny::tagList(
         shiny::icon("table", class = class_data),
         shiny::icon("edit", class = class_model),
-        shiny::icon("random", class = class_configure),
+        shiny::icon("random", class = class_link),
         shiny::icon("calculator", class = class_fit))
     })
 

@@ -32,7 +32,7 @@ mod_fit_ui <- function(id) {
 }
 
 
-mod_fit_server <- function(input, output, session, data, model, configure) {
+mod_fit_server <- function(input, output, session, data, model, link) {
   rv <- shiny::reactiveValues()
 
   output$status_data <- shiny::renderUI({
@@ -44,7 +44,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
   })
 
   output$status_link <- shiny::renderUI({
-    show_module_status_if_not_ok(configure()$status)
+    show_module_status_if_not_ok(link()$status)
   })
 
   output$status_fit <- shiny::renderUI({
@@ -56,7 +56,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
   })
 
   shiny::observe({
-    rv$configuration <- fit_configuration(model(), data(), configure())
+    rv$configuration <- fit_configuration(model(), data(), link())
   })
 
   output$control_parameters <- shiny::renderUI({
@@ -155,7 +155,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
       return()
     }
     browser()
-    rv$configuration <- fit_configuration(model(), data(), configure())
+    rv$configuration <- fit_configuration(model(), data(), link())
     rv$fit <- state$fit
     output$control_target <- shiny::renderUI(fit_control_target(
       rv$configuration$link, session$ns, state$control_target))

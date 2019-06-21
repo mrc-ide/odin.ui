@@ -24,7 +24,7 @@ example_data_fit <- function() {
   a <- c(1.75, 4.37, 3.33, 9.19, 7.66, 6.36, 9.97, 11.48, 12.15, 11.39)
   d <- data.frame(t = 1:10, a = a, b = runif(10), c = runif(10))
   data <- odin_data_source(d, "file.csv", "t")
-  link <- configure_result(list(a = "x", c = "y"))
+  link <- link_result(list(a = "x", c = "y"))
   list(model = model, data = data, link = link,
        configuration = fit_configuration(model, data, link))
 }

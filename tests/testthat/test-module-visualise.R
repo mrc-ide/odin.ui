@@ -15,7 +15,7 @@ test_that("run model, with missing zero time", {
   model <- common_odin_compile_from_code(code)
   d <- data.frame(t = 1:10, a = runif(10), b = runif(10), c = runif(10))
   data <- odin_data_source(d, "file.csv", "t")
-  link <- configure_result(list(a = "x", c = "y"))
+  link <- link_result(list(a = "x", c = "y"))
   configuration <- common_model_data_configuration(model, data, link)
 
   user <- list(a = 2, b = 1)
@@ -49,7 +49,7 @@ test_that("plot", {
   model <- common_odin_compile_from_code(code)
   d <- data.frame(t = 1:10, a = runif(10), b = runif(10), c = runif(10))
   data <- odin_data_source(d, "file.csv", "t")
-  link <- configure_result(list(a = "x", c = "y"))
+  link <- link_result(list(a = "x", c = "y"))
   configuration <- common_model_data_configuration(model, data, link)
   user <- list(a = 2, b = 1)
   res <- vis_run(configuration, user = user)

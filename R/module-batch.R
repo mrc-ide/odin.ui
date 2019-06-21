@@ -29,7 +29,7 @@ mod_batch_ui <- function(id) {
 }
 
 
-mod_batch_server <- function(input, output, session, model, data, configure,
+mod_batch_server <- function(input, output, session, model, data, link,
                              import = NULL) {
   rv <- shiny::reactiveValues()
 
@@ -53,7 +53,7 @@ mod_batch_server <- function(input, output, session, model, data, configure,
 
   shiny::observe({
     rv$configuration <- common_model_data_configuration(
-      model(), data(), configure())
+      model(), data(), link())
   })
 
   output$control_parameters <- shiny::renderUI({
@@ -142,7 +142,7 @@ mod_batch_server <- function(input, output, session, model, data, configure,
       return()
     }
     rv$configuration <- common_model_data_configuration(
-      model(), data(), configure())
+      model(), data(), link())
     rv$result <- with_success(batch_run(rv$configuration, state$focal))
     output$control_parameters <- shiny::renderUI(
       common_control_parameters(rv$configuration$pars, session$ns, state$user))

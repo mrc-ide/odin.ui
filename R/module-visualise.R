@@ -47,11 +47,11 @@ mod_vis_ui <- function(id) {
 
 
 ## Basic flow is
-##   {data, model, configure} => configuration
+##   {data, model, link} => configuration
 ##   configuration => control interface
 ##   {configuration, control interface} => result
 ##   {result, control inteface} => plot
-mod_vis_server <- function(input, output, session, data, model, configure,
+mod_vis_server <- function(input, output, session, data, model, link,
                            import = NULL) {
   rv <- shiny::reactiveValues()
 
@@ -69,7 +69,7 @@ mod_vis_server <- function(input, output, session, data, model, configure,
 
   shiny::observe({
     rv$configuration <- common_model_data_configuration(
-      model(), data(), configure())
+      model(), data(), link())
   })
 
   output$control_parameters <- shiny::renderUI({
@@ -144,7 +144,7 @@ mod_vis_server <- function(input, output, session, data, model, configure,
     }
     shiny::isolate({
       rv$configuration <- common_model_data_configuration(
-        model(), data(), configure())
+        model(), data(), link())
       rv$result <- with_success(vis_run(rv$configuration, state$user_result))
       output$control_parameters <- shiny::renderUI(
         common_control_parameters(rv$configuration$pars, session$ns,
