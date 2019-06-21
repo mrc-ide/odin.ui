@@ -64,3 +64,81 @@ test_that("write_csv does not add row labels", {
   write_csv(d, path)
   expect_equal(readLines(path)[[2]], c("1,3"))
 })
+
+
+test_that("drop_null", {
+  empty <- set_names(list(), character())
+  expect_null(drop_null(NULL))
+  expect_equal(drop_null(list()), list())
+  expect_equal(drop_null(list(a = NULL)), empty)
+  expect_equal(drop_null(list(a = NULL, b = NULL)), empty)
+  expect_equal(drop_null(list(a = 1, b = NULL)), list(a = 1))
+  expect_equal(drop_null(list(a = 1, b = 2)), list(a = 1, b = 2))
+})
+
+
+test_that("list_to_numeric", {
+  expect_equal(list_to_numeric(list(a = 1, b = 2)), c(1, 2))
+  expect_equal(list_to_numeric(list(a = 1, b = 2), TRUE), c(a = 1, b = 2))
+})
+
+
+test_that("list_to_logical", {
+  expect_equal(list_to_numeric(list(a = TRUE, b = FALSE)),
+               c(TRUE, FALSE))
+  expect_equal(list_to_numeric(list(a = TRUE, b = FALSE), TRUE),
+               c(a = TRUE, b = FALSE))
+})
+
+
+test_that("list_to_character", {
+  expect_equal(list_to_character(list(a = "a", b = "2")), c("a", "2"))
+  expect_equal(list_to_character(list(a = "a", b = "2"), TRUE),
+               c(a = "a", b = "2"))
+})
+
+
+test_that("list_to_df", {
+  x <- list(a = 1, b = 2)
+  y <- list_to_df(x)
+  expect_equal(y, data_frame(name = c("a", "b"), value = c(1, 2)))
+  expect_equal(df_to_list(y), x)
+})
+
+
+test_that("constrain", {
+  expect_equal(constrain(1, 0, 2), 1)
+  expect_equal(constrain(-1, 0, 2), 0)
+  expect_equal(constrain(3, 0, 2), 2)
+})
+
+
+test_that("with_success", {
+  f <- function(x) {
+    if (x < 0) {
+      stop("x must be positive")
+    }
+    sqrt(x)
+  }
+
+  expect_equal(
+    with_success(f(-1)),
+    list(success = FALSE, value = NULL, error = "x must be positive"))
+  expect_equal(
+    with_success(f(4)),
+    list(success = TRUE, value = 2, error = NULL))
+})
+
+
+test_that("protect", {
+  f <- function(x) {
+    if (x < 0) {
+      stop("x must be positive")
+    }
+    sqrt(x)
+  }
+
+  g <- protect(f, NA)
+  expect_equal(g(4), 2)
+  expect_equal(g(-4), NA)
+})

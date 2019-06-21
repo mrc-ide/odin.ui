@@ -188,6 +188,22 @@ expand_and_name <- function(x, nms) {
 }
 
 
+with_success <- function(expr) {
+  res <- tryCatch(
+    force(expr),
+    error = identity)
+  if (inherits(res, "error")) {
+    list(success = FALSE,
+         value = NULL,
+         error = res$message)
+  } else {
+    list(success = TRUE,
+         value = res,
+         error = NULL)
+  }
+}
+
+
 protect <- function(fun, fail = Inf) {
   function(...) {
     tryCatch(fun(...), error = function(e) fail)

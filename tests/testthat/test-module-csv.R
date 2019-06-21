@@ -233,3 +233,12 @@ test_that("csv plot: configured", {
 
   expect_is(csv_plot(result), "plotly")
 })
+
+
+test_that("csv result returns an odin_data_source", {
+  d <- data.frame(a = 1:10, b = runif(10))
+  filename <- "myfile.csv"
+  result <- csv_import_result(d, filename)
+  expect_equal(csv_result(result$value, "b"),
+               odin_data_source(d, filename, "b"))
+})

@@ -288,22 +288,6 @@ add_status <- function(x, status) {
 }
 
 
-with_success <- function(expr) {
-  res <- tryCatch(
-    force(expr),
-    error = identity)
-  if (inherits(res, "error")) {
-    list(success = FALSE,
-         value = NULL,
-         error = res$message)
-  } else {
-    list(success = TRUE,
-         value = res,
-         error = NULL)
-  }
-}
-
-
 ## Standard data structure for a data set that knows what is going on
 ## with time.
 odin_data_source <- function(data, filename, name_time) {
