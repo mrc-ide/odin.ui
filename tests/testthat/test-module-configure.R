@@ -2,7 +2,7 @@ context("module: configure")
 
 
 test_that("ui requires a configuration", {
-  expect_null(configure_link_ui(NULL, identity))
+  expect_null(link_link_ui(NULL, identity))
 })
 
 
@@ -27,7 +27,7 @@ test_that("link result with nonempty inputs", {
 
 
 test_that("configuration", {
-  expect_null(configure_configuration(NULL, NULL))
+  expect_null(link_configuration(NULL, NULL))
 })
 
 
@@ -42,7 +42,7 @@ test_that("configuration: nonemtpy", {
   data <- odin_data_source(d, "file.csv", "t")
 
   expect_equal(
-    configure_configuration(data, model),
+    link_configuration(data, model),
     list(data = data, model = model,
          vars = list(
            data = c("a", "b", "c"),
@@ -50,33 +50,33 @@ test_that("configuration: nonemtpy", {
            id = sprintf("link_data_%s", c("a", "b", "c")))))
 
   ## Don't set configuration for all these cases:
-  expect_null(configure_configuration(NULL, NULL))
-  expect_null(configure_configuration(NULL, model))
-  expect_null(configure_configuration(data, NULL))
+  expect_null(link_configuration(NULL, NULL))
+  expect_null(link_configuration(NULL, model))
+  expect_null(link_configuration(data, NULL))
 
   data2 <- modifyList(data, list(configured = FALSE))
   model2 <- modifyList(model, list(success = FALSE))
-  expect_null(configure_configuration(data2, model))
-  expect_null(configure_configuration(data, model2))
+  expect_null(link_configuration(data2, model))
+  expect_null(link_configuration(data, model2))
 })
 
 
 test_that("status", {
   expect_equal(
-    configure_status(NULL, NULL),
+    link_status(NULL, NULL),
     module_status("danger", "Model/Data link is not configured", NULL))
   expect_equal(
-    configure_status(NULL, "solution"),
+    link_status(NULL, "solution"),
     module_status("danger", "Model/Data link is not configured", "solution"))
 
   result <- link_result(list(a = NA, b = "Y", c = "Z"))
   expect_equal(
-    configure_status(result, NULL),
+    link_status(result, NULL),
     module_status("success", "Model/Data link is configured",
                   "b ~ Y & c ~ Z"))
   expect_equal(
-    configure_status(result, NULL),
-    configure_status(result, "solution"))
+    link_status(result, NULL),
+    link_status(result, "solution"))
 })
 
 
