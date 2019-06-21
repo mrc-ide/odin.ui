@@ -135,7 +135,6 @@ mod_fit_server <- function(input, output, session, data, model, link) {
     if (is.null(rv$configuration)) {
       return(NULL)
     }
-    browser()
     pars <- rv$configuration$pars
     ## TODO: I wonder if we can strip this down earlier?
     vars <- rv$configuration$vars[rv$configuration$vars$include, ]
@@ -154,7 +153,6 @@ mod_fit_server <- function(input, output, session, data, model, link) {
     if (is.null(state)) {
       return()
     }
-    browser()
     rv$configuration <- fit_configuration(model(), data(), link())
     rv$fit <- state$fit
     output$control_target <- shiny::renderUI(fit_control_target(
@@ -168,7 +166,7 @@ mod_fit_server <- function(input, output, session, data, model, link) {
   shiny::outputOptions(output, "control_parameters", suspendWhenHidden = FALSE)
 
   list(result = shiny::reactive(add_status(rv$fit$value, rv$status)),
-       user = shiny::reactive(rv$fit$result$user),
+       user = shiny::reactive(rv$fit$value$user),
        get_state = get_state,
        set_state = set_state)
 }
