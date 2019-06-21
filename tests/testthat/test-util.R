@@ -84,9 +84,9 @@ test_that("list_to_numeric", {
 
 
 test_that("list_to_logical", {
-  expect_equal(list_to_numeric(list(a = TRUE, b = FALSE)),
+  expect_equal(list_to_logical(list(a = TRUE, b = FALSE)),
                c(TRUE, FALSE))
-  expect_equal(list_to_numeric(list(a = TRUE, b = FALSE), TRUE),
+  expect_equal(list_to_logical(list(a = TRUE, b = FALSE), TRUE),
                c(a = TRUE, b = FALSE))
 })
 
