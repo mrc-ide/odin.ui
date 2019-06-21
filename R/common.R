@@ -202,6 +202,10 @@ common_control_graph_settings <- function(configuration, ns, check_title,
   if (!is.null(vars$include)) {
     vars <- vars[vars$include, , drop = FALSE]
   }
+  if (nrow(vars) == 0L) {
+    return(NULL)
+  }
+
   labels <- Map(function(lab, col)
     shiny::span(lab, style = paste0("color:", col)),
     vars$name, configuration$cols$model[vars$name])

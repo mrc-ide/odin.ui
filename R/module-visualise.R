@@ -176,6 +176,12 @@ vis_run <- function(configuration, user) {
     return(NULL)
   }
 
+  err <- vlapply(user, is_missing)
+  if (any(err)) {
+    stop(sprintf("Missing parameter for %s",
+                 paste(names(user)[err], collapse = ", ")))
+  }
+
   data <- configuration$data
   model <- configuration$model
 

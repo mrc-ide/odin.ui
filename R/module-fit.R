@@ -48,7 +48,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
   })
 
   output$status_fit <- shiny::renderUI({
-    rv$fit$status$ui
+    rv$status$ui
   })
 
   output$status_run <- shiny::renderUI({
@@ -68,7 +68,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
     ## persist the previous choice but getting that to work without a
     ## circular dependency is hard and isolate over all this
     ## expression does not work well.
-    fit_control_target(rv$configuration, session$ns)
+    fit_control_target(rv$configuration$link, session$ns)
   })
 
   ## TODO: this should *only* include
@@ -87,9 +87,13 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
         value = 0,
         fit_run(rv$configuration, input$target, user, vary))
       if (rv$fit$success) {
-        set_inputs(session, pars$id_value, rv$fit$result$user)
+        set_inputs(session, pars$id_value, rv$fit$value$user)
       }
     })
+
+  shiny::observe({
+    rv$status <- fit_status(rv$fit)
+  })
 
   shiny::observe({
     pars <- rv$configuration$pars
@@ -98,12 +102,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
   })
 
   shiny::observe({
-    if (!is.null(input$target) && !is.null(rv$result$value)) {
-      compare <- fit_make_compare(rv$configuration, input$target)
-      rv$goodness_of_fit <- compare(rv$result$value$simulation$data)
-    } else {
-      rv$goodness_of_fit <- NULL
-    }
+    rv$goodness_of_fit <- fit_goodness_of_fit(rv$result, input$target)
   })
 
   output$odin_output <- plotly::renderPlotly({
@@ -136,6 +135,7 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
     if (is.null(rv$configuration)) {
       return(NULL)
     }
+    browser()
     pars <- rv$configuration$pars
     ## TODO: I wonder if we can strip this down earlier?
     vars <- rv$configuration$vars[rv$configuration$vars$include, ]
@@ -154,10 +154,11 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
     if (is.null(state)) {
       return()
     }
+    browser()
     rv$configuration <- fit_configuration(model(), data(), configure())
     rv$fit <- state$fit
     output$control_target <- shiny::renderUI(fit_control_target(
-      rv$configuration, session$ns, state$control_target))
+      rv$configuration$link, session$ns, state$control_target))
     output$control_parameters <- shiny::renderUI(fit_control_parameters(
       rv$configuration$pars, session$ns, state$control_parameters))
     output$control_graph <- shiny::renderUI(
@@ -166,38 +167,40 @@ mod_fit_server <- function(input, output, session, data, model, configure) {
 
   shiny::outputOptions(output, "control_parameters", suspendWhenHidden = FALSE)
 
-  list(result = shiny::reactive(c(rv$fit$result, list(status = rv$fit$status))),
+  list(result = shiny::reactive(add_status(rv$fit$value, rv$status)),
        user = shiny::reactive(rv$fit$result$user),
        get_state = get_state,
        set_state = set_state)
 }
 
 
-fit_configuration <- function(model, data, configure) {
-  link <- configure$link
-  configuration <- common_model_data_configuration(model, data, configure)
+fit_configuration <- function(model, data, link) {
+  configuration <- common_model_data_configuration(model, data, link)
   if (!is.null(configuration$pars)) {
+    ## Additional UI elements to indicate if the parameters should vary:
     configuration$pars$id_vary <-
-      sprintf("par_vary_%s",configuration$pars$name)
+      sprintf("par_vary_%s", configuration$pars$name)
+    ## Information about the default vary state (might be dropped later?)
     configuration$pars$vary <- FALSE
     ## TODO: remove this cheat later
     configuration$pars$vary <-
       configuration$pars$name %in% c("I0", "cfr", "R0_before", "R0_after")
     configuration$vars$include <-
-      configuration$vars$name %in% list_to_character(configure$link)
-    ## TODO: this would be improved by passing the whole link through
-    ## above
-    configuration$link_label <- configure$link$label
+      configuration$vars$name %in% list_to_character(link$map)
   }
   configuration
 }
 
 
-fit_control_target <- function(configuration, ns, restore = NULL) {
-  if (is.null(configuration$link)) {
+## TODO: add to this:
+## * compare function (if supported - Anne could use likelihood here)
+## * tolerance
+## * algorithm (subplex/etc)
+fit_control_target <- function(link, ns, restore = NULL) {
+  if (is.null(link)) {
     return(NULL)
   }
-  choices <- set_names(names(configuration$link), configuration$link_label)
+  choices <- set_names(names(link$map), link$label)
   selected <- restore %||% NA
   mod_model_control_section(
     "Optimisation",
@@ -230,86 +233,63 @@ fit_control_parameters <- function(pars, ns, restore = NULL) {
 }
 
 
-fit_result <- function(result) {
-  msg <- sprintf("Fit model in %2.2f s", result$elapsed)
-  list(success = TRUE,
-       result = result,
-       status = module_status("success", msg, NULL))
-}
+fit_run <- function(configuration, target, user, vary, method = "subplex") {
+  data_t <- configuration$data$data[[configuration$data$name_time]]
+  data_y <- configuration$data$data[[target]]
+  model <- configuration$model$model
 
-
-fit_error <- function(message) {
-  list(success = FALSE,
-       result = NULL,
-       status = module_status("danger", "Error fitting model to data",
-                              message))
-}
-
-
-fit_run <- function(configuration, target, user, vary) {
+  name_model_y <- configuration$link$map[[target]]
   user <- list_to_numeric(user, TRUE)
-  if (any(is.na(user))) {
-    return(fit_error(sprintf(
-      "Starting parameter value needed for %s",
-      paste(names(user)[is.na(user)], collapse = ", "))))
-  }
-
   vary <- names(vary)[list_to_logical(vary)]
-  if (length(vary) == 0L) {
-    return(fit_error("Select at least one parameter to vary"))
-  }
 
-  pars <- configuration$model$info$pars
-  i <- match(vary, pars$name)
-  lower <- pars$min[i]
-  upper <- pars$max[i]
+  i <- match(vary, configuration$pars$name)
+  lower <- configuration$pars$min[i]
+  upper <- configuration$pars$max[i]
 
-  result <- with_success({
-    objective <- fit_make_objective(configuration, target, user, vary)
-    result <- do_fit(user[vary], objective, lower, upper,
-                     tolerance = 1e-6, method = "nmkb")
-  })
+  compare <- compare_sse
+  tolerance <- 1e-6
 
-  if (!result$success) {
-    return(fit_error(result$error))
-  }
-
-  value <- result$value
-  user[vary] <- value$par
-  value$user <- as.list(user)
-  value$target <- target
-  fit_result(value)
+  with_success(
+    odin_fit_model(data_t, data_y, model, name_model_y, user, vary,
+                   lower, upper, method = method, compare = compare,
+                   tolerance = tolerance))
 }
 
 
-fit_make_objective <- function(configuration, target, user, vary) {
-  mod <- configuration$model$model(user = as.list(user))
-  time <- configuration$data$data[[configuration$data$name_time]]
-  compare <- fit_make_compare(configuration, target)
-  force(vary)
-  function(p) {
-    mod$set_user(user = set_names(as.list(p), vary))
-    y <- mod$run(c(0, time))[-1, , drop = FALSE]
-    compare(y)
+fit_status <- function(result) {
+  if (is.null(result$success)) {
+    return(NULL)
   }
+  if (result$success) {
+    class <- "success"
+    title <- sprintf("Fit model in %2.2f s", result$value$elapsed)
+    body <- NULL
+  } else {
+    class <- "danger"
+    title <- "Error fitting model to data"
+    body <- result$message
+  }
+  module_status(class, title, body)
 }
 
 
-fit_make_compare <- function(configuration, target, compare = compare_sse) {
-  real <- configuration$data$data[[target]]
-  target_model <- configuration$link[[target]]
-  compare <- match.fun(compare)
-  function(modelled) {
-    compare(modelled[, target_model], real)
+fit_goodness_of_fit <- function(result, target, compare = compare_sse) {
+  if (is.null(result$value) || is.null(target)) {
+    return(NULL)
   }
+  cfg <- result$value$configuration
+  y_data <- cfg$data$data[[target]]
+  name_y_model <- cfg$link$map[[target]]
+  y_model <- result$value$simulation$data[, name_y_model]
+  compare(y_data, y_model)
 }
 
 
 fit_plot_series <- function(result, target, y2_model) {
   cfg <- result$configuration
-  y2 <- odin_y2(y2_model, cfg$data$name_vars, result$configuration$link)
-  cols <- result$configuration$cols
-  target_model <- result$configuration$link[[target]]
+  y2 <- odin_y2(y2_model, cfg$data$name_vars, cfg$link$map)
+  cols <- cfg$cols
+  target_model <- cfg$link$map[[target]]
 
   model_vars <- cfg$vars$name[cfg$vars$include]
 

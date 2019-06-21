@@ -3,9 +3,9 @@ do_fit <- function(start, target, lower, upper, tolerance, method) {
   t0 <- Sys.time()
   res <- switch(
     method,
-    ## optim = do_fit_optim(start, target, tolerance, lower, upper),
-    ## subplex = do_fit_subplex(start, target, tolerance),
-    ## hjkb = do_fit_hjkb(start, target, tolerance, lower, upper),
+    optim = do_fit_optim(start, target, tolerance, lower, upper),
+    subplex = do_fit_subplex(start, target, tolerance),
+    hjkb = do_fit_hjkb(start, target, tolerance, lower, upper),
     nmkb = do_fit_nmkb(start, target, tolerance, lower, upper),
     stop("Unknown method ", method))
   t1 <- Sys.time()
@@ -34,7 +34,7 @@ do_fit_subplex <- function(start, target, tolerance) {
        value = res$value,
        success = res$convergence == 0,
        message = res$message,
-       evaluations = res$count)
+       evaluations = res$counts)
 }
 
 
@@ -62,4 +62,50 @@ do_fit_nmkb <- function(start, target, tolerance, lower, upper) {
 
 compare_sse <- function(modelled, real) {
   sum((modelled - real)^2, na.rm = TRUE)
+}
+
+
+odin_fit_model <- function(data_t, data_y, model, name_model_y, user, vary,
+                           lower, upper, method = "subplex",
+                           compare = compare_sse, tolerance = 1e-6) {
+  if (any(is.na(user))) {
+    stop(sprintf(
+      "Starting parameter value needed for %s",
+      paste(names(user)[is.na(user)], collapse = ", ")))
+  }
+
+  if (length(vary) == 0L) {
+    stop("Select at least one parameter to vary")
+  }
+
+  objective <- odin_fit_objective(data_t, data_y, model, name_model_y,
+                                  user, vary, compare)
+  value <- do_fit(user[vary], objective, lower, upper,
+                  tolerance = tolerance, method = method)
+
+  user[vary] <- value$par
+  value$user <- as.list(user)
+
+  value
+}
+
+
+odin_fit_objective <- function(data_t, data_y, model, name_model_y,
+                               user, vary, compare) {
+  compare <- match.fun(compare)
+  mod <- model(user = as.list(user))
+  t_after_zero <- data_t[[1]] > 0
+
+  if (t_after_zero) {
+    data_t <- c(0, data_t)
+  }
+
+  function(p) {
+    mod$set_user(user = set_names(as.list(p), vary))
+    y <- mod$run(data_t)[, name_model_y]
+    if (t_after_zero) {
+      y <- y[-1]
+    }
+    compare(y, data_y)
+  }
 }
