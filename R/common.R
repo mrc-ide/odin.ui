@@ -138,7 +138,11 @@ plot_plotly_series_bulk <- function(x, y, col, points, y2,
                                     symbol = "circle") {
   nms <- colnames(y)
   y2 <- expand_and_name(y2, nms)
-  legendgroup <- expand_and_name(legendgroup, nms)
+  if (isTRUE(legendgroup)) {
+    legendgroup <- set_names(colnames(y), colnames(y))
+  } else {
+    legendgroup <- expand_and_name(legendgroup, nms)
+  }
   width <- expand_and_name(width, nms)
   dash <- expand_and_name(dash, nms)
   symbol <- expand_and_name(symbol, nms)
@@ -350,4 +354,10 @@ common_odin_compile <- function(validation) {
 
 common_odin_compile_from_code <- function(code) {
   common_odin_compile(common_odin_validate(code))
+}
+
+
+models_compatible <- function(cfg1, cfg2) {
+  identical(cfg1$pars$name, cfg2$pars$name) &&
+    identical(cfg1$vars$name, cfg2$vars$name)
 }

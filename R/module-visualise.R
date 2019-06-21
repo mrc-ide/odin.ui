@@ -24,6 +24,8 @@ mod_vis_ui <- function(id) {
           shiny::uiOutput(ns("status_model")),
           ## TODO: status_configure but tone down warning to info
           shiny::uiOutput(ns("control_parameters")),
+          mod_lock_ui(ns("lock")),
+          shiny::hr(),
           ##
           shiny::uiOutput(ns("import_button"), inline = TRUE),
           shiny::actionButton(ns("reset_button"), "Reset",
@@ -54,6 +56,16 @@ mod_vis_ui <- function(id) {
 mod_vis_server <- function(input, output, session, data, model, link,
                            import = NULL) {
   rv <- shiny::reactiveValues()
+
+  set_result <- function(result) {
+    pars <- rv$configuration$pars
+    set_inputs(session, pars$id_value, result$value$simulation$user$value)
+    rv$result <- result
+  }
+  locked <- shiny::callModule(
+    mod_lock_server, "lock",
+    shiny::reactive(!is.null(rv$configuration)), shiny::reactive(rv$result),
+    set_result)
 
   output$status_data <- shiny::renderUI({
     show_module_status_if_not_ok(data()$status)
@@ -108,7 +120,8 @@ mod_vis_server <- function(input, output, session, data, model, link,
     if (!is.null(rv$result$value)) {
       vars <- rv$configuration$vars
       y2_model <- get_inputs(input, vars$id_graph_option, vars$name)
-      vis_plot(rv$result$value, y2_model, input$logscale_y)
+      vis_plot(rv$result$value, locked$result()$value,
+               y2_model, input$logscale_y)
     }
   })
 
@@ -219,17 +232,15 @@ vis_run <- function(configuration, user) {
 }
 
 
-vis_plot_series <- function(result, y2_model) {
+vis_plot_series_focal <- function(result, y2) {
   cfg <- result$configuration
-  y2 <- odin_y2(y2_model, cfg$data$name_vars, result$configuration$link$map)
-  cols <- result$configuration$cols
+  cols <- cfg$cols
 
   model_vars <- cfg$model$info$vars$name
-  ## TODO: don't use names(cols) here and in the data section
   model_data <- result$simulation$smooth
   series_model <- plot_plotly_series_bulk(
     model_data[, 1], model_data[, model_vars, drop = FALSE],
-    cols$model, FALSE, y2$model)
+    cols$model, FALSE, y2$model, legendgroup = TRUE)
 
   data_data <- cfg$data$data
   data_time <- cfg$data$name_time
@@ -241,8 +252,35 @@ vis_plot_series <- function(result, y2_model) {
 }
 
 
-vis_plot <- function(result, y2_model, logscale_y) {
-  plot_plotly(vis_plot_series(result, y2_model), logscale_y)
+vis_plot_series_locked <- function(result, locked, y2) {
+  if (is.null(locked)) {
+    return(NULL)
+  }
+  if (identical(result, locked)) {
+    return(NULL)
+  }
+
+  cols <- result$configuration$cols
+  model_vars <- intersect(locked$configuration$vars$name,
+                          result$configuration$vars$name)
+  model_data <- locked$simulation$smooth
+  plot_plotly_series_bulk(
+    model_data[, 1], model_data[, model_vars, drop = FALSE],
+    cols$model, FALSE, y2$model, dash = "dot", width = 1,
+    showlegend = FALSE, legendgroup = TRUE)
+}
+
+
+vis_plot_series <- function(result, locked, y2_model) {
+  cfg <- result$configuration
+  y2 <- odin_y2(y2_model, cfg$data$name_vars, cfg$link$map)
+  c(vis_plot_series_locked(result, locked, y2),
+    vis_plot_series_focal(result, y2))
+}
+
+
+vis_plot <- function(result, locked, y2_model, logscale_y) {
+  plot_plotly(vis_plot_series(result, locked, y2_model), logscale_y)
 }
 
 
