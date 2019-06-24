@@ -54,18 +54,19 @@ test_that("plot", {
   user <- list(a = 2, b = 1)
   res <- vis_run(configuration, user = user)
   y2 <- list(x = FALSE, y = TRUE)
-  series <- vis_plot_series(res, y2)
+  series <- vis_plot_series(res, NULL, y2)
 
   expect_equal(length(series), 5)
   ## Lines for modelled data:
   expect_equal(
     series[[1]],
     plot_plotly_series(res$simulation$smooth[, 1], res$simulation$smooth[, 2],
-                       "x", configuration$cols$model[[1]]))
+                       "x", configuration$cols$model[[1]], legendgroup = "x"))
   expect_equal(
     series[[2]],
     plot_plotly_series(res$simulation$smooth[, 1], res$simulation$smooth[, 3],
-                       "y", configuration$cols$model[[2]], y2 = TRUE))
+                       "y", configuration$cols$model[[2]], legendgroup = "y",
+                       y2 = TRUE))
 
   ## Points for real data:
   expect_equal(
@@ -82,7 +83,7 @@ test_that("plot", {
                        points = TRUE, y2 = TRUE))
 
   ## This can't be helpfully tested at this point
-  expect_is(vis_plot(res, y2, FALSE), "plotly")
+  expect_is(vis_plot(res, NULL, y2, FALSE), "plotly")
 })
 
 
