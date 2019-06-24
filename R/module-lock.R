@@ -71,18 +71,13 @@ lock_control <- function(render, ns, collapsed = TRUE) {
 
   mod_model_control_section(
     "Locked parameter set",
-    shiny::uiOutput(ns("status")),
-    shiny::actionButton(ns("set"), "Lock current",
-                        shiny::icon("lock"),
-                        class = "btn-blue"),
-    shiny::actionButton(
-      ns("hide"), "Show/Hide locked", shiny::icon("eye")),
-    shiny::actionButton(ns("clear"), "Clear locked",
-                        shiny::icon("trash"),
-                        class = "btn-danger"),
-    shiny::actionButton(ns("swap"), "Swap locked and current",
-                        shiny::icon("refresh"),
-                        class = "btn-grey"),
+    button_row("", ns("set"), "Lock current", shiny::icon("lock"),
+               class = "btn-blue"),
+    button_row("", ns("hide"), "Show/Hide locked", shiny::icon("eye")),
+    button_row("", ns("clear"), "Clear locked", shiny::icon("trash"),
+               class = "btn-danger"),
+    button_row("", ns("swap"), "Swap locked and current",
+               shiny::icon("refresh"), class = "btn-grey"),
     ns = ns, collapsed = TRUE)
 }
 

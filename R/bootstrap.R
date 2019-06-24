@@ -34,3 +34,8 @@ simple_numeric_input <- function(name, ...) {
 simple_select_input <- function(name, ...) {
   horizontal_form_group(shiny::span(name), raw_select_input(...))
 }
+
+
+button_row <- function(label, ..., label_width = 6) {
+  horizontal_form_group(label, shiny::actionButton(...))
+}
