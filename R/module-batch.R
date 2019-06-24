@@ -12,7 +12,8 @@ mod_batch_ui <- function(id) {
           shiny::uiOutput(ns("status_model")),
           shiny::uiOutput(ns("control_parameters")),
           shiny::uiOutput(ns("control_focal")),
-          ## https://github.com/rstudio/shiny/issues/1675#issuecomment-298398997
+          mod_lock_ui(ns("lock")),
+          shiny::hr(),
           shiny::uiOutput(ns("import_button"), inline = TRUE),
           shiny::actionButton(ns("reset_button"), "Reset",
                               shiny::icon("refresh"),
@@ -32,6 +33,16 @@ mod_batch_ui <- function(id) {
 mod_batch_server <- function(input, output, session, model, data, link,
                              import = NULL) {
   rv <- shiny::reactiveValues()
+
+  set_result <- function(result) {
+    pars <- rv$configuration$pars
+    set_inputs(session, pars$id_value, result$value$simulation$user$value)
+    rv$result <- result
+  }
+  locked <- shiny::callModule(
+    mod_lock_server, "lock",
+    shiny::reactive(!is.null(rv$configuration)), shiny::reactive(rv$result),
+    set_result)
 
   output$status_data <- shiny::renderUI({
     show_module_status_if_not_ok(data()$status)
@@ -103,7 +114,8 @@ mod_batch_server <- function(input, output, session, model, data, link,
     if (!is.null(rv$result$value)) {
       vars <- rv$configuration$vars
       include <- get_inputs(input, vars$id_graph_option, vars$name)
-      batch_plot(rv$result$value, include, input$logscale_y)
+      batch_plot(rv$result$value, locked$result()$value,
+                 include, input$logscale_y)
     }
   })
 
@@ -248,21 +260,55 @@ batch_run <- function(configuration, focal) {
 }
 
 
-batch_plot_series <- function(result, include) {
+batch_plot_series <- function(result, locked, include) {
   cfg <- result$configuration
   cols <- cfg$cols
   include <- names(include)[vlapply(include, isTRUE)]
-
   if (length(include) == 0L) {
     return(NULL)
   }
 
+  c(batch_plot_series_locked(result, locked, include),
+    batch_plot_series_focal(result, include),
+    batch_plot_series_data(result, inclue))
+}
+
+
+batch_plot_series_focal <- function(result, include) {
+  batch_plot_series_modelled(result, include, FALSE)
+}
+
+
+batch_plot_series_locked <- function(result, locked, include) {
+  if (is.null(locked)) {
+    return(NULL)
+  }
+  if (identical(result, locked)) {
+    return(NULL)
+  }
+
+  model_vars <- intersect(locked$configuration$vars$name, include)
+  batch_plot_series_modelled(locked, include, TRUE)
+}
+
+
+batch_plot_series_modelled <- function(result, include, locked = FALSE) {
+  cfg <- result$configuration
+  cols <- cfg$cols
+
+  if (locked) {
+    width <- 1
+    dash <- "dot"
+  } else {
+    width <- 2
+    dash <- NULL
+  }
+
   xy <- result$simulation$central$simulation$smooth
   series_central <- plot_plotly_series_bulk(
-    xy[, 1], xy[, include, drop = FALSE], cols$model, FALSE, FALSE,
-    legendgroup = set_names(include, include))
-
-  plot_plotly(series_central)
+    xy[, 1], xy[, include, drop = FALSE], cols$model,
+    points = FALSE, y2 = FALSE, showlegend = !locked,
+    legendgroup = set_names(include, include), dash = dash, width = width)
 
   f <- function(nm) {
     t <- result$simulation$smooth[, 1]
@@ -271,21 +317,28 @@ batch_plot_series <- function(result, include) {
     colnames(m) <- sprintf("%s (%s = %s)", nm, cfg$focal$name, cfg$focal$value)
     col <- set_names(rep(cols$model[[nm]], ncol(m)), colnames(m))
     plot_plotly_series_bulk(t, m, col, FALSE, FALSE,
-                            legendgroup = nm, showlegend = FALSE, width = 1)
+                            legendgroup = nm, showlegend = FALSE,
+                            width = width / 2, dash = dash)
   }
+
   series_batch <- unlist(lapply(include, f), FALSE, FALSE)
 
-  data <- cfg$data$data
-  data_time <- data[[cfg$data$name_time]]
-  series_data <- plot_plotly_series_bulk(
-    data_time, data[names(cols$data)], cols$data, TRUE, FALSE)
-
-  c(series_batch, series_central, series_data)
+  c(series_central, series_batch)
 }
 
 
-batch_plot <- function(result, include, logscale_y) {
-  plot_plotly(batch_plot_series(result, include), logscale_y)
+batch_plot_series_data <- function(result, include) {
+  cfg <- result$configuration
+  cols <- cfg$cols
+  data <- cfg$data$data
+  data_time <- data[[cfg$data$name_time]]
+  plot_plotly_series_bulk(
+    data_time, data[names(cols$data)], cols$data, TRUE, FALSE)
+}
+
+
+batch_plot <- function(result, locked, include, logscale_y) {
+  plot_plotly(batch_plot_series(result, locked, include), logscale_y)
 }
 
 

@@ -232,6 +232,14 @@ vis_run <- function(configuration, user) {
 }
 
 
+vis_plot_series <- function(result, locked, y2_model) {
+  cfg <- result$configuration
+  y2 <- odin_y2(y2_model, cfg$data$name_vars, cfg$link$map)
+  c(vis_plot_series_locked(result, locked, y2),
+    vis_plot_series_focal(result, y2))
+}
+
+
 vis_plot_series_focal <- function(result, y2) {
   cfg <- result$configuration
   cols <- cfg$cols
@@ -270,13 +278,6 @@ vis_plot_series_locked <- function(result, locked, y2) {
     showlegend = FALSE, legendgroup = TRUE)
 }
 
-
-vis_plot_series <- function(result, locked, y2_model) {
-  cfg <- result$configuration
-  y2 <- odin_y2(y2_model, cfg$data$name_vars, cfg$link$map)
-  c(vis_plot_series_locked(result, locked, y2),
-    vis_plot_series_focal(result, y2))
-}
 
 
 vis_plot <- function(result, locked, y2_model, logscale_y) {

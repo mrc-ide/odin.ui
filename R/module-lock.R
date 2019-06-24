@@ -71,6 +71,7 @@ lock_control <- function(render, ns, collapsed = TRUE) {
 
   mod_model_control_section(
     "Locked parameter set",
+    shiny::uiOutput(ns("status")),
     button_row("", ns("set"), "Lock current", shiny::icon("lock"),
                class = "btn-blue"),
     button_row("", ns("hide"), "Show/Hide locked", shiny::icon("eye")),
