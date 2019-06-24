@@ -228,3 +228,48 @@ test_that("download data", {
   common_download_data(path, simulation, "parameters")
   expect_equal(read_csv(path), simulation$user)
 })
+
+
+test_that("add_status", {
+  expect_equal(add_status(NULL, TRUE), list(status = TRUE))
+  expect_equal(add_status(list(a = 1), TRUE), list(a = 1, status = TRUE))
+  expect_equal(add_status(list(a = 1, b = 2), list(c = 3)),
+               list(a = 1, b = 2, status = list(c = 3)))
+})
+
+
+test_that("show module status", {
+  st1 <- module_status("danger", "title", "body")
+  st2 <- module_status("success", "title", "body")
+
+  expect_null(show_module_status_if_ok(st1))
+  expect_identical(show_module_status_if_ok(st2), st2$ui)
+
+  expect_identical(show_module_status_if_not_ok(st1), st1$ui)
+  expect_null(show_module_status_if_not_ok(st2))
+})
+
+
+test_that("text module status", {
+  expect_equal(
+    text_module_status(module_status("success", "title", "body")),
+    "text-success")
+  expect_equal(
+    text_module_status(module_status("danger", "title", "body")),
+    "text-danger")
+})
+
+
+test_that("get_inputs", {
+  input <- list(id_a = 1, id_b = 2, id_c = 3)
+
+  expect_equal(
+    get_inputs(input, character(), character()),
+    set_names(list(), character()))
+  expect_equal(
+    get_inputs(input, c("id_a"), "a"),
+    list(a = 1))
+  expect_equal(
+    get_inputs(input, c("id_a", "id_b"), c("a", "b")),
+    list(a = 1, b = 2))
+})
