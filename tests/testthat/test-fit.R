@@ -69,3 +69,31 @@ test_that("fit", {
   res <- odin_fit_model(t, y, model, "x", user, vary, lower, upper)
   expect_equal(res$par, c(a = 1.664666, b = 1.109152), tolerance = 1e-4)
 })
+
+
+test_that("fit: vary algo", {
+  configuration <- example_data_fit()$configuration
+
+  t <- configuration$data$data$t
+  y <- configuration$data$data$a
+  model <- configuration$model$model
+  user <- list(a = 0, b = 0)
+  vary <- c("a", "b")
+  i <- match(vary, configuration$pars$name)
+  lower <- configuration$pars$min[i]
+  upper <- configuration$pars$max[i]
+
+  res_optim <- odin_fit_model(
+    t, y, model, "x", user, vary, lower, upper, method = "optim")
+  res_subplex <- odin_fit_model(
+    t, y, model, "x", user, vary, lower, upper, method = "subplex")
+  res_hjkb <- odin_fit_model(
+    t, y, model, "x", user, vary, lower, upper, method = "hjkb")
+
+  expect_equal(res_optim$par, c(a = 1.664666, b = 1.109152), tolerance = 1e-4)
+  expect_equal(res_subplex$par, c(a = 1.664666, b = 1.109152), tolerance = 1e-4)
+  expect_equal(res_hjkb$par, c(a = 1.664666, b = 1.109152), tolerance = 1e-4)
+
+  expect_equal(names(res_optim), names(res_subplex))
+  expect_equal(names(res_optim), names(res_hjkb))
+})

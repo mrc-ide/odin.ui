@@ -6,7 +6,6 @@ do_fit <- function(start, target, lower, upper, tolerance, method) {
     optim = do_fit_optim(start, target, tolerance, lower, upper),
     subplex = do_fit_subplex(start, target, tolerance),
     hjkb = do_fit_hjkb(start, target, tolerance, lower, upper),
-    nmkb = do_fit_nmkb(start, target, tolerance, lower, upper),
     stop("Unknown method ", method))
   t1 <- Sys.time()
   ## only really interested in wall time here:
@@ -49,17 +48,6 @@ do_fit_hjkb <- function(start, target, tolerance, lower, upper) {
 }
 
 
-do_fit_nmkb <- function(start, target, tolerance, lower, upper) {
-  control <- list(tol = tolerance)
-  res <- dfoptim::nmkb(start, target, lower, upper, control)
-  list(par = res$par,
-       value = res$value,
-       success = res$convergence == 0,
-       message = res$message,
-       evaluations = res$feval)
-}
-
-
 compare_sse <- function(modelled, real) {
   sum((modelled - real)^2, na.rm = TRUE)
 }
@@ -80,7 +68,8 @@ odin_fit_model <- function(data_t, data_y, model, name_model_y, user, vary,
 
   objective <- odin_fit_objective(data_t, data_y, model, name_model_y,
                                   user, vary, compare)
-  value <- do_fit(user[vary], objective, lower, upper,
+  start <- list_to_numeric(user[vary], TRUE)
+  value <- do_fit(start, objective, lower, upper,
                   tolerance = tolerance, method = method)
 
   user[vary] <- value$par
