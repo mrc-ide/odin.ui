@@ -43,6 +43,9 @@ mod_lock_server <- function(input, output, session, render, current,
       }
     })
 
+  ## TODO: this works off of the model *run*, not off the model
+  ## itself, so we need another bit that indicates that is out of
+  ## date.
   output$status <- shiny::renderUI({
     lock_status(rv$locked, current(), rv$hidden)
   })
@@ -84,7 +87,6 @@ lock_control <- function(render, ns, collapsed = TRUE) {
 }
 
 
-## TODO: warn when model is different - do this by comparing the IR
 lock_status <- function(locked, current, hidden) {
   if (is.null(locked)) {
     class <- "danger"
@@ -95,9 +97,19 @@ lock_status <- function(locked, current, hidden) {
     title <- "Locked data present"
     body <- "Same as current"
   } else {
-    class <- "success"
+    compatible <- models_compatible(locked$value$configuration,
+                                    current$value$configuration)
     title <- "Locked data present"
-    body <- "Different to current"
+    if (compatible) {
+      class <- "success"
+      body <- "Different to current"
+    } else {
+      class <- "warning"
+      body <- paste("Locked model is structurally different to current",
+                    "with different parameters or variables/outputs",
+                    "results may not be meaningfully comparable, and",
+                    "swapping is not supported.")
+    }
     if (hidden) {
       body <- paste(body, "(but hidden)")
     }
