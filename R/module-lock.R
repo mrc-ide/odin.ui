@@ -6,7 +6,7 @@ mod_lock_ui <- function(id) {
 
 mod_lock_server <- function(input, output, session, render, current,
                             set_current) {
-  rv <- shiny::reactiveValues()
+  rv <- shiny::reactiveValues(hidden = FALSE)
 
   output$control_locked <- shiny::renderUI({
     lock_control(render(), session$ns)
@@ -17,7 +17,13 @@ mod_lock_server <- function(input, output, session, render, current,
       result <- current()
       if (isTRUE(result$success)) {
         rv$locked <- result
+        rv$hidden <- FALSE
       }
+    })
+
+  shiny::observeEvent(
+    input$hide, {
+      rv$hidden <- !rv$hidden
     })
 
   shiny::observeEvent(
@@ -38,7 +44,7 @@ mod_lock_server <- function(input, output, session, render, current,
     })
 
   output$status <- shiny::renderUI({
-    lock_status(rv$locked, current())
+    lock_status(rv$locked, current(), rv$hidden)
   })
 
   get_state <- function() {
@@ -49,13 +55,13 @@ mod_lock_server <- function(input, output, session, render, current,
     rv$locked <- state
   }
 
-  list(result = shiny::reactive(rv$locked),
+  list(result = shiny::reactive(if (!rv$hidden) rv$locked),
        get_state = get_state,
        set_state = set_state)
 }
 
 
-lock_control <- function(render, ns) {
+lock_control <- function(render, ns, collapsed = TRUE) {
   if (!isTRUE(render)) {
     return(NULL)
   }
@@ -66,6 +72,8 @@ lock_control <- function(render, ns) {
     shiny::actionButton(ns("set"), "Lock current",
                         shiny::icon("lock"),
                         class = "btn-blue"),
+    shiny::actionButton(
+      ns("hide"), "Show/Hide locked", shiny::icon("eye")),
     shiny::actionButton(ns("clear"), "Clear locked",
                         shiny::icon("trash"),
                         class = "btn-danger"),
@@ -76,7 +84,8 @@ lock_control <- function(render, ns) {
 }
 
 
-lock_status <- function(locked, current) {
+## TODO: warn when model is different - do this by comparing the IR
+lock_status <- function(locked, current, hidden) {
   if (is.null(locked)) {
     class <- "danger"
     title <- "No locked data"
@@ -89,6 +98,9 @@ lock_status <- function(locked, current) {
     class <- "success"
     title <- "Locked data present"
     body <- "Different to current"
+    if (hidden) {
+      body <- paste(body, "(but hidden)")
+    }
   }
   simple_panel(class, title, body)
 }
