@@ -13,6 +13,8 @@ mod_fit_ui <- function(id) {
           ##
           shiny::uiOutput(ns("control_target")),
           shiny::uiOutput(ns("control_parameters")),
+          mod_lock_ui(ns("lock")),
+          shiny::hr(),
           ##
           shiny::actionButton(ns("reset_button"), "Reset",
                               shiny::icon("refresh"),
@@ -34,6 +36,16 @@ mod_fit_ui <- function(id) {
 
 mod_fit_server <- function(input, output, session, data, model, link) {
   rv <- shiny::reactiveValues()
+
+  set_result <- function(result) {
+    pars <- rv$configuration$pars
+    set_inputs(session, pars$id_value, result$value$simulation$user$value)
+    rv$result <- result
+  }
+  locked <- shiny::callModule(
+    mod_lock_server, "lock",
+    shiny::reactive(!is.null(rv$configuration)), shiny::reactive(rv$result),
+    set_result)
 
   output$status_data <- shiny::renderUI({
     show_module_status_if_not_ok(data()$status)
@@ -107,10 +119,10 @@ mod_fit_server <- function(input, output, session, data, model, link) {
 
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result$value) && !is.null(input$target)) {
-      ## TODO: I wonder if we can strip this down earlier?
       vars <- rv$configuration$vars[rv$configuration$vars$include, ]
       y2_model <- get_inputs(input, vars$id_graph_option, vars$name)
-      fit_plot(rv$result$value, input$target, y2_model, input$logscale_y)
+      fit_plot(rv$result$value, locked$result()$value,
+               input$target, y2_model, input$logscale_y)
     }
   })
 
@@ -283,35 +295,63 @@ fit_goodness_of_fit <- function(result, target, compare = compare_sse) {
 }
 
 
-fit_plot_series <- function(result, target, y2_model) {
+fit_plot_series <- function(result, locked, target, y2_model) {
   cfg <- result$configuration
   y2 <- odin_y2(y2_model, cfg$data$name_vars, cfg$link$map)
-  cols <- cfg$cols
   target_model <- cfg$link$map[[target]]
 
-  model_vars <- cfg$vars$name[cfg$vars$include]
+  c(fit_plot_series_locked(result, locked, target_model, y2),
+    fit_plot_series_focal(result, target_model, y2),
+    fit_plot_series_data(result, target, y2))
+}
 
-  xy <- result$simulation$smooth
-  dash <- set_names(ifelse(model_vars == target_model, "solid", "dash"),
-                    model_vars)
-  series_model <- plot_plotly_series_bulk(
-    xy[, 1], xy[, model_vars, drop = FALSE], cols$model, FALSE, y2$model,
-    dash = dash)
 
+fit_plot_series_data <- function(result, target, y2) {
+  cfg <- result$configuration
   data <- cfg$data$data
   data_time <- data[[cfg$data$name_time]]
   data_vars <- cfg$data$name_vars
   symbol <- set_names(ifelse(data_vars == target, "circle", "circle-open"),
                       data_vars)
-  series_data <- plot_plotly_series_bulk(
-    data_time, data[data_vars], cols$data, TRUE, y2$data, symbol = symbol)
-
-  c(series_model, series_data)
+  plot_plotly_series_bulk(
+    data_time, data[data_vars], cfg$cols$data, TRUE, y2$data, symbol = symbol)
 }
 
 
-fit_plot <- function(result, target, y2_model, logscale_y) {
-  plot_plotly(fit_plot_series(result, target, y2_model), logscale_y)
+fit_plot_series_focal <- function(result, target, y2) {
+  cfg <- result$configuration
+
+  model_vars <- cfg$vars$name[cfg$vars$include]
+
+  xy <- result$simulation$smooth
+  dash <- set_names(ifelse(model_vars == target, "solid", "dash"), model_vars)
+  plot_plotly_series_bulk(
+    xy[, 1], xy[, model_vars, drop = FALSE], cfg$cols$model, FALSE, y2$model,
+    dash = dash)
+}
+
+
+fit_plot_series_locked <- function(result, locked, target, y2) {
+  if (is.null(locked)) {
+    return(NULL)
+  }
+  if (identical(result, locked)) {
+    return(NULL)
+  }
+
+  cfg <- result$configuration
+  model_vars <- intersect(locked$configuration$vars$name,
+                          cfg$vars$name[cfg$vars$include])
+  model_data <- locked$simulation$smooth
+  plot_plotly_series_bulk(
+    model_data[, 1], model_data[, model_vars, drop = FALSE],
+    cfg$cols$model, FALSE, y2$model, dash = "dot", width = 1,
+    showlegend = FALSE, legendgroup = TRUE)
+}
+
+
+fit_plot <- function(result, locked, target, y2_model, logscale_y) {
+  plot_plotly(fit_plot_series(result, locked, target, y2_model), logscale_y)
 }
 
 
