@@ -39,6 +39,27 @@ test_that("run model, with missing zero time", {
 })
 
 
+test_that("run model, with missing zero time", {
+  code <- c("deriv(x) <- 1",
+            "initial(x) <- a",
+            "a <- user(3, min = 0)",
+            "b <- user(max = 1)",
+            "deriv(y) <- 2",
+            "initial(y) <- b")
+  model <- common_odin_compile_from_code(code)
+  d <- data.frame(t = 1:10, a = runif(10), b = runif(10), c = runif(10))
+  data <- odin_data_source(d, "file.csv", "t")
+  link <- link_result(list(a = "x", c = "y"))
+  configuration <- common_model_data_configuration(model, data, link)
+
+  user <- list(a = NA, b = 1)
+  res <- with_success(vis_run(configuration, user = user))
+  expect_equal(
+    res,
+    list(success = FALSE, value = NULL, error = "Missing parameter for a"))
+})
+
+
 test_that("plot", {
   code <- c("deriv(x) <- 1",
             "initial(x) <- a",
@@ -84,6 +105,42 @@ test_that("plot", {
 
   ## This can't be helpfully tested at this point
   expect_is(vis_plot(res, NULL, y2, FALSE), "plotly")
+})
+
+
+test_that("locked series", {
+  code <- c("deriv(x) <- 1",
+            "initial(x) <- a",
+            "a <- user(3, min = 0)",
+            "b <- user(max = 1)",
+            "deriv(y) <- 2",
+            "initial(y) <- b")
+  model <- common_odin_compile_from_code(code)
+  d <- data.frame(t = 1:10, a = runif(10), b = runif(10), c = runif(10))
+  data <- odin_data_source(d, "file.csv", "t")
+  link <- link_result(list(a = "x", c = "y"))
+  configuration <- common_model_data_configuration(model, data, link)
+  user1 <- list(a = 2, b = 1)
+  user2 <- list(a = 1, b = 1)
+  res1 <- vis_run(configuration, user = user1)
+  res2 <- vis_run(configuration, user = user2)
+  y2_model <- list(x = FALSE, y = TRUE)
+  y2 <- odin_y2(y2_model, configuration$data$name_vars, configuration$link$map)
+
+  expect_null(vis_plot_series_locked(res1, res1, y2))
+  series <- vis_plot_series_locked(res2, res1, y2)
+  expect_equal(length(series), 2)
+  ## Lines for modelled data:
+  expect_equal(
+    series[[1]],
+    plot_plotly_series(res1$simulation$smooth[, 1], res1$simulation$smooth[, 2],
+                       "x", configuration$cols$model[[1]], legendgroup = "x",
+                       showlegend = FALSE, dash = "dot", width = 1))
+  expect_equal(
+    series[[2]],
+    plot_plotly_series(res1$simulation$smooth[, 1], res1$simulation$smooth[, 3],
+                       "y", configuration$cols$model[[2]], legendgroup = "y",
+                       y2 = TRUE, showlegend = FALSE, dash = "dot", width = 1))
 })
 
 
