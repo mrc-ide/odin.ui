@@ -158,13 +158,15 @@ mod_fit_server <- function(input, output, session, data, model, link) {
     list(fit = rv$fit,
          control_parameters = list(value = user, vary = vary),
          control_target = input$target,
-         control_graph = control_graph)
+         control_graph = control_graph,
+         locked = locked$get_state())
   }
 
   set_state <- function(state) {
     if (is.null(state)) {
       return()
     }
+    locked$set_state(state$locked)
     rv$configuration <- fit_configuration(model(), data(), link())
     rv$fit <- state$fit
     output$control_target <- shiny::renderUI(fit_control_target(

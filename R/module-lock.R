@@ -50,12 +50,16 @@ mod_lock_server <- function(input, output, session, render, current,
     lock_status(rv$locked, current(), rv$hidden)
   })
 
+  ## NOTE: it's possible to to do load/save more efficiently but we
+  ## don't worry about that for now
   get_state <- function() {
-    rv$locked
+    list(locked = rv$locked,
+         hidden = rv$hidden)
   }
 
   set_state <- function(state) {
-    rv$locked <- state
+    rv$locked <- state$locked
+    rv$hidden <- state$hidden
   }
 
   list(result = shiny::reactive(if (!rv$hidden) rv$locked),

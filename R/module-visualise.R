@@ -148,7 +148,8 @@ mod_vis_server <- function(input, output, session, data, model, link,
            logscale_y = input$logscale_y)
     list(user_display = user_display,
          user_result = user_result,
-         control_graph = control_graph)
+         control_graph = control_graph,
+         locked = locked$get_state())
   }
 
   set_state <- function(state) {
@@ -156,6 +157,7 @@ mod_vis_server <- function(input, output, session, data, model, link,
       return()
     }
     shiny::isolate({
+      locked$set_state(state$locked)
       rv$configuration <- common_model_data_configuration(
         model(), data(), link())
       rv$result <- with_success(vis_run(rv$configuration, state$user_result))

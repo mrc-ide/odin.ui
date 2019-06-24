@@ -146,13 +146,15 @@ mod_batch_server <- function(input, output, session, model, data, link,
     list(user = user,
          focal = focal,
          control_focal = control_focal,
-         control_graph = control_graph)
+         control_graph = control_graph,
+         locked = locked$get_state())
   }
 
   set_state <- function(state) {
     if (is.null(state)) {
       return()
     }
+    locked$set_state(state$locked)
     rv$configuration <- common_model_data_configuration(
       model(), data(), link())
     rv$result <- with_success(batch_run(rv$configuration, state$focal))
