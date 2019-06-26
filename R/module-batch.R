@@ -345,7 +345,9 @@ batch_plot <- function(result, locked, include, logscale_y) {
 
 
 batch_control_graph <- function(configuration, ns, restore = NULL) {
-  common_control_graph(configuration, ns, "Display series in plot", restore)
+  title <- "Display series in plot"
+  types <- c("modelled", "combined", "parameters")
+  common_control_graph(configuration, ns, title, types, restore)
 }
 
 

@@ -43,7 +43,7 @@ mod_vis_compare_server <- function(input, output, session, model1, model2) {
   })
 
   output$control_graph <- shiny::renderUI({
-    vis_control_graph(rv$configuration, session$ns)
+    compare_control_graph(rv$configuration, session$ns)
   })
 
   shiny::observeEvent(
@@ -173,4 +173,11 @@ compare_vis_plot_series <- function(result, y2) {
     label = label2, legendgroup = vars2, dash = "dash")
 
   c(series1, series2)
+}
+
+
+compare_control_graph <- function(configuration, ns, restore = NULL) {
+  types <- configuration$names$long
+  title <- "Plot on second y axis"
+  common_control_graph(configuration, ns, title, types, restore)
 }

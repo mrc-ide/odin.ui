@@ -358,5 +358,7 @@ fit_plot <- function(result, locked, target, y2_model, logscale_y) {
 
 
 fit_control_graph <- function(configuration, ns, restore = NULL) {
-  common_control_graph(configuration, ns, "Plot on second y axis", restore)
+  types <- c("modelled", "combined", "parameters")
+  title <- "Plot on second y axis"
+  common_control_graph(configuration, ns, title, types, restore)
 }

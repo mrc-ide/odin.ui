@@ -168,7 +168,7 @@ common_control_parameters <- function(pars, ns, restore = NULL) {
 }
 
 
-common_control_graph_downloads <- function(ns) {
+common_control_graph_downloads <- function(ns, types) {
   shiny::div(
     class = "form-inline mt-5",
     shiny::div(
@@ -177,23 +177,21 @@ common_control_graph_downloads <- function(ns) {
         ns("download_filename"), placeholder = "filename", value = "")),
     shiny::div(
       class = "form-group",
-      raw_select_input(
-        ns("download_type"),
-        choices = list("modelled", "combined", "parameters"))),
+      raw_select_input(ns("download_type"), choices = types)),
     shiny::downloadButton(
       ns("download_button"), "Download", class = "btn-blue"))
 }
 
 
 common_control_graph <- function(configuration, ns, check_title,
-                                 restore = NULL) {
+                                 download_types, restore = NULL) {
   if (is.null(configuration)) {
     return(NULL)
   }
 
   shiny::div(
     class = "pull-right",
-    common_control_graph_downloads(ns),
+    common_control_graph_downloads(ns, download_types),
     common_control_graph_settings(configuration, ns, check_title, restore))
 }
 
