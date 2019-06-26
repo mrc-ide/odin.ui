@@ -135,8 +135,9 @@ plot_plotly_series <- function(x, y, name, col, points = FALSE, y2 = FALSE,
 plot_plotly_series_bulk <- function(x, y, col, points, y2,
                                     showlegend = TRUE, legendgroup = NULL,
                                     width = NULL, dash = "solid",
-                                    symbol = "circle") {
+                                    symbol = "circle", label = NULL) {
   nms <- colnames(y)
+  label <- expand_and_name(label %||% colnames(y), nms)
   y2 <- expand_and_name(y2, nms)
   if (isTRUE(legendgroup)) {
     legendgroup <- set_names(colnames(y), colnames(y))
@@ -147,7 +148,7 @@ plot_plotly_series_bulk <- function(x, y, col, points, y2,
   dash <- expand_and_name(dash, nms)
   symbol <- expand_and_name(symbol, nms)
   lapply(nms, function(i)
-    plot_plotly_series(x, y[, i], i, col[[i]], points, y2[[i]],
+    plot_plotly_series(x, y[, i], label[[i]], col[[i]], points, y2[[i]],
                        showlegend = showlegend,
                        legendgroup = legendgroup[[i]],
                        width = width[[i]], dash = dash[[i]],

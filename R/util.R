@@ -181,8 +181,12 @@ combine_colwise <- function(x, fmt = "%s (%d)") {
 
 
 expand_and_name <- function(x, nms) {
-  if (length(x) == 1 && is.null(names(x))) {
-    x <- set_names(rep(x, length(nms)), nms)
+  if (is.null(names(x))) {
+    if (length(x) == 1) {
+      x <- set_names(rep(x, length(nms)), nms)
+    } else if (length(x) == length(nms)) {
+      names(x) <- nms
+    }
   }
   x
 }
