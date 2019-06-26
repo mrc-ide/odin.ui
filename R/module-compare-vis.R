@@ -38,7 +38,8 @@ mod_vis_compare_server <- function(input, output, session, model1, model2) {
   })
 
   output$control_parameters <- shiny::renderUI({
-    compare_control_parameters(rv$configuration$pars, session$ns)
+    compare_control_parameters(
+      rv$configuration$pars, rv$configuration$names, session$ns)
   })
 
   output$control_graph <- shiny::renderUI({
@@ -85,13 +86,15 @@ compare_configuration <- function(model1, model2) {
 
   cols <- odin_colours(vars$name, NULL, NULL)
 
+  names <- list(long = c(model1$name, model2$name),
+                short = c(model1$name_short, model2$name_short))
+
   list(data = NULL, model1 = model1, model2 = model2, link = NULL,
-       pars = pars, vars = vars, cols = cols)
+       pars = pars, vars = vars, cols = cols, names = names)
 }
 
 
-## TODO: names should be configurable.
-compare_control_parameters <- function(pars, ns, restore = NULL) {
+compare_control_parameters <- function(pars, names, ns, restore = NULL) {
   if (is.null(pars)) {
     return(NULL)
   }
@@ -107,13 +110,11 @@ compare_control_parameters <- function(pars, ns, restore = NULL) {
     }
   }
 
-  name1 <- "Model 1"
-  name2 <- "Model 2"
   mod_model_control_section(
     "Model parameters",
     f("Shared", "both"),
-    f(paste(name1, "only"), "1_only"),
-    f(paste(name2, "only"), "2_only"),
+    f(paste(names$long[[1]], "only"), "1_only"),
+    f(paste(names$long[[2]], "only"), "2_only"),
     ns = ns)
 }
 
@@ -154,13 +155,10 @@ compare_vis_plot_series <- function(result, y2) {
   cfg <- result$configuration
   cols <- cfg$cols
 
-  name1 <- "Model 1"
-  name2 <- "Model 2"
-
   vars1 <- cfg$model1$info$vars$name
   vars2 <- cfg$model2$info$vars$name
-  label1 <- sprintf("%s (%s)", vars1, name1)
-  label2 <- sprintf("%s (%s)", vars2, name2)
+  label1 <- sprintf("%s (%s)", vars1, cfg$names$long[[1]])
+  label2 <- sprintf("%s (%s)", vars2, cfg$names$long[[2]])
   model1 <- result$simulation$model1
   model2 <- result$simulation$model2
 

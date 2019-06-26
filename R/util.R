@@ -213,3 +213,8 @@ protect <- function(fun, fail = Inf) {
     tryCatch(fun(...), error = function(e) fail)
   }
 }
+
+
+clean_name <- function(x) {
+  gsub(" ", "-", tolower(x))
+}

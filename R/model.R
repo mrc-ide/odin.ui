@@ -218,7 +218,9 @@ model_info <- function(model) {
   }
   metadata <- odin::odin_ir(model, TRUE)
   variables <- names(metadata$data$variable$contents)
-  output <- names(metadata$data$output$contents)
+  ## TODO: this could be dealt with more nicely, but we need to remove
+  ## any manually computed time here from discrete models.
+  output <- setdiff(names(metadata$data$output$contents), "time")
   d <- metadata$data$elements[c(variables, output)]
   rank <- vapply(d, "[[", integer(1), "rank", USE.NAMES = FALSE)
   type <- rep("variable", length(d))

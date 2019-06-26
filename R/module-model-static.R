@@ -4,7 +4,7 @@ model_static_ui <- function(id, code, path_docs = NULL, title = "Code") {
   editor <- shiny::tagList(
     odin_css(),
     shiny::includeCSS(odin_ui_file("css/styles-editor.css")),
-    shiny::titlePanel(title),
+    shiny::titlePanel(shiny::textOutput(ns("title"))),
     ## The ace editor setting "showPrintMargin" is the one to control
     ## the 80 char bar but I don't see how to get that through here.
     ## https://github.com/ajaxorg/ace/wiki/Configuring-Ace
@@ -19,8 +19,11 @@ model_static_ui <- function(id, code, path_docs = NULL, title = "Code") {
 }
 
 
-model_static_server <- function(input, output, session, code) {
-  data <- model_static_setup(code)
+model_static_server <- function(input, output, session, code,
+                                name = NULL, name_short = NULL) {
+  data <- model_static_setup(code, name, name_short)
+
+  output$title <- shiny::renderText(data$result$name)
 
   shiny::observe({
     shinyAce::updateAceEditor(session, session$ns("editor"), data$result$code)
@@ -36,12 +39,12 @@ model_static_server <- function(input, output, session, code) {
 }
 
 
-model_static_setup <- function(code) {
+model_static_setup <- function(code, name, name_short) {
   if (length(code) == 1 && file.exists(code)) {
     code <- readLines(code)
   }
   validation <- common_odin_validate(editor_validate_initial_code(code))
-  result <- common_odin_compile(validation)
+  result <- common_odin_compile(validation, name, name_short)
   stopifnot(result$success)
   status <- editor_status(result, NULL)
 

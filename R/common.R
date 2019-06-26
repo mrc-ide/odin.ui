@@ -324,7 +324,7 @@ odin_const_model <- function(code) {
 ## result here must be the output of odin::odin_build, which includes:
 ##
 ## success, elapsed, output, model, ir & error
-odin_model <- function(result, code) {
+odin_model <- function(result, code, name = NULL, name_short = NULL) {
   if (is.null(result)) {
     result <- list(success = FALSE)
   }
@@ -334,6 +334,8 @@ odin_model <- function(result, code) {
   if (!is.null(result$elapsed)) {
     result$elapsed <- result$elapsed[["elapsed"]]
   }
+  result$name <- name %||% "model"
+  result$name_short <- name_short %||% clean_name(result$name)
   result$code <- code
   result$is_current <- TRUE
   result
@@ -351,13 +353,13 @@ common_odin_validate <- function(code) {
 }
 
 
-common_odin_compile <- function(validation) {
+common_odin_compile <- function(validation, name = NULL, name_short = NULL) {
   if (validation$success) {
     result <- odin::odin_build(validation$result)
   } else {
     result <- NULL
   }
-  odin_model(result, validation$code)
+  odin_model(result, validation$code, name = name, name_short = name_short)
 }
 
 
