@@ -225,5 +225,35 @@ model_info <- function(model) {
   type[names(d) %in% output] <- "output"
   vars <- data_frame(name = names(d), rank = rank, type = type)
 
-  list(pars = stats::coef(model), vars = vars)
+  list(pars = stats::coef(model), vars = vars, features = metadata$features)
+}
+
+
+model_run_continuous <- function(model, t_end, t_n, ...) {
+  t <- seq(0, t_end, length.out = t_n)
+  model$run(t, ...)
+}
+
+
+model_run_discrete <- function(model, t_end, t_n, ..., name_scale = "dt") {
+  dt <- model$contents()[[name_scale]]
+  step <- discrete_times(t_end, t_n, dt)
+  y <- model$run(step, ...)
+  cbind(t = y[, "step"] * dt, y)
+}
+
+
+model_run <- function(model, t_end, t_n, is_discrete, ..., name_scale = "dt") {
+  if (is_discrete) {
+    model_run_discrete(model, t_end, t_n, ..., name_scale = name_scale)
+  } else {
+    model_run_continuous(model, t_end, t_n, ...)
+  }
+}
+
+
+discrete_times <- function(t_end, t_n, dt) {
+  by <- ceiling(t_end / dt / t_n)
+  step_end <- ceiling(t_end / dt)
+  seq(0, step_end, by = by)
 }
