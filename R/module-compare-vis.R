@@ -60,6 +60,16 @@ mod_vis_compare_server <- function(input, output, session, model1, model2) {
       compare_vis_plot(rv$result$value, y2_model, input$logscale_y)
     }
   })
+
+  output$download_button <- shiny::downloadHandler(
+    filename = function() {
+      compare_download_filename(input$download_filename, input$download_type,
+                                rv$configuration$names)
+    },
+    content = function(filename) {
+      compare_download_data(filename, rv$result$value$simulation,
+                           input$download_type, rv$configuration$names)
+    })
 }
 
 
@@ -180,4 +190,16 @@ compare_control_graph <- function(configuration, ns, restore = NULL) {
   types <- configuration$names$long
   title <- "Plot on second y axis"
   common_control_graph(configuration, ns, title, types, restore)
+}
+
+
+compare_download_filename <- function(filename, type, names) {
+  name <- names$short[[match(type, names$long)]]
+  common_download_filename(filename, name, "compare")
+}
+
+
+compare_download_data <- function(filename, simulation, type, names) {
+  data <- simulation[[match(type, names$long)]]
+  write_csv(data, filename)
 }
