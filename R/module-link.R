@@ -49,6 +49,12 @@ mod_link_server <- function(input, output, session, data, model,
     rv$status <- link_status(rv$result, link_status_body)
   })
 
+  shiny::observeEvent(
+    input$clear, {
+      output$link <- shiny::renderUI(
+        link_link_ui(rv$configuration, session$ns))
+    })
+
   get_state <- function() {
     list(result = rv$result)
   }
@@ -88,7 +94,10 @@ link_link_ui <- function(configuration, ns, restore = NULL) {
     shiny::selectizeInput(id, name, selected = selected, choices = choices,
                           options = if (is.na(selected)) opts)
   }
-  Map(input, ns(vars$id), vars$data, selected)
+  shiny::tagList(
+    Map(input, ns(vars$id), vars$data, selected),
+    shiny::actionButton(ns("clear"), "Clear", shiny::icon("times"),
+                        class = "btn-danger"))
 }
 
 
