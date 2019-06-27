@@ -272,7 +272,7 @@ batch_plot_series <- function(result, locked, include) {
 
   c(batch_plot_series_locked(result, locked, include),
     batch_plot_series_focal(result, include),
-    batch_plot_series_data(result, inclue))
+    batch_plot_series_data(result, include))
 }
 
 
