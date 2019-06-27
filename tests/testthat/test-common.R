@@ -156,7 +156,8 @@ test_that("odin code compilation failure", {
 test_that("odin_model has sensible output on null input", {
   code <- "code"
   expect_equal(odin_model(NULL, code),
-               list(success = FALSE, code = code, is_current = TRUE))
+               list(success = FALSE, name = "model", name_short = "model",
+                    code = code, is_current = TRUE))
 })
 
 
