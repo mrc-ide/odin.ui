@@ -111,6 +111,8 @@ mod_batch_server <- function(input, output, session, model, data, link,
       pars <- rv$configuration$pars
       if (identical(names(user), pars$name)) {
         set_inputs(session, pars$id_value, user)
+        shiny::showNotification(
+          "Parameters updated", duration = 2, type = "message")
         rv$focal <- batch_focal(
           input$focal_name, input$focal_pct, input$focal_n, user)
         rv$result <- with_success(batch_run(rv$configuration, rv$focal))
