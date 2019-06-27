@@ -201,36 +201,6 @@ test_that("validate: note", {
 })
 
 
-test_that("download filename", {
-  re <- "^odin-prefix-type-[0-9]{8}-[0-9]{6}.csv$"
-  expect_match(common_download_filename(NULL, "type", "prefix"), re)
-  expect_match(common_download_filename(NA, "type", "prefix"), re)
-  expect_match(common_download_filename("", "type", "prefix"), re)
-
-  expect_equal(common_download_filename("foo", "type", "prefix"),
-               "foo.csv")
-  expect_equal(common_download_filename("foo.csv", "type", "prefix"),
-               "foo.csv")
-})
-
-
-test_that("download data", {
-  path <- tempfile()
-  on.exit(unlink(path))
-  simulation <- list(smooth = data_frame(x = 1),
-                     combined = data_frame(x = 2),
-                     user = data_frame(x = 3))
-  common_download_data(path, simulation, "modelled")
-  expect_equal(read_csv(path), simulation$smooth)
-
-  common_download_data(path, simulation, "combined")
-  expect_equal(read_csv(path), simulation$combined)
-
-  common_download_data(path, simulation, "parameters")
-  expect_equal(read_csv(path), simulation$user)
-})
-
-
 test_that("add_status", {
   expect_equal(add_status(NULL, TRUE), list(status = TRUE))
   expect_equal(add_status(list(a = 1), TRUE), list(a = 1, status = TRUE))
