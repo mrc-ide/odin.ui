@@ -25,7 +25,10 @@ mod_fit_ui <- function(id) {
       shiny::mainPanel(
         shiny::div(class = "plotly-graph-wrapper",
                    plotly::plotlyOutput(ns("odin_output"))),
-        shiny::uiOutput(ns("control_graph")),
+        shiny::div(
+          class = "pull-right",
+          mod_download_ui(ns("download")),
+          shiny::uiOutput(ns("control_graph"))),
         shiny::textOutput(ns("goodness_of_fit")),
         shiny::fluidRow(
           shiny::column(4, shiny::uiOutput(ns("status_run")))),
@@ -46,6 +49,10 @@ mod_fit_server <- function(input, output, session, data, model, link) {
     mod_lock_server, "lock",
     shiny::reactive(!is.null(rv$configuration)), shiny::reactive(rv$result),
     set_result)
+
+  download <- shiny::callModule(
+    mod_download_server, "download", shiny::reactive(rv$result$value),
+    "visualise")
 
   output$status_data <- shiny::renderUI({
     show_module_status_if_not_ok(data()$status)
@@ -132,16 +139,6 @@ mod_fit_server <- function(input, output, session, data, model, link) {
               format(rv$goodness_of_fit, big.mark = ","))
     }
   })
-
-  output$download_button <- shiny::downloadHandler(
-    filename = function() {
-      common_download_filename(input$download_filename, input$download_type,
-                               "fit")
-    },
-    content = function(filename) {
-      common_download_data(filename, rv$result$value$simulation,
-                           input$download_type)
-    })
 
   get_state <- function() {
     if (is.null(rv$configuration)) {
@@ -358,7 +355,6 @@ fit_plot <- function(result, locked, target, y2_model, logscale_y) {
 
 
 fit_control_graph <- function(configuration, ns, restore = NULL) {
-  types <- c("modelled", "combined", "parameters")
   title <- "Plot on second y axis"
-  common_control_graph(configuration, ns, title, types, restore)
+  common_control_graph(configuration, ns, title, restore)
 }

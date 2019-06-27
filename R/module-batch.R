@@ -24,7 +24,10 @@ mod_batch_ui <- function(id) {
       shiny::mainPanel(
         shiny::div(class = "plotly-graph-wrapper",
                    plotly::plotlyOutput(ns("odin_output"))),
-        shiny::uiOutput(ns("control_graph")),
+        shiny::div(
+          class = "pull-right",
+          mod_download_ui(ns("download")),
+          shiny::uiOutput(ns("control_graph"))),
         shiny::fluidRow(
           shiny::column(4, shiny::uiOutput(ns("status_batch")))))))
 }
@@ -43,6 +46,10 @@ mod_batch_server <- function(input, output, session, model, data, link,
     mod_lock_server, "lock",
     shiny::reactive(!is.null(rv$configuration)), shiny::reactive(rv$result),
     set_result)
+
+  download <- shiny::callModule(
+    mod_download_server, "download", shiny::reactive(rv$result$value),
+    "visualise")
 
   output$status_data <- shiny::renderUI({
     show_module_status_if_not_ok(data()$status)
@@ -118,16 +125,6 @@ mod_batch_server <- function(input, output, session, model, data, link,
                  include, input$logscale_y)
     }
   })
-
-  output$download_button <- shiny::downloadHandler(
-    filename = function() {
-      common_download_filename(input$download_filename, input$download_type,
-                               "batch")
-    },
-    content = function(filename) {
-      common_download_data(filename, rv$result$value$simulation,
-                           input$download_type)
-    })
 
   get_state <- function() {
     if (is.null(rv$configuration)) {
@@ -346,8 +343,7 @@ batch_plot <- function(result, locked, include, logscale_y) {
 
 batch_control_graph <- function(configuration, ns, restore = NULL) {
   title <- "Display series in plot"
-  types <- c("modelled", "combined", "parameters")
-  common_control_graph(configuration, ns, title, types, restore)
+  common_control_graph(configuration, ns, title, restore)
 }
 
 

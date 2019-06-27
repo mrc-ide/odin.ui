@@ -168,31 +168,13 @@ common_control_parameters <- function(pars, ns, restore = NULL) {
 }
 
 
-common_control_graph_downloads <- function(ns, types) {
-  shiny::div(
-    class = "form-inline mt-5",
-    shiny::div(
-      class = "form-group",
-      raw_text_input(
-        ns("download_filename"), placeholder = "filename", value = "")),
-    shiny::div(
-      class = "form-group",
-      raw_select_input(ns("download_type"), choices = types)),
-    shiny::downloadButton(
-      ns("download_button"), "Download", class = "btn-blue"))
-}
-
-
 common_control_graph <- function(configuration, ns, check_title,
-                                 download_types, restore = NULL) {
+                                 restore = NULL) {
   if (is.null(configuration)) {
     return(NULL)
   }
 
-  shiny::div(
-    class = "pull-right",
-    common_control_graph_downloads(ns, download_types),
-    common_control_graph_settings(configuration, ns, check_title, restore))
+  common_control_graph_settings(configuration, ns, check_title, restore)
 }
 
 
@@ -243,25 +225,6 @@ common_control_graph_settings <- function(configuration, ns, check_title,
 }
 
 
-common_download_filename <- function(filename, type, prefix) {
-  if (is_missing(filename)) {
-    filename <- sprintf("odin-%s-%s-%s.csv", prefix, type, date_string())
-  } else {
-    filename <- ensure_extension(filename, "csv")
-  }
-  filename
-}
-
-
-common_download_data <- function(filename, simulation, type) {
-  data <- switch(type,
-                 modelled = simulation$smooth,
-                 combined = simulation$combined,
-                 parameters = simulation$user)
-  write_csv(data, filename)
-}
-
-
 common_model_data_configuration <- function(model, data, link) {
   if (!isTRUE(model$success) || !isTRUE(data$configured)) {
     return(NULL)
@@ -281,8 +244,14 @@ common_model_data_configuration <- function(model, data, link) {
 
   cols <- odin_colours(vars$name, data$name_vars, link$map)
 
+  download_names <- download_names(
+    display = c("Modelled", "Combined", "Parameters"),
+    filename = c("modelled", "combined", "parameters"),
+    data = c("smooth", "combined", "user"))
+
   list(data = data, model = model, link = link,
-       pars = pars, vars = vars, cols = cols)
+       pars = pars, vars = vars, cols = cols,
+       download_names = download_names)
 }
 
 
