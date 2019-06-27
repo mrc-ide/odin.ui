@@ -99,15 +99,15 @@ mod_batch_server <- function(input, output, session, model, data, link,
   })
 
   output$import_button <- shiny::renderUI({
-    if (!is.null(import) && !is.null(import())) {
-      shiny::actionButton(session$ns("import"), "Import",
-                          shiny::icon("calculator"))
+    if (!is.null(import$user())) {
+      shiny::actionButton(
+        session$ns("import"), import$title, import$icon)
     }
   })
 
   shiny::observeEvent(
     input$import, {
-      user <- import()
+      user <- import$user()
       pars <- rv$configuration$pars
       if (identical(names(user), pars$name)) {
         set_inputs(session, pars$id_value, user)

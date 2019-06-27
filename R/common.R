@@ -339,3 +339,13 @@ models_compatible <- function(cfg1, cfg2) {
   identical(cfg1$pars$name, cfg2$pars$name) &&
     identical(cfg1$vars$name, cfg2$vars$name)
 }
+
+
+import_from_fit <- function(user = NULL) {
+  if (!shiny::is.reactive(user)) {
+    user <- shiny::reactive(user)
+  }
+  list(user = user,
+       title = "Import from fit",
+       icon = shiny::icon("calculator"))
+}

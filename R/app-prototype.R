@@ -79,10 +79,10 @@ odin_prototype_server <- function(initial_code) {
       mod_fit_server, "odin_fit", data$result, model$result, link$result)
     vis <- shiny::callModule(
       mod_vis_server, "odin_vis", data$result, model$result, link$result,
-      fit$user)
+      import_from_fit(fit$user))
     batch <- shiny::callModule(
-      mod_batch_server, "odin_batch", model$result, data$result,
-      link$result, fit$user)
+      mod_batch_server, "odin_batch", model$result, data$result, link$result,
+      import_from_fit(fit$user))
 
     modules <- list(date = data, model = model, link = link,
                     vis = vis, fit = fit, batch = batch)
