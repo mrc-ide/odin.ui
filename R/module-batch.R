@@ -363,9 +363,10 @@ batch_status <- function(result, include) {
   if (!is.null(result$error)) {
     simple_panel("danger", "Error running model", result$error)
   } else if (isTRUE(result$success) && !any(vlapply(include, isTRUE))) {
-    simple_panel("info", "Select a series to show plot",
-                 paste("Drawing these plots can be slow, so start by",
-                       "selecting a series by opening the 'Graph settings'",
-                       "by clicking the cog icon"))
+    simple_panel("warning", "Select a series to show plot",
+                 paste("To display your results, select one or more",
+                       "series by opening the 'Graph settings'",
+                       "by clicking the cog icon (on the right, below",
+                       "the download button)."))
   }
 }
