@@ -67,7 +67,7 @@ download_names <- function(x, display = NULL, filename = NULL, data = NULL) {
               data = data %||% x,
               filename = filename %||% clean_name(x))
   n <- lengths(ret)
-  if (length(unique(n)) != 1 || n == 0) {
+  if (length(unique(n)) != 1 || n[[1]] == 0) {
     stop("Invalid inputs")
   }
   ret
