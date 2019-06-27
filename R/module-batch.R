@@ -226,7 +226,7 @@ batch_run <- function(configuration, focal) {
   central <- vis_run(configuration, user)
 
   ## Output types we'll work with:
-  types <- names(central$simulation)
+  types <- setdiff(names(central$simulation), "combined")
 
   ## Then the sensitivity around that
   batch <- lapply(value, f)
@@ -236,6 +236,9 @@ batch_run <- function(configuration, focal) {
 
   ## Organise output that will download cleanly:
   simulation <- set_names(lapply(types, g), types)
+
+  ## Don't repeat data in the combined output
+  simulation$combined <- rbind(simulation$data, configuration$data$data)
 
   ## Update with central runs too:
   simulation$user <- cbind(
