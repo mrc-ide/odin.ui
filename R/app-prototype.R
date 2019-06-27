@@ -36,11 +36,11 @@ odin_prototype_ui <- function(initial_code) {
         mod_batch_ui("odin_batch")),
       shiny::tabPanel(
         shiny::tagList(
-          "Status",
+          "Load/Save",
           shiny::uiOutput("status", inline = TRUE)),
         icon = shiny::icon("list"),
         shiny::tagList(
-          shiny::h2("Status"),
+          shiny::h2("Load & Save"),
           shiny::hr(),
 
           shiny::div(
