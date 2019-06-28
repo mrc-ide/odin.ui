@@ -39,13 +39,19 @@ model_static_server <- function(input, output, session, code,
 }
 
 
-model_static_setup <- function(code, name, name_short) {
+model_static_setup <- function(code, name, name_short,
+                               show = NULL, include = NULL) {
   if (length(code) == 1 && file.exists(code)) {
     code <- readLines(code)
   }
   validation <- common_odin_validate(editor_validate_initial_code(code))
-  result <- common_odin_compile(validation, name, name_short)
-  stopifnot(result$success)
+  model <- common_odin_compile(validation, name, name_short)
+  stopifnot(model$success)
+
+  show <- show %||% model$info$vars$name
+  include <- include %||% model$info$vars$name
+  result <- editor_result(model, show, include)
+
   status <- editor_status(result, NULL)
 
   list(validation = validation, result = result, status = status)

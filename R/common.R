@@ -188,10 +188,7 @@ common_control_graph_settings <- function(configuration, ns, check_title,
   title <- "Graph settings"
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
 
-  vars <- configuration$vars
-  if (!is.null(vars$include)) {
-    vars <- vars[vars$include, , drop = FALSE]
-  }
+  vars <- configuration$vars[configuration$vars$include, , drop = FALSE]
   if (nrow(vars) == 0L) {
     return(NULL)
   }
