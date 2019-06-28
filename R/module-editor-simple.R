@@ -47,7 +47,9 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
     shiny::tags$style(".shiny-file-input-progress {display: none}"),
 
     shiny::uiOutput(ns("validation_info")),
-    shiny::uiOutput(ns("result_info")))
+    shiny::uiOutput(ns("model_info")),
+    shiny::uiOutput(ns("include")),
+    shiny::uiOutput(ns("status")))
 
   shiny::fluidRow(
     shiny::column(6, editor),
@@ -66,12 +68,16 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
     editor_validation_info(rv$validation)
   })
 
-  output$result_info <- shiny::renderUI({
-    editor_result_info(rv$result)
+  output$model_info <- shiny::renderUI({
+    editor_model_info(rv$model)
   })
 
   shiny::observe({
     rv$status <- editor_status(rv$result, editor_status_body)
+  })
+
+  output$status <- shiny::renderUI({
+    show_module_status_if_ok(rv$status)
   })
 
   shiny::observe({
@@ -96,8 +102,8 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
 
   ## Realtime validation
   shiny::observe({
-    if (!is.null(rv$result)) {
-      rv$result$is_current <- identical(rv$result$code, input$editor)
+    if (!is.null(rv$model)) {
+      rv$model$is_current <- identical(rv$model$code, input$editor)
     }
     if (input$auto_validate) {
       rv$validation <- common_odin_validate(input$editor)
@@ -107,16 +113,29 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
   ## Here is the first part of the exit route out of the module
   shiny::observeEvent(
     input$compile, {
-      rv$validation <- common_odin_validate(input$editor)
-      rv$result <- shiny::withProgress(
-        message = "Compiling...", value = 1,
-        common_odin_compile(rv$validation))
+      prev <- shiny::isolate(rv$result)
+      shiny::withProgress(
+        message = "Compiling...", value = 1, {
+          rv$validation <- common_odin_validate(input$editor)
+          model <- common_odin_compile(rv$validation)
+          rv$model <- model
+          output$include <- shiny::renderUI({
+            editor_include(model, prev, session$ns)
+          })
+        })
     })
+
+  shiny::observe({
+    rv$result <- editor_result(
+      rv$model, input$include_show, input$include_include)
+  })
 
   shiny::observeEvent(
     input$reset_button, {
       shinyAce::updateAceEditor(session, ns("editor"), value = initial_code)
+      output$include <- NULL
       rv$result <- NULL
+      rv$model <- NULL
       rv$validation <- NULL
     })
 
@@ -126,14 +145,15 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
       writeLines(input$editor, con)
     })
 
+
   get_state <- function() {
     list(editor = input$editor,
-         result = if (!is.null(rv$result$model)) rv$result$code)
+         model = if (!is.null(rv$model$model)) rv$model$code)
   }
 
   set_state <- function(state) {
-    if (!is.null(state$result)) {
-      rv$result <- common_odin_compile(common_odin_validate(state$result))
+    if (!is.null(state$model)) {
+      rv$model <- common_odin_compile(common_odin_validate(state$model))
     }
     shinyAce::updateAceEditor(session, ns("editor"), value = state$editor)
     rv$validation <- common_odin_validate(state$editor)
@@ -170,7 +190,7 @@ editor_validation_info <- function(status) {
 }
 
 
-editor_result_info <- function(result) {
+editor_model_info <- function(result) {
   if (is.null(result)) {
     panel <- NULL
   } else {
@@ -233,16 +253,21 @@ editor_validate_initial_code <- function(initial_code) {
 }
 
 
-editor_status <- function(model, body) {
-  if (is.null(model$model)) {
+editor_status <- function(result, body) {
+  if (is.null(result$model)) {
     class <- "danger"
     title <- "Please compile a model"
   } else {
-    np <- nrow(model$info$pars)
-    nv <- nrow(model$info$vars)
+    np <- nrow(result$info$pars)
+    nv <- nrow(result$info$vars)
     title <- sprintf("Model with %d parameters and %d variables/outputs",
                      np, nv)
-    if (model$is_current) {
+    hide <- !result$info$vars$include
+    if (any(hide)) {
+      title <- sprintf("%s (%s hidden)", title, sum(hide))
+    }
+
+    if (result$is_current) {
       class <- "success"
       body <- NULL
     } else {
@@ -256,4 +281,51 @@ editor_status <- function(model, body) {
     }
   }
   module_status(class, title, body)
+}
+
+
+editor_include <- function(model, result, ns) {
+  if (!isTRUE(model$success)) {
+    return(NULL)
+  }
+  show <- include <- vars <- model$info$vars$name
+
+  if (!is.null(result)) {
+    prev <- result$info$vars
+    show <- setdiff(show, prev$name[!prev$show])
+    include <- setdiff(include, prev$name[!prev$include])
+  }
+
+  ## TODO: status here too that indicates if a variable is shown by
+  ## default but not included.
+  simple_panel(
+    "info",
+    "Outputs to include in graphs",
+    icon_name = "gear",
+    shiny::tagList(
+      shiny::p(paste(
+        "By default all variables and outputs are included everywhere",
+        "where the model is used, but this can become quite cluttered",
+        "for nontrivial models.  Uncheck variables that you do not want",
+        "to see and they will be excluded from the interface (they will",
+        "still be calculated in the simulations)")),
+      shiny::fluidRow(
+        shiny::column(6,
+                      shiny::checkboxGroupInput(
+                        ns("include_show"), "Show by default",
+                        choices = vars, selected = show)),
+        shiny::column(6,
+                      shiny::checkboxGroupInput(
+                        ns("include_include"), "Include anywhere",
+                        choices = vars, selected = include)))))
+}
+
+
+editor_result <- function(model, show, include) {
+  if (!isTRUE(model$success) || is.null(show) || is.null(include)) {
+    return(NULL)
+  }
+  model$info$vars$include <- model$info$vars$name %in% include
+  model$info$vars$show <- model$info$vars$name %in% show
+  model
 }
