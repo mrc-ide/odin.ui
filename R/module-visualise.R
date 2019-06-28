@@ -190,6 +190,11 @@ vis_run <- function(configuration, user) {
     return(NULL)
   }
 
+  vars <- configuration$vars
+  if (!any(vars$include)) {
+    return(NULL)
+  }
+
   err <- vlapply(user, is_missing)
   if (any(err)) {
     stop(sprintf("Missing parameter for %s",
@@ -215,12 +220,9 @@ vis_run <- function(configuration, user) {
     result_smooth <- result_smooth[-1, , drop = FALSE]
   }
 
-  ## Relevant only for the fitting:
-  if ("include" %in% names(configuration$vars)) {
-    i <- c(1, which(configuration$vars$include) + 1)
-    result_data <- result_data[, i, drop = FALSE]
-    result_smooth <- result_smooth[, i, drop = FALSE]
-  }
+  i <- setdiff(colnames(result_data), vars$name[!vars$include])
+  result_data <- result_data[, i, drop = FALSE]
+  result_smooth <- result_smooth[, i, drop = FALSE]
 
   ## 2. Result combined with the data
   result_combined <- cbind(result_data, data$data)
@@ -244,12 +246,13 @@ vis_plot_series <- function(result, locked, y2_model) {
 vis_plot_series_focal <- function(result, y2) {
   cfg <- result$configuration
   cols <- cfg$cols
+  vars <- cfg$vars[cfg$vars$include, ]
 
-  model_vars <- cfg$model$info$vars$name
+  model_vars <- vars$name
   model_data <- result$simulation$smooth
   series_model <- plot_plotly_series_bulk(
     model_data[, 1], model_data[, model_vars, drop = FALSE],
-    cols$model, FALSE, y2$model, legendgroup = TRUE)
+    cols$model, FALSE, y2$model, legendgroup = TRUE, show = vars$show)
 
   data_data <- cfg$data$data
   data_time <- cfg$data$name_time
@@ -269,14 +272,17 @@ vis_plot_series_locked <- function(result, locked, y2) {
     return(NULL)
   }
 
-  cols <- result$configuration$cols
-  model_vars <- intersect(locked$configuration$vars$name,
-                          result$configuration$vars$name)
+  cfg <- result$configuration
+  cols <- cfg$cols
+  vars <- cfg$vars[cfg$vars$include, ]
+
+  model_vars <- intersect(locked$configuration$vars$name, vars$name)
   model_data <- locked$simulation$smooth
+  show <- vars$show[match(model_vars, vars$name)]
   plot_plotly_series_bulk(
     model_data[, 1], model_data[, model_vars, drop = FALSE],
     cols$model, FALSE, y2$model, dash = "dot", width = 1,
-    showlegend = FALSE, legendgroup = TRUE)
+    showlegend = FALSE, legendgroup = TRUE, show = show)
 }
 
 
