@@ -22,8 +22,10 @@ mod_batch_ui <- function(id) {
                               shiny::icon("play"),
                               class = "btn-blue pull-right"))),
       shiny::mainPanel(
-        shiny::div(class = "plotly-graph-wrapper",
-                   plotly::plotlyOutput(ns("odin_output"))),
+        shiny::div(
+          class = "plotly-graph-wrapper",
+          shinycssloaders::withSpinner(
+            plotly::plotlyOutput(ns("odin_output")))),
         shiny::div(
           class = "pull-right",
           mod_download_ui(ns("download")),
@@ -61,12 +63,6 @@ mod_batch_server <- function(input, output, session, model, data, link,
 
   output$status_focal <- shiny::renderText({
     batch_status_focal(rv$focal)
-  })
-
-  output$status_batch <- shiny::renderUI({
-    vars <- rv$configuration$vars
-    include <- get_inputs(input, vars$id_graph_option, vars$name)
-    batch_status(rv$result, include)
   })
 
   shiny::observe({
@@ -122,9 +118,9 @@ mod_batch_server <- function(input, output, session, model, data, link,
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result$value)) {
       vars <- rv$configuration$vars
-      include <- get_inputs(input, vars$id_graph_option, vars$name)
+      y2_model <- get_inputs(input, vars$id_graph_option, vars$name)
       batch_plot(rv$result$value, locked$result()$value,
-                 include, input$logscale_y)
+                 y2_model, input$logscale_y)
     }
   })
 
@@ -240,7 +236,7 @@ batch_run <- function(configuration, focal) {
   simulation <- set_names(lapply(types, g), types)
 
   ## Don't repeat data in the combined output
-  simulation$combined <- rbind(simulation$data, configuration$data$data)
+  simulation$combined <- cbind(simulation$data, configuration$data$data)
 
   ## Update with central runs too:
   simulation$user <- cbind(
@@ -264,26 +260,21 @@ batch_run <- function(configuration, focal) {
 }
 
 
-batch_plot_series <- function(result, locked, include) {
+batch_plot_series <- function(result, locked, y2_model) {
   cfg <- result$configuration
-  cols <- cfg$cols
-  include <- names(include)[vlapply(include, isTRUE)]
-  if (length(include) == 0L) {
-    return(NULL)
-  }
-
-  c(batch_plot_series_locked(result, locked, include),
-    batch_plot_series_focal(result, include),
-    batch_plot_series_data(result, include))
+  y2 <- odin_y2(y2_model, cfg$data$name_vars, cfg$link$map)
+  c(batch_plot_series_locked(result, locked, y2),
+    batch_plot_series_focal(result, y2),
+    batch_plot_series_data(result, y2))
 }
 
 
-batch_plot_series_focal <- function(result, include) {
-  batch_plot_series_modelled(result, include, FALSE)
+batch_plot_series_focal <- function(result, y2) {
+  batch_plot_series_modelled(result, y2, FALSE)
 }
 
 
-batch_plot_series_locked <- function(result, locked, include) {
+batch_plot_series_locked <- function(result, locked, y2) {
   if (is.null(locked)) {
     return(NULL)
   }
@@ -291,14 +282,16 @@ batch_plot_series_locked <- function(result, locked, include) {
     return(NULL)
   }
 
-  model_vars <- intersect(locked$configuration$vars$name, include)
-  batch_plot_series_modelled(locked, include, TRUE)
+  model_vars <- intersect(locked$configuration$vars$name, y2)
+  batch_plot_series_modelled(locked, y2, TRUE)
 }
 
 
-batch_plot_series_modelled <- function(result, include, locked = FALSE) {
+batch_plot_series_modelled <- function(result, y2, locked = FALSE) {
   cfg <- result$configuration
   cols <- cfg$cols
+  vars <- cfg$vars[cfg$vars$include, ]
+  model_vars <- vars$name
 
   if (locked) {
     width <- 1
@@ -310,9 +303,10 @@ batch_plot_series_modelled <- function(result, include, locked = FALSE) {
 
   xy <- result$simulation$central$simulation$smooth
   series_central <- plot_plotly_series_bulk(
-    xy[, 1], xy[, include, drop = FALSE], cols$model,
-    points = FALSE, y2 = FALSE, showlegend = !locked,
-    legendgroup = set_names(include, include), dash = dash, width = width)
+    xy[, 1], xy[, model_vars, drop = FALSE], cols$model,
+    points = FALSE, y2 = y2$model, showlegend = !locked,
+    legendgroup = model_vars, dash = dash, width = width,
+    show = FALSE)
 
   f <- function(nm) {
     t <- result$simulation$smooth[, 1]
@@ -320,12 +314,13 @@ batch_plot_series_modelled <- function(result, include, locked = FALSE) {
     m <- matrix(unlist(y), length(y[[1]]), length(y))
     colnames(m) <- sprintf("%s (%s = %s)", nm, cfg$focal$name, cfg$focal$value)
     col <- set_names(rep(cols$model[[nm]], ncol(m)), colnames(m))
-    plot_plotly_series_bulk(t, m, col, FALSE, FALSE,
+    plot_plotly_series_bulk(t, m, col, points = FALSE, y2 = y2$model[[nm]],
                             legendgroup = nm, showlegend = FALSE,
-                            width = width / 2, dash = dash)
+                            width = width / 2, dash = dash,
+                            show = FALSE)
   }
 
-  series_batch <- unlist(lapply(include, f), FALSE, FALSE)
+  series_batch <- unlist(lapply(model_vars, f), FALSE, FALSE)
 
   c(series_central, series_batch)
 }
@@ -347,7 +342,7 @@ batch_plot <- function(result, locked, include, logscale_y) {
 
 
 batch_control_graph <- function(configuration, ns, restore = NULL) {
-  title <- "Display series in plot"
+  title <- "Plot on second y axis"
   common_control_graph(configuration, ns, title, restore)
 }
 
@@ -360,14 +355,8 @@ batch_status_focal <- function(focal) {
 }
 
 
-batch_status <- function(result, include) {
+batch_status <- function(result) {
   if (!is.null(result$error)) {
     simple_panel("danger", "Error running model", result$error)
-  } else if (isTRUE(result$success) && !any(vlapply(include, isTRUE))) {
-    simple_panel("warning", "Select a series to show plot",
-                 paste("To display your results, select one or more",
-                       "series by opening the 'Graph settings'",
-                       "by clicking the cog icon (on the right, below",
-                       "the download button)."))
   }
 }
