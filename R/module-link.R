@@ -36,7 +36,8 @@ mod_link_server <- function(input, output, session, data, model,
 
   output$link <- shiny::renderUI({
     ## TODO: get previous first
-    link_link_ui(rv$configuration, session$ns)
+    prev <- shiny::isolate(rv$result)
+    link_link_ui(rv$configuration, prev, session$ns)
   })
 
   shiny::observe({
@@ -52,7 +53,7 @@ mod_link_server <- function(input, output, session, data, model,
   shiny::observeEvent(
     input$clear, {
       output$link <- shiny::renderUI(
-        link_link_ui(rv$configuration, session$ns))
+        link_link_ui(rv$configuration, NULL, session$ns))
     })
 
   get_state <- function() {
@@ -62,7 +63,7 @@ mod_link_server <- function(input, output, session, data, model,
   set_state <- function(state) {
     rv$configuration <- link_configuration(data(), model())
     output$link <- shiny::renderUI(link_link_ui(
-      rv$configuration, session$ns, state))
+      rv$configuration, NULL, session$ns, state))
     rv$result <- state$result
   }
 
@@ -74,7 +75,7 @@ mod_link_server <- function(input, output, session, data, model,
 }
 
 
-link_link_ui <- function(configuration, ns, restore = NULL) {
+link_link_ui <- function(configuration, prev, ns, restore = NULL) {
   if (is.null(configuration)) {
     return(NULL)
   }
@@ -87,6 +88,9 @@ link_link_ui <- function(configuration, ns, restore = NULL) {
   if (!is.null(restore)) {
     i <- !vlapply(restore$result$map, is_missing)
     selected[i] <- list_to_character(restore$result$map[i])
+  } else if (isTRUE(prev$configured)) {
+    i <- !vlapply(prev$map, is_missing)
+    selected[i] <- list_to_character(prev$map[i])
   }
 
   choices <- vars$model
@@ -99,34 +103,6 @@ link_link_ui <- function(configuration, ns, restore = NULL) {
     shiny::actionButton(ns("clear"), "Clear", shiny::icon("times"),
                         class = "btn-danger"))
 }
-
-
-## link_link_ui_update <- function(map, input, data, model, restore) {
-##   if (!isTRUE(data$configured) || is.null(model)) {
-##     return(list(map = NULL, selected = NULL))
-##   }
-
-##   if (is.null(restore)) {
-##     prev <- lapply(map, function(x) input[[x]])
-##   } else {
-##     prev <- restore
-##   }
-
-##   vars_data <- data$name_vars
-##   vars_model <- model$info$vars$name
-
-##   ## Are any of these still current?
-##   fmt <- "link_data_%s"
-##   map <- set_names(sprintf(fmt, vars_data), vars_data)
-
-##   selected <- set_names(rep(list(NULL), length(vars_data)), vars_data)
-##   i <- names(prev) %in% vars_data &
-##     unlist(prev, FALSE, FALSE) %in% vars_model
-##   selected[names(prev)[i]] <- prev[i]
-
-##   list(map = map, selected = selected,
-##        vars_data = vars_data, vars_model = vars_model)
-## }
 
 
 link_status <- function(result, body) {
@@ -148,7 +124,7 @@ link_configuration <- function(data, model) {
   }
 
   vars_data <- data$name_vars
-  vars_model <- model$info$vars$name
+  vars_model <- model$info$vars$name[model$info$vars$include]
   vars_id <- sprintf("link_data_%s", vars_data)
 
   list(data = data, model = model,

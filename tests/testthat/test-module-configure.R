@@ -2,7 +2,7 @@ context("module: configure")
 
 
 test_that("ui requires a configuration", {
-  expect_null(link_link_ui(NULL, identity))
+  expect_null(link_link_ui(NULL, NULL, identity))
 })
 
 
