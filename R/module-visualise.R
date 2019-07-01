@@ -23,7 +23,7 @@ mod_vis_ui <- function(id) {
           shiny::uiOutput(ns("status_data")),
           shiny::uiOutput(ns("status_model")),
           ## TODO: status_configure but tone down warning to info
-          shiny::uiOutput(ns("control_parameters")),
+          mod_parameters_ui(ns("parameters")),
           mod_lock_ui(ns("lock")),
           shiny::hr(),
           ##
@@ -60,9 +60,12 @@ mod_vis_server <- function(input, output, session, data, model, link,
                            import = NULL) {
   rv <- shiny::reactiveValues()
 
+  parameters <- shiny::callModule(
+    mod_parameters_server, "parameters",
+    shiny::reactive(rv$configuration$pars))
+
   set_result <- function(result) {
-    pars <- rv$configuration$pars
-    set_inputs(session, pars$id_value, result$value$simulation$user$value)
+    parameters$set(result$value$simulation$user)
     rv$result <- result
   }
   locked <- shiny::callModule(
@@ -91,19 +94,13 @@ mod_vis_server <- function(input, output, session, data, model, link,
       model(), data(), link())
   })
 
-  output$control_parameters <- shiny::renderUI({
-    common_control_parameters(rv$configuration$pars, session$ns)
-  })
-
   output$control_graph <- shiny::renderUI({
     vis_control_graph(rv$configuration, session$ns)
   })
 
   shiny::observeEvent(
     input$go_button, {
-      pars <- rv$configuration$pars
-      user <- get_inputs(input, pars$id_value, pars$name)
-      rv$result <- with_success(vis_run(rv$configuration, user))
+      rv$result <- with_success(vis_run(rv$configuration, parameters$result()))
     })
 
   output$import_button <- shiny::renderUI({
@@ -116,11 +113,7 @@ mod_vis_server <- function(input, output, session, data, model, link,
   shiny::observeEvent(
     input$import, {
       user <- import$user()
-      pars <- rv$configuration$pars
-      if (identical(names(user), pars$name)) {
-        set_inputs(session, pars$id_value, user)
-        shiny::showNotification(
-          "Parameters updated", duration = 2, type = "message")
+      if (parameters$set(user)) {
         rv$result <- with_success(vis_run(rv$configuration, user))
       }
     })
@@ -155,14 +148,12 @@ mod_vis_server <- function(input, output, session, data, model, link,
     if (is.null(state)) {
       return()
     }
+    browser()
     shiny::isolate({
       locked$set_state(state$locked)
       rv$configuration <- common_model_data_configuration(
         model(), data(), link())
       rv$result <- with_success(vis_run(rv$configuration, state$user_result))
-      output$control_parameters <- shiny::renderUI(
-        common_control_parameters(rv$configuration$pars, session$ns,
-                                  state$user_display))
       output$control_graph <- shiny::renderUI(
         vis_control_graph(rv$configuration, session$ns, state$control_graph))
     })
@@ -173,20 +164,8 @@ mod_vis_server <- function(input, output, session, data, model, link,
 }
 
 
-vis_control_parameters <- function(configuration, ns) {
-  if (is.null(configuration)) {
-    return(NULL)
-  }
-  pars <- configuration$pars
-  mod_model_control_section(
-    "Model parameters",
-    Map(simple_numeric_input, pars$name, ns(pars$id_value), pars$value),
-    ns = ns)
-}
-
-
 vis_run <- function(configuration, user) {
-  if (is.null(configuration)) {
+  if (is.null(configuration) || is.null(user)) {
     return(NULL)
   }
 

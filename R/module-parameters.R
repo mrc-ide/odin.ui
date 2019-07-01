@@ -33,16 +33,26 @@ mod_parameters_server <- function(input, output, session, pars,
 
   shiny::observeEvent(
     input$upload, {
-      res <- parameters_validate(input$upload$datapath, rv$configuration$pars)
+      res <- parameters_validate_file(
+        input$upload$datapath, rv$configuration$pars)
       if (res$success) {
         set_inputs(session, res$value$id_value, res$value$value)
       }
       output$status <- shiny::renderUI(parameters_status(res))
     })
 
+  set <- function(values, notify = TRUE) {
+    res <- parameters_validate_user(values, rv$configuration$pars)
+    if (res$success) {
+      set_inputs(session, res$value$id_value, res$value$value)
+    }
+    output$status <- shiny::renderUI(parameters_status(res, notify))
+    res$success
+  }
+
   list(
     result = shiny::reactive(rv$values),
-    set = function(values) browser())
+    set = set)
 }
 
 parameters_configuration <- function(pars, with_option, title) {
@@ -125,7 +135,7 @@ parameters_filename <- function(filename, prefix) {
 }
 
 
-parameters_validate <- function(path, pars) {
+parameters_validate_file <- function(path, pars) {
   input <- with_success(read_csv(path))
   if (!input$success) {
     return(input)
@@ -135,27 +145,33 @@ parameters_validate <- function(path, pars) {
     return(unsuccessful(sprintf("Missing columns: %s",
                                 paste(msg, collapse = ", "))))
   }
-  msg <- setdiff(pars$name, input$value$name)
+  parameters_validate_user(df_to_list(input$value), pars)
+}
+
+
+parameters_validate_user <- function(values, pars) {
+  msg <- setdiff(pars$name, names(values))
   if (length(msg) > 0L) {
     return(unsuccessful(sprintf("Missing parameters: %s",
                                 paste(msg, collapse = ", "))))
   }
-  extra <- setdiff(input$value$name, pars$name)
+  extra <- setdiff(names(values), pars$name)
   if (length(msg) > 0L) {
     return(unsuccessful(sprintf("Extra parameters: %s",
                                 paste(extra, collapse = ", "))))
   }
-  i <- match(input$value$name, pars$name)
-  pars$value <- input$value$value[i]
+  pars$value <- list_to_numeric(values[pars$name])
 
   successful(pars[c("name", "id_value", "value")])
 }
 
 
-parameters_status <- function(res) {
-  if (res$success) {
-    simple_panel("success", "Parameters updated", NULL)
-  } else {
-    simple_panel("danger", "Error uploading parameters", res$error)
+parameters_status <- function(res, notify) {
+  if (notify) {
+    if (res$success) {
+      simple_panel("success", "Parameters updated", NULL)
+    } else {
+      simple_panel("danger", "Error uploading parameters", res$error)
+    }
   }
 }
