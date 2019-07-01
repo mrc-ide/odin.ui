@@ -24,7 +24,7 @@ text_module_status <- function(x) {
 }
 
 
-get_inputs <- function(input, ids, names) {
+get_inputs <- function(input, ids, names = ids) {
   set_names(lapply(ids, function(x) input[[x]]), names)
 }
 
@@ -215,8 +215,12 @@ common_control_graph_settings <- function(configuration, ns, check_title,
 }
 
 
-common_model_data_configuration <- function(model, data, link) {
-  if (!isTRUE(model$success) || !isTRUE(data$configured)) {
+common_model_data_configuration <- function(model, data, link,
+                                            run_options = NULL) {
+  if (!isTRUE(model$success)) {
+    return(NULL)
+  }
+  if (!isTRUE(data$configured) && !isTRUE(run_options$control_end_time)) {
     return(NULL)
   }
 

@@ -24,6 +24,7 @@ mod_vis_ui <- function(id) {
           shiny::uiOutput(ns("status_model")),
           ## TODO: status_configure but tone down warning to info
           mod_parameters_ui(ns("parameters")),
+          mod_control_run_ui(ns("control_run")),
           mod_lock_ui(ns("lock")),
           shiny::hr(),
           ##
@@ -57,12 +58,14 @@ mod_vis_ui <- function(id) {
 ##   {configuration, control interface} => result
 ##   {result, control inteface} => plot
 mod_vis_server <- function(input, output, session, data, model, link,
-                           import = NULL) {
+                           import = NULL, run_options = NULL) {
   rv <- shiny::reactiveValues()
 
   parameters <- shiny::callModule(
     mod_parameters_server, "parameters",
     shiny::reactive(rv$configuration$pars))
+  control_run <- shiny::callModule(
+    mod_control_run_server, "control_run", model, run_options)
 
   set_result <- function(result) {
     parameters$set(result$value$simulation$user)
@@ -91,7 +94,7 @@ mod_vis_server <- function(input, output, session, data, model, link,
 
   shiny::observe({
     rv$configuration <- common_model_data_configuration(
-      model(), data(), link())
+      model(), data(), link(), control_run$result()$options)
   })
 
   output$control_graph <- shiny::renderUI({
@@ -100,11 +103,12 @@ mod_vis_server <- function(input, output, session, data, model, link,
 
   shiny::observeEvent(
     input$go_button, {
-      rv$result <- with_success(vis_run(rv$configuration, parameters$result()))
+      rv$result <- with_success(vis_run(
+        rv$configuration, parameters$result(), control_run$result()))
     })
 
   output$import_button <- shiny::renderUI({
-    if (!is.null(import$user())) {
+    if (!is.null(import) && !is.null(import$user())) {
       shiny::actionButton(
         session$ns("import"), import$title, import$icon)
     }
@@ -163,7 +167,8 @@ mod_vis_server <- function(input, output, session, data, model, link,
 }
 
 
-vis_run <- function(configuration, user) {
+## TODO: this probably breaks into two - one with data and one without?
+vis_run <- function(configuration, user, run_options) {
   if (is.null(configuration) || is.null(user)) {
     return(NULL)
   }
@@ -180,30 +185,39 @@ vis_run <- function(configuration, user) {
   }
 
   data <- configuration$data
-  model <- configuration$model
+  has_data <- !is.null(data)
 
-  name_time <- data$name_time
-  mod <- model$model(user = user)
-
-  ## 1. Result aligned with the data
-  t_data <- data$data[[name_time]]
-  t_after_zero <- t_data[[1]] > 0
-  t_smooth <- seq(min(t_data), max(t_data), length.out = 501)
-
-  result_data <- mod$run(c(if (t_after_zero) 0, t_data))
-  result_smooth <- mod$run(c(if (t_after_zero) 0, t_smooth))
-
-  if (t_after_zero) {
-    result_data <- result_data[-1, , drop = FALSE]
-    result_smooth <- result_smooth[-1, , drop = FALSE]
+  if (run_options$options$control_end_time) {
+    t_start <- 0
+    t_end <- run_options$values$end
+    if (is_missing(t_end)) {
+      stop("Model run end time must be specified")
+    }
+  } else {
+    t_data <- data$data[[data$name_time]]
+    t_start <- min(t_data)
+    t_end <- max(t_data)
   }
 
-  i <- setdiff(colnames(result_data), vars$name[!vars$include])
-  result_data <- result_data[, i, drop = FALSE]
+  model <- configuration$model
+  mod <- model$model(user = user)
+
+  t_smooth <- seq(t_start, t_end, length.out = 501)
+  result_smooth <- mod$run(c(if (t_smooth[[1]] > 0) 0, t_smooth))
+  i <- setdiff(colnames(result_smooth), vars$name[!vars$include])
   result_smooth <- result_smooth[, i, drop = FALSE]
 
-  ## 2. Result combined with the data
-  result_combined <- cbind(result_data, data$data)
+  if (has_data) {
+    t_after_zero <- t_data[[1]] > 0
+    result_data <- mod$run(c(if (t_after_zero) 0, t_data))
+    if (t_after_zero) {
+      result_data <- result_data[-1, , drop = FALSE]
+    }
+    result_data <- result_data[, i, drop = FALSE]
+    result_combined <- cbind(result_data, data$data)
+  } else {
+    result_data <- result_combined <- NULL
+  }
 
   list(configuration = configuration,
        simulation = list(data = result_data,
