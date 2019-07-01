@@ -10,7 +10,7 @@ mod_vis_compare_ui <- function(id) {
           shiny::uiOutput(ns("status_data")),
           shiny::uiOutput(ns("status_model")),
           ## TODO: status_configure but tone down warning to info
-          shiny::uiOutput(ns("control_parameters")),
+          mod_parameters_ui(ns("parameters")),
           ## mod_lock_ui(ns("lock")),
           shiny::hr(),
           ##
@@ -35,6 +35,10 @@ mod_vis_compare_ui <- function(id) {
 mod_vis_compare_server <- function(input, output, session, model1, model2) {
   rv <- shiny::reactiveValues()
 
+  parameters <- shiny::callModule(
+    mod_parameters_server, "parameters",
+    shiny::reactive(rv$configuration$pars))
+
   download <- shiny::callModule(
     mod_download_server, "download", shiny::reactive(rv$result$value),
     "compare")
@@ -43,19 +47,13 @@ mod_vis_compare_server <- function(input, output, session, model1, model2) {
     rv$configuration <- compare_configuration(model1(), model2())
   })
 
-  output$control_parameters <- shiny::renderUI({
-    compare_control_parameters(
-      rv$configuration$pars, rv$configuration$names, session$ns)
-  })
-
   output$control_graph <- shiny::renderUI({
     compare_control_graph(rv$configuration, session$ns)
   })
 
   shiny::observeEvent(
     input$run, {
-      pars <- rv$configuration$pars
-      user <- get_inputs(input, pars$id_value, pars$name)
+      user <- parameters$result()
       rv$result <- with_success(compare_vis_run(rv$configuration, user))
     })
 
@@ -69,11 +67,12 @@ mod_vis_compare_server <- function(input, output, session, model1, model2) {
 }
 
 
-compare_union_metadata <- function(a, b, present = "present") {
+compare_union_metadata <- function(a, b, names) {
   ret <- rbind(a, b[!(b$name %in% a$name), , drop = FALSE])
   rownames(ret) <- NULL
-  i <- (ret$name %in% a$name) + (ret$name %in% b$name) * 2 + 1
-  ret[[present]] <- c(NA, "1_only", "2_only", "both")[i]
+  i <- 4 - (ret$name %in% b$name) - (ret$name %in% a$name) * 2
+  lvls <- c("Shared", paste(names$long, "only"))
+  ret$group <- factor(lvls[i], lvls)
   ret
 }
 
@@ -83,17 +82,17 @@ compare_configuration <- function(model1, model2) {
     return(NULL)
   }
 
-  pars <- compare_union_metadata(model1$info$pars, model2$info$pars)
+  names <- list(long = c(model1$name, model2$name),
+                short = c(model1$name_short, model2$name_short))
+
+  pars <- compare_union_metadata(model1$info$pars, model2$info$pars, names)
   pars$value <- vnapply(pars$default_value, function(x) x %||% NA_real_)
   pars$id_value <- sprintf("par_value_%s", pars$name)
 
-  vars <- compare_union_metadata(model1$info$vars, model2$info$vars)
+  vars <- compare_union_metadata(model1$info$vars, model2$info$vars, names)
   vars$id_graph_option <- sprintf("var_graph_option_%s", vars$name)
 
   cols <- odin_colours(vars$name, NULL, NULL)
-
-  names <- list(long = c(model1$name, model2$name),
-                short = c(model1$name_short, model2$name_short))
 
   download_names <- download_names(
     display = c(names$long, "Parameters"),
@@ -106,33 +105,8 @@ compare_configuration <- function(model1, model2) {
 }
 
 
-compare_control_parameters <- function(pars, names, ns, restore = NULL) {
-  if (is.null(pars)) {
-    return(NULL)
-  }
-  value <- restore %||% pars$value
-
-  controls <- unname(Map(simple_numeric_input,
-                         pars$name, ns(pars$id_value), value))
-
-  f <- function(label, key) {
-    i <- pars$present == key
-    if (any(i)) {
-      c(list(shiny::div(shiny::tags$b(label))), controls[i])
-    }
-  }
-
-  mod_model_control_section(
-    "Model parameters",
-    f("Shared", "both"),
-    f(paste(names$long[[1]], "only"), "1_only"),
-    f(paste(names$long[[2]], "only"), "2_only"),
-    ns = ns)
-}
-
-
 compare_vis_run <- function(configuration, user) {
-  if (is.null(configuration)) {
+  if (is.null(configuration) || is.null(user)) {
     return(NULL)
   }
 
