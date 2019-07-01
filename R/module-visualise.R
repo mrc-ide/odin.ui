@@ -131,14 +131,13 @@ mod_vis_server <- function(input, output, session, data, model, link,
     if (is.null(rv$configuration)) {
       return(NULL)
     }
-    pars <- rv$configuration$pars
     vars <- rv$configuration$vars
-    user_display <- get_inputs(input, pars$id_value, pars$name)
+    parameters <- parameters$get_state()
     user_result <- df_to_list(rv$result$value$simulation$user)
     control_graph <-
       list(option = get_inputs(input, vars$id_graph_option, vars$name),
            logscale_y = input$logscale_y)
-    list(user_display = user_display,
+    list(parameters = parameters,
          user_result = user_result,
          control_graph = control_graph,
          locked = locked$get_state())
@@ -148,11 +147,11 @@ mod_vis_server <- function(input, output, session, data, model, link,
     if (is.null(state)) {
       return()
     }
-    browser()
     shiny::isolate({
       locked$set_state(state$locked)
       rv$configuration <- common_model_data_configuration(
         model(), data(), link())
+      parameters$set_state(state$parameters)
       rv$result <- with_success(vis_run(rv$configuration, state$user_result))
       output$control_graph <- shiny::renderUI(
         vis_control_graph(rv$configuration, session$ns, state$control_graph))

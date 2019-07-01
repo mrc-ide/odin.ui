@@ -10,7 +10,7 @@ mod_batch_ui <- function(id) {
           class = "form-horizontal",
           shiny::uiOutput(ns("status_data")),
           shiny::uiOutput(ns("status_model")),
-          shiny::uiOutput(ns("control_parameters")),
+          mod_parameters_ui(ns("parameters")),
           shiny::uiOutput(ns("control_focal")),
           mod_lock_ui(ns("lock")),
           shiny::hr(),
@@ -39,9 +39,12 @@ mod_batch_server <- function(input, output, session, model, data, link,
                              import = NULL) {
   rv <- shiny::reactiveValues()
 
+  parameters <- shiny::callModule(
+    mod_parameters_server, "parameters",
+    shiny::reactive(rv$configuration$pars))
+
   set_result <- function(result) {
-    pars <- rv$configuration$pars
-    set_inputs(session, pars$id_value, result$value$simulation$user$value)
+    parameters$set(result$value$simulation$user)
     rv$result <- result
   }
   locked <- shiny::callModule(
@@ -70,10 +73,6 @@ mod_batch_server <- function(input, output, session, model, data, link,
       model(), data(), link())
   })
 
-  output$control_parameters <- shiny::renderUI({
-    common_control_parameters(rv$configuration$pars, session$ns)
-  })
-
   output$control_focal <- shiny::renderUI({
     batch_control_focal(rv$configuration, session$ns)
   })
@@ -88,10 +87,8 @@ mod_batch_server <- function(input, output, session, model, data, link,
     })
 
   shiny::observe({
-    pars <- rv$configuration$pars
-    user <- get_inputs(input, pars$id_value, pars$name)
     rv$focal <- batch_focal(
-      input$focal_name, input$focal_pct, input$focal_n, user)
+      input$focal_name, input$focal_pct, input$focal_n, parameters$result())
   })
 
   output$import_button <- shiny::renderUI({
@@ -104,11 +101,7 @@ mod_batch_server <- function(input, output, session, model, data, link,
   shiny::observeEvent(
     input$import, {
       user <- import$user()
-      pars <- rv$configuration$pars
-      if (identical(names(user), pars$name)) {
-        set_inputs(session, pars$id_value, user)
-        shiny::showNotification(
-          "Parameters updated", duration = 2, type = "message")
+      if (parameters$set(user)) {
         rv$focal <- batch_focal(
           input$focal_name, input$focal_pct, input$focal_n, user)
         rv$result <- with_success(batch_run(rv$configuration, rv$focal))
@@ -128,9 +121,7 @@ mod_batch_server <- function(input, output, session, model, data, link,
     if (is.null(rv$configuration)) {
       return(NULL)
     }
-    pars <- rv$configuration$pars
     vars <- rv$configuration$vars
-    user <- get_inputs(input, pars$id_value, pars$name)
     focal <- rv$result$value$focal
     control_graph <-
       list(option = get_inputs(input, vars$id_graph_option, vars$name),
@@ -142,6 +133,7 @@ mod_batch_server <- function(input, output, session, model, data, link,
          focal = focal,
          control_focal = control_focal,
          control_graph = control_graph,
+         parameters = parameters$get_state(),
          locked = locked$get_state())
   }
 
@@ -152,9 +144,8 @@ mod_batch_server <- function(input, output, session, model, data, link,
     locked$set_state(state$locked)
     rv$configuration <- common_model_data_configuration(
       model(), data(), link())
+    parameters$set_state(state$parameters)
     rv$result <- with_success(batch_run(rv$configuration, state$focal))
-    output$control_parameters <- shiny::renderUI(
-      common_control_parameters(rv$configuration$pars, session$ns, state$user))
     output$control_graph <- shiny::renderUI(
       batch_control_graph(rv$configuration, session$ns, state$control_graph))
     output$control_focal <- shiny::renderUI(

@@ -161,18 +161,6 @@ plot_plotly_series_bulk <- function(x, y, col, points, y2,
 }
 
 
-common_control_parameters <- function(pars, ns, restore = NULL) {
-  if (is.null(pars)) {
-    return(NULL)
-  }
-  value <- restore %||% pars$value
-  mod_model_control_section(
-    "Model parameters",
-    Map(simple_numeric_input, pars$name, ns(pars$id_value), value),
-    ns = ns)
-}
-
-
 common_control_graph <- function(configuration, ns, check_title,
                                  restore = NULL) {
   if (is.null(configuration)) {
