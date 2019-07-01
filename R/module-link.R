@@ -8,7 +8,7 @@ mod_link_ui <- function(id) {
     shiny::uiOutput(ns("status_model")),
     shiny::h3("Link"),
     shiny::uiOutput(ns("link")),
-    shiny::uiOutput(ns("status_link")))
+    shiny::uiOutput(ns("summary")))
 }
 
 
@@ -24,10 +24,8 @@ mod_link_server <- function(input, output, session, data, model,
     model()$status$ui
   })
 
-  output$status_link <- shiny::renderUI({
-    ## Don't show this if not OK because it refers us back to this tab
-    ## perhaps!
-    show_module_status_if_ok(rv$status)
+  output$summary <- shiny::renderUI({
+    link_summary(rv$configuration, rv$result)
   })
 
   shiny::observe({
@@ -112,9 +110,30 @@ link_status <- function(result, body) {
     body <- paste(result$label, collapse = " & ")
   } else {
     class <- "danger"
-    title <- "Model/Data link is not configured"
+    title <- result$error %||% "Model/Data link is not configured"
   }
   module_status(class, title, body)
+}
+
+
+link_summary <- function(configuration, result) {
+  if (is.null(configuration)) {
+    return(NULL)
+  }
+  if (isTRUE(result$configured)) {
+    class <- "success"
+    title <- "Model/Data link is configured"
+    body <- paste(result$label, collapse = " & ")
+  } else if (!is.null(result$error)) {
+    class <- "danger"
+    title <- "Invalid Model/Data link"
+    body <- result$error
+  } else {
+    class <- "info"
+    title <- "Model/Data link is not configured"
+    body <- "Select model outputs that correspond to each data series above"
+  }
+  simple_panel(class, title, body)
 }
 
 
@@ -137,6 +156,14 @@ link_configuration <- function(data, model) {
 ## which will be filtered)
 link_result <- function(map) {
   map <- map[!vlapply(map, is_missing)]
-  label <- sprintf("%s ~ %s", names(map), list_to_character(map))
-  list(map = map, label = label, configured = length(map) > 0L)
+
+  targets <- list_to_character(map)
+  dup <- unique(targets[duplicated(targets)])
+  if (any(duplicated(targets))) {
+    list(error = paste0("Duplicated link target: ", dup),
+         configured = FALSE)
+  } else {
+    label <- sprintf("%s ~ %s", names(map), list_to_character(map))
+    list(map = map, label = label, configured = length(map) > 0L)
+  }
 }
