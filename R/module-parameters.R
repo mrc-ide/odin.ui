@@ -99,15 +99,18 @@ parameters_ui <- function(configuration, ns, restore = NULL) {
   }
   pars <- configuration$pars
 
+  if ("range" %in% names(pars)) browser()
+
   ## TODO: the id_value bit comes out to the configuration within the
   ## module
   value <- restore$value %||% pars$value
+  range <- pars$range
   if (configuration$with_option) {
     f <- function(name, id_value, value, id_option, option) {
       shiny::fluidRow(
         shiny::column(
           10,
-          simple_numeric_input(name, id_value, value)),
+          parameter_input(name, id_value, value, range)),
         shiny::column(
           2, shiny::checkboxInput(id_option, "", option)))
     }
@@ -115,8 +118,8 @@ parameters_ui <- function(configuration, ns, restore = NULL) {
     controls <- Map(f, pars$name, ns(pars$id_value),
                     value, ns(pars$id_option), option)
   } else {
-    controls <- unname(Map(simple_numeric_input,
-                           pars$name, ns(pars$id_value), value))
+    controls <- unname(Map(parameter_input,
+                           pars$name, ns(pars$id_value), value, range))
   }
 
   if ("group" %in% names(pars)) {
@@ -200,5 +203,19 @@ parameters_status <- function(res, notify) {
     simple_panel("success", "Parameters updated", NULL)
   } else {
     simple_panel("danger", "Error uploading parameters", res$error)
+  }
+}
+
+
+parameter_range <- function(from, to) {
+  list(from = from, to = to)
+}
+
+
+parameter_input <- function(name, id, value, range) {
+  if (is.null(range)) {
+    simple_numeric_input(name, id, value)
+  } else {
+    simple_slider_input(name, id, value, range)
   }
 }

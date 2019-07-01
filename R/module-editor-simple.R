@@ -325,6 +325,7 @@ editor_result <- function(model, show, include) {
   if (!isTRUE(model$success) || is.null(show) || is.null(include)) {
     return(NULL)
   }
+  model$info$pars$range <- I(vector("list", nrow(model$info$pars)))
   model$info$vars$include <- model$info$vars$name %in% include
   model$info$vars$show <- model$info$vars$name %in% show
   model

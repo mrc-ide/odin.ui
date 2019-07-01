@@ -20,8 +20,10 @@ model_static_ui <- function(id, code, path_docs = NULL, title = "Code") {
 
 
 model_static_server <- function(input, output, session, code,
-                                name = NULL, name_short = NULL) {
-  data <- model_static_setup(code, name, name_short)
+                                name = NULL, name_short = NULL,
+                                parameter_ranges = NULL) {
+  data <- model_static_setup(code, name, name_short,
+                             parameter_ranges = parameter_ranges)
 
   output$title <- shiny::renderText(data$result$name)
 
@@ -40,7 +42,8 @@ model_static_server <- function(input, output, session, code,
 
 
 model_static_setup <- function(code, name, name_short,
-                               show = NULL, include = NULL) {
+                               show = NULL, include = NULL,
+                               parameter_ranges = NULL) {
   if (length(code) == 1 && file.exists(code)) {
     code <- readLines(code)
   }
@@ -51,6 +54,11 @@ model_static_setup <- function(code, name, name_short,
   show <- show %||% model$info$vars$name
   include <- include %||% model$info$vars$name
   result <- editor_result(model, show, include)
+
+  if (!is.null(parameter_ranges)) {
+    i <- match(result$info$pars$name, names(parameter_ranges))
+    result$info$pars$range <- I(parameter_ranges[i])
+  }
 
   status <- editor_status(result, NULL)
 

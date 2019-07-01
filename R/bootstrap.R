@@ -36,6 +36,21 @@ simple_select_input <- function(name, ...) {
 }
 
 
+simple_slider_input <- function(name, id, value, range) {
+  list(shiny::div(
+    class = "form-group slider-label",
+    shiny::div(class = "col-xs-12", shiny::tags$label(name))),
+    shiny::div(
+      class = "form-group",
+      shiny::div(class = "col-xs-12 slider",
+                 shiny::sliderInput(id,
+                                    label = NULL,
+                                    min = range$from,
+                                    max = range$to,
+                                    value = value))))
+}
+
+
 button_row <- function(label, ..., label_width = 6) {
   horizontal_form_group(label, shiny::actionButton(...))
 }
