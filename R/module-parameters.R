@@ -99,8 +99,6 @@ parameters_ui <- function(configuration, ns, restore = NULL) {
   }
   pars <- configuration$pars
 
-  if ("range" %in% names(pars)) browser()
-
   ## TODO: the id_value bit comes out to the configuration within the
   ## module
   value <- restore$value %||% pars$value

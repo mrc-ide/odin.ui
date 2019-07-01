@@ -84,7 +84,7 @@ odin_prototype_server <- function(initial_code) {
       mod_batch_server, "odin_batch", model$result, data$result, link$result,
       import_from_fit(fit$user))
 
-    modules <- list(date = data, model = model, link = link,
+    modules <- list(data = data, model = model, link = link,
                     vis = vis, fit = fit, batch = batch)
 
     output$status <- shiny::renderUI({
