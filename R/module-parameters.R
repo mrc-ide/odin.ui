@@ -5,7 +5,8 @@ mod_parameters_ui <- function(id) {
 
 
 mod_parameters_server <- function(input, output, session, pars,
-                                  with_option = FALSE, title = NULL) {
+                                  with_option = FALSE, title = NULL,
+                                  download_prefix = "parameters") {
   rv <- shiny::reactiveValues()
 
   shiny::observe({
@@ -19,13 +20,30 @@ mod_parameters_server <- function(input, output, session, pars,
   shiny::observe({
     pars <- rv$configuration$pars
     rv$values <- get_inputs(input, pars$id_value, pars$name)
+    output$status <- NULL
   })
+
+  output$download <- shiny::downloadHandler(
+    filename = function() {
+      parameters_filename(input$download_filename, download_prefix)
+    },
+    content = function(con) {
+      write_csv(list_to_df(rv$values), con)
+    })
+
+  shiny::observeEvent(
+    input$upload, {
+      res <- parameters_validate(input$upload$datapath, rv$configuration$pars)
+      if (res$success) {
+        set_inputs(session, res$value$id_value, res$value$value)
+      }
+      output$status <- shiny::renderUI(parameters_status(res))
+    })
 
   list(
     result = shiny::reactive(rv$values),
     set = function(values) browser())
 }
-
 
 parameters_configuration <- function(pars, with_option, title) {
   if (is.null(pars)) {
@@ -72,5 +90,72 @@ parameters_ui <- function(configuration, ns, restore = NULL) {
     controls <- unname(Map(f, names(controls), controls))
   }
 
-  mod_model_control_section(configuration$title, controls, ns = ns)
+  status <- shiny::uiOutput(ns("status"))
+
+  tags <- shiny::tagList(
+    controls, shiny::hr(), parameters_io(ns), status)
+
+  mod_model_control_section(configuration$title, tags, ns = ns)
+}
+
+
+parameters_io <- function(ns) {
+  shiny::div(
+    style = "margin-left:15px", # HACK: undo a later subtraction
+    shiny::div(
+      class = "form-inline mt-5",
+      shiny::div(
+        class = "form-group",
+        raw_text_input(ns("download_filename"), placeholder = "filename",
+                       value = "")),
+      shiny::downloadButton(ns("download"), "Download", class = "btn-blue")),
+    shiny::fileInput(ns("upload"),
+                     "Upload parameters:",
+                     accept = accept_csv()))
+}
+
+
+parameters_filename <- function(filename, prefix) {
+  if (!is.null(filename) && nzchar(filename)) {
+    filename <- ensure_extension(filename, "csv")
+  } else {
+    filename <- sprintf("odin-%s-%s.csv", prefix, date_string())
+  }
+  filename
+}
+
+
+parameters_validate <- function(path, pars) {
+  input <- with_success(read_csv(path))
+  if (!input$success) {
+    return(input)
+  }
+  msg <- setdiff(c("name", "value"), names(input$value))
+  if (length(msg) > 0L) {
+    return(unsuccessful(sprintf("Missing columns: %s",
+                                paste(msg, collapse = ", "))))
+  }
+  msg <- setdiff(pars$name, input$value$name)
+  if (length(msg) > 0L) {
+    return(unsuccessful(sprintf("Missing parameters: %s",
+                                paste(msg, collapse = ", "))))
+  }
+  extra <- setdiff(input$value$name, pars$name)
+  if (length(msg) > 0L) {
+    return(unsuccessful(sprintf("Extra parameters: %s",
+                                paste(extra, collapse = ", "))))
+  }
+  i <- match(input$value$name, pars$name)
+  pars$value <- input$value$value[i]
+
+  successful(pars[c("name", "id_value", "value")])
+}
+
+
+parameters_status <- function(res) {
+  if (res$success) {
+    simple_panel("success", "Parameters updated", NULL)
+  } else {
+    simple_panel("danger", "Error uploading parameters", res$error)
+  }
 }

@@ -197,14 +197,20 @@ with_success <- function(expr) {
     force(expr),
     error = identity)
   if (inherits(res, "error")) {
-    list(success = FALSE,
-         value = NULL,
-         error = res$message)
+    unsuccessful(res$message)
   } else {
-    list(success = TRUE,
-         value = res,
-         error = NULL)
+    successful(res)
   }
+}
+
+
+successful <- function(value) {
+  list(success = TRUE, value = value, error = NULL)
+}
+
+
+unsuccessful <- function(error) {
+  list(success = FALSE, value = NULL, error = error)
 }
 
 
@@ -217,4 +223,11 @@ protect <- function(fun, fail = Inf) {
 
 clean_name <- function(x) {
   gsub(" ", "-", tolower(x))
+}
+
+
+accept_csv <- function() {
+  c("text/csv",
+    "text/comma-separated-values,text/plain",
+    ".csv")
 }

@@ -10,11 +10,7 @@ mod_csv_ui <- function(id) {
           "a column for time and one or more response variables.",
           "The data must have a header row, and all columns must contain",
           "only numbers. Missing data is allowed.")),
-        shiny::fileInput(
-          ns("filename"), NULL,
-          accept = c("text/csv",
-                     "text/comma-separated-values,text/plain",
-                     ".csv")),
+        shiny::fileInput(ns("filename"), NULL, accept = accept_csv()),
         shiny::selectInput(ns("name_time"),
                            "Select time variable",
                            character(0)),
