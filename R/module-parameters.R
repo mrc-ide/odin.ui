@@ -104,7 +104,7 @@ parameters_ui <- function(configuration, ns, restore = NULL) {
   value <- restore$value %||% pars$value
   range <- pars$range
   if (configuration$with_option) {
-    f <- function(name, id_value, value, id_option, option) {
+    f <- function(name, id_value, value, range, id_option, option) {
       shiny::fluidRow(
         shiny::column(
           10,
@@ -113,8 +113,8 @@ parameters_ui <- function(configuration, ns, restore = NULL) {
           2, shiny::checkboxInput(id_option, "", option)))
     }
     option <- restore$option %||% pars$option
-    controls <- Map(f, pars$name, ns(pars$id_value),
-                    value, ns(pars$id_option), option)
+    controls <- Map(f, pars$name, ns(pars$id_value), value, range,
+                    ns(pars$id_option), option)
   } else {
     controls <- unname(Map(parameter_input,
                            pars$name, ns(pars$id_value), value, range))
