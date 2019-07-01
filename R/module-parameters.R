@@ -19,7 +19,11 @@ mod_parameters_server <- function(input, output, session, pars,
 
   shiny::observe({
     pars <- rv$configuration$pars
-    rv$values <- get_inputs(input, pars$id_value, pars$name)
+    values <- get_inputs(input, pars$id_value, pars$name)
+    if (with_option) {
+      attr(values, "option") <- get_inputs(input, pars$id_option, pars$name)
+    }
+    rv$values <- values
     output$status <- NULL
   })
 
@@ -50,9 +54,27 @@ mod_parameters_server <- function(input, output, session, pars,
     res$success
   }
 
+  get_state <- function() {
+    ret <- list(values = get_inputs(input, pars$id_value, pars$id_value))
+    if (with_option) {
+      ret$option <- get_inputs(input, pars$id_option, pars$id_option)
+    }
+    ret
+  }
+
+  set_state <- function(state) {
+    set_inputs(session, names(state$values), state$values)
+    if (with_option) {
+      set_inputs(session, names(state$option), state$option,
+                 shiny::updateCheckboxInput)
+    }
+  }
+
   list(
     result = shiny::reactive(rv$values),
-    set = set)
+    set = set,
+    get_state = get_state,
+    set_state = set_state)
 }
 
 parameters_configuration <- function(pars, with_option, title) {
@@ -61,6 +83,11 @@ parameters_configuration <- function(pars, with_option, title) {
   }
   pars$id_value <- sprintf("value_%s", pars$name)
   pars$id_option <- sprintf("option_%s", pars$name)
+  pars$option <- FALSE
+
+  ## TODO: remove this cheat later
+  pars$option <- pars$name %in% c("I0", "cfr", "R0_before", "R0_after")
+
   title <- title %||% "Model parameters"
   list(pars = pars, with_option = with_option, title = title)
 }
@@ -167,11 +194,11 @@ parameters_validate_user <- function(values, pars) {
 
 
 parameters_status <- function(res, notify) {
-  if (notify) {
-    if (res$success) {
-      simple_panel("success", "Parameters updated", NULL)
-    } else {
-      simple_panel("danger", "Error uploading parameters", res$error)
-    }
+  if (!notify) {
+    NULL # also clears any previous notification
+  } else if (res$success) {
+    simple_panel("success", "Parameters updated", NULL)
+  } else {
+    simple_panel("danger", "Error uploading parameters", res$error)
   }
 }

@@ -12,7 +12,7 @@ mod_fit_ui <- function(id) {
           shiny::uiOutput(ns("status_link")),
           ##
           shiny::uiOutput(ns("control_target")),
-          shiny::uiOutput(ns("control_parameters")),
+          mod_parameters_ui(ns("parameters")),
           mod_lock_ui(ns("lock")),
           shiny::hr(),
           ##
@@ -40,9 +40,12 @@ mod_fit_ui <- function(id) {
 mod_fit_server <- function(input, output, session, data, model, link) {
   rv <- shiny::reactiveValues()
 
+  parameters <- shiny::callModule(
+    mod_parameters_server, "parameters",
+    shiny::reactive(rv$configuration$pars), with_option = TRUE)
+
   set_result <- function(result) {
-    pars <- rv$configuration$pars
-    set_inputs(session, pars$id_value, result$value$simulation$user$value)
+    parameters$set(result$value$simulation$user)
     rv$result <- result
   }
   locked <- shiny::callModule(
@@ -78,10 +81,6 @@ mod_fit_server <- function(input, output, session, data, model, link) {
     rv$configuration <- fit_configuration(model(), data(), link())
   })
 
-  output$control_parameters <- shiny::renderUI({
-    fit_control_parameters(rv$configuration$pars, session$ns)
-  })
-
   output$control_target <- shiny::renderUI({
     ## TODO: it would be nice to depend on input$target so that we can
     ## persist the previous choice but getting that to work without a
@@ -97,16 +96,14 @@ mod_fit_server <- function(input, output, session, data, model, link) {
 
   shiny::observeEvent(
     input$fit, {
-      pars <- rv$configuration$pars
-      user <- get_inputs(input, pars$id_value, pars$name)
-      vary <- get_inputs(input, pars$id_vary, pars$name)
+      user <- parameters$result()
       rv$fit <- shiny::withProgress(
         message = "model fit in progress",
         detail = "this may take a while",
         value = 0,
-        fit_run(rv$configuration, input$target, user, vary))
+        fit_run(rv$configuration, input$target, user, attr(user, "option")))
       if (rv$fit$success) {
-        set_inputs(session, pars$id_value, rv$fit$value$user)
+        parameters$set(rv$fit$value$user, notify = FALSE)
       }
     })
 
@@ -115,9 +112,7 @@ mod_fit_server <- function(input, output, session, data, model, link) {
   })
 
   shiny::observe({
-    pars <- rv$configuration$pars
-    user <- get_inputs(input, pars$id_value, pars$name)
-    rv$result <- with_success(vis_run(rv$configuration, user))
+    rv$result <- with_success(vis_run(rv$configuration, parameters$result()))
   })
 
   shiny::observe({
@@ -144,18 +139,18 @@ mod_fit_server <- function(input, output, session, data, model, link) {
     if (is.null(rv$configuration)) {
       return(NULL)
     }
+    browser()
     pars <- rv$configuration$pars
     ## TODO: I wonder if we can strip this down earlier?
     vars <- rv$configuration$vars[rv$configuration$vars$include, ]
-    user <- get_inputs(input, pars$id_value, pars$name)
-    vary <- get_inputs(input, pars$id_vary, pars$name)
+    user <- parameters$result()
     control_graph <-
       list(option = get_inputs(input, vars$id_graph_option, vars$name),
            logscale_y = input$logscale_y)
     list(fit = rv$fit,
-         control_parameters = list(value = user, vary = vary),
          control_target = input$target,
          control_graph = control_graph,
+         parameters = parameters$get_state(),
          locked = locked$get_state())
   }
 
@@ -163,8 +158,10 @@ mod_fit_server <- function(input, output, session, data, model, link) {
     if (is.null(state)) {
       return()
     }
-    locked$set_state(state$locked)
     rv$configuration <- fit_configuration(model(), data(), link())
+    locked$set_state(state$locked)
+    parameters$set_state(state$parameters)
+
     rv$fit <- state$fit
     output$control_target <- shiny::renderUI(fit_control_target(
       rv$configuration$link, session$ns, state$control_target))
@@ -174,7 +171,7 @@ mod_fit_server <- function(input, output, session, data, model, link) {
       fit_control_graph(rv$configuration, session$ns, state$control_graph))
   }
 
-  shiny::outputOptions(output, "control_parameters", suspendWhenHidden = FALSE)
+  ## shiny::outputOptions(output, "control_parameters", suspendWhenHidden = FALSE)
 
   list(result = shiny::reactive(add_status(rv$fit$value, rv$status)),
        user = shiny::reactive(rv$fit$value$user),
