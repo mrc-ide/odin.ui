@@ -124,10 +124,10 @@ parameters_ui <- function(configuration, ns, restore = NULL) {
 
   if ("group" %in% names(pars)) {
     controls <- split(controls, pars$group, drop = TRUE)
-    f <- function(label, value) {
+    g <- function(label, value) {
       shiny::div(shiny::tags$b(label), value)
     }
-    controls <- unname(Map(f, names(controls), controls))
+    controls <- unname(Map(g, names(controls), controls))
   }
 
   status <- shiny::uiOutput(ns("status"))
