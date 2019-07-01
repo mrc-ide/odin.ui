@@ -127,7 +127,8 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
 
   shiny::observe({
     rv$result <- editor_result(
-      rv$model, input$include_show, input$include_include)
+      rv$model, input$var_show_order, input$var_hide_order,
+      input$var_disable_order)
   })
 
   shiny::observeEvent(
@@ -264,7 +265,7 @@ editor_status <- function(result, body) {
                      np, nv)
     hide <- !result$info$vars$include
     if (any(hide)) {
-      title <- sprintf("%s (%s hidden)", title, sum(hide))
+      title <- sprintf("%s (%s disabled)", title, sum(hide))
     }
 
     if (result$is_current) {
@@ -290,43 +291,54 @@ editor_include <- function(model, result, ns) {
   }
   show <- include <- vars <- model$info$vars$name
 
-  if (!is.null(result)) {
+  if (is.null(result)) {
+    show <- model$info$vars$name
+    hide <- character()
+    disable <- character()
+  } else {
     prev <- result$info$vars
-    show <- setdiff(show, prev$name[!prev$show])
-    include <- setdiff(include, prev$name[!prev$include])
+    vars <- model$info$vars$name
+    hide <- intersect(prev$name[prev$hide], vars)
+    disable <- intersect(prev$name[prev$disable], vars)
+    show <- union(prev$name[prev$show], setdiff(vars, c(hide, disable)))
   }
 
-  ## TODO: status here too that indicates if a variable is shown by
-  ## default but not included.
   simple_panel(
     "info",
     "Outputs to include in graphs",
     icon_name = "gear",
     shiny::tagList(
-      shiny::p(paste(
-        "By default all variables and outputs are included everywhere",
-        "where the model is used, but this can become quite cluttered",
-        "for nontrivial models.  Uncheck variables that you do not want",
-        "to see and they will be excluded from the interface (they will",
-        "still be calculated in the simulations)")),
-      shiny::fluidRow(
-        shiny::column(6,
-                      shiny::checkboxGroupInput(
-                        ns("include_show"), "Show by default",
-                        choices = vars, selected = show)),
-        shiny::column(6,
-                      shiny::checkboxGroupInput(
-                        ns("include_include"), "Include anywhere",
-                        choices = vars, selected = include)))))
+      shiny::includeMarkdown(odin_ui_file("md/editor-info.md")),
+      shinyjqui::orderInput(ns("var_show"), "Reorder variables", show,
+                            connect = ns(c("var_hide", "var_disable"))),
+      shinyjqui::orderInput(ns("var_hide"), "Hide variables", hide,
+                            connect = ns(c("var_show", "var_disable")),
+                            placeholder = "Drag items here to hide"),
+      shinyjqui::orderInput(ns("var_disable"), "Disable variables", disable,
+                            connect = ns(c("var_hide", "var_show")),
+                            placeholder = "Drag items here to disable")))
 }
 
 
-editor_result <- function(model, show, include) {
-  if (!isTRUE(model$success) || is.null(show) || is.null(include)) {
+editor_result <- function(model, show, hide, disable) {
+  if (!isTRUE(model$success)) {
     return(NULL)
   }
+  ## TODO: decent error if nothing shown
+  if (!isTRUE(model$success) || is.null(show)) {
+    return(NULL)
+  }
+
+  vars <- model$info$vars
+  order <- c(show, hide, disable)
+  vars <- vars[match(order, vars$name), , drop = FALSE]
+  vars$show <- vars$name %in% show
+  vars$hide <- vars$name %in% hide
+  vars$disable <- vars$name %in% disable
+  vars$include <- vars$show | vars$hide
+  model$info$vars <- vars
+
   model$info$pars$range <- I(vector("list", nrow(model$info$pars)))
-  model$info$vars$include <- model$info$vars$name %in% include
-  model$info$vars$show <- model$info$vars$name %in% show
+
   model
 }

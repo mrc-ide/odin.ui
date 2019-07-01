@@ -466,3 +466,7 @@ a.text-muted {
 .slider .shiny-input-container {
     width: 100% !important;
 }
+
+.ui-sortable {
+    background-color: #f5f5f5;
+}

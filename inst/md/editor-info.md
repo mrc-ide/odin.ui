@@ -1,0 +1,1 @@
+By default, all variables and outputs are included everywhere.  As models get more complicated, this gets more cluttered.  You can disable variables by dragging them into the "Hide variable" section below, or disable them entirely by dragging into "Disable variable".  You can also reorder variables.  Hidden variables are still computed.
