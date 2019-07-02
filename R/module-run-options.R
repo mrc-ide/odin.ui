@@ -7,6 +7,7 @@ mod_control_run_ui <- function(id) {
 ## This will need some work for a *pair* of models?
 mod_control_run_server <- function(input, output, session, model, options) {
   rv <- shiny::reactiveValues()
+  options <- control_run_options_validate(options)
 
   shiny::observe({
     rv$configuration <- control_run_configuration(model(), options)
@@ -75,4 +76,11 @@ control_run_result <- function(options, values) {
 
 control_run_options <- function(control_end_time = FALSE, replicates = FALSE) {
   list(control_end_time = control_end_time, replicates = replicates)
+}
+
+
+control_run_options_validate <- function(options) {
+  control_run_options(
+    control_end_time = options$control_end_time %||% FALSE,
+    replicates = options$replicates %||% FALSE)
 }
