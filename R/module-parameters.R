@@ -42,7 +42,7 @@ mod_parameters_server <- function(input, output, session, pars,
       if (res$success) {
         set_inputs(session, res$value$id_value, res$value$value)
       }
-      output$status <- shiny::renderUI(parameters_status(res))
+      output$status <- shiny::renderUI(parameters_status(res, TRUE))
     })
 
   set <- function(values, notify = TRUE) {
