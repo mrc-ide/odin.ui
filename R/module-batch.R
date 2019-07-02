@@ -11,6 +11,7 @@ mod_batch_ui <- function(id) {
           shiny::uiOutput(ns("status_data")),
           shiny::uiOutput(ns("status_model")),
           mod_parameters_ui(ns("parameters")),
+          mod_control_run_ui(ns("control_run")),
           shiny::uiOutput(ns("control_focal")),
           mod_lock_ui(ns("lock")),
           shiny::hr(),
@@ -36,12 +37,14 @@ mod_batch_ui <- function(id) {
 
 
 mod_batch_server <- function(input, output, session, model, data, link,
-                             import = NULL) {
+                             import = NULL, run_options = NULL) {
   rv <- shiny::reactiveValues()
 
   parameters <- shiny::callModule(
     mod_parameters_server, "parameters",
     shiny::reactive(rv$configuration$pars))
+  control_run <- shiny::callModule(
+    mod_control_run_server, "control_run", model, run_options)
 
   set_result <- function(result) {
     parameters$set(result$value$simulation$user)
@@ -70,7 +73,7 @@ mod_batch_server <- function(input, output, session, model, data, link,
 
   shiny::observe({
     rv$configuration <- common_model_data_configuration(
-      model(), data(), link())
+      model(), data(), link(), control_run$result()$options)
   })
 
   output$control_focal <- shiny::renderUI({
@@ -83,7 +86,8 @@ mod_batch_server <- function(input, output, session, model, data, link,
 
   shiny::observeEvent(
     input$go_button, {
-      rv$result <- with_success(batch_run(rv$configuration, rv$focal))
+      rv$result <- with_success(batch_run(
+        rv$configuration, rv$focal, control_run$result()))
     })
 
   shiny::observe({
@@ -104,7 +108,8 @@ mod_batch_server <- function(input, output, session, model, data, link,
       if (parameters$set(user)) {
         rv$focal <- batch_focal(
           input$focal_name, input$focal_pct, input$focal_n, user)
-        rv$result <- with_success(batch_run(rv$configuration, rv$focal))
+        rv$result <- with_success(batch_run(
+          rv$configuration, rv$focal, control_run$result()))
       }
     })
 
@@ -194,7 +199,7 @@ batch_focal <- function(name, pct, n, user) {
 }
 
 
-batch_run <- function(configuration, focal) {
+batch_run <- function(configuration, focal, run_options) {
   if (is.null(focal)) {
     return(NULL)
   }
@@ -208,11 +213,11 @@ batch_run <- function(configuration, focal) {
   user <- focal$base
   f <- function(p) {
     user[[name]] <- p
-    vis_run(configuration, user)
+    vis_run(configuration, user, run_options)
   }
 
   ## First, the central runs as our base set:
-  central <- vis_run(configuration, user)
+  central <- vis_run(configuration, user, run_options)
 
   ## Output types we'll work with:
   types <- setdiff(names(central$simulation), "combined")

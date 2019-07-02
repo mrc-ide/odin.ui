@@ -118,7 +118,8 @@ mod_vis_server <- function(input, output, session, data, model, link,
     input$import, {
       user <- import$user()
       if (parameters$set(user)) {
-        rv$result <- with_success(vis_run(rv$configuration, user))
+        rv$result <- with_success(vis_run(
+          rv$configuration, user, control_run$result()))
       }
     })
 
