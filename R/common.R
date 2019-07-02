@@ -75,7 +75,7 @@ plot_plotly <- function(series, logscale_y = FALSE) {
     return(NULL)
   }
   p <- plotly::plot_ly()
-  p <- plotly::config(p, collaborate = FALSE, displaylogo = FALSE)
+  p <- plotly::config(p, displaylogo = FALSE)
 
   ## Don't truncate labels:
   hoverlabel <- list(namelength = -1)

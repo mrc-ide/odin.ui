@@ -13,7 +13,7 @@ Imports:
     dfoptim,
     dygraphs,
     jsonlite,
-    plotly,
+    plotly (>= 4.9.0),
     markdown,
     odin (>= 0.2.0),
     shiny (>= 1.0.4),
