@@ -112,7 +112,8 @@ mod_fit_server <- function(input, output, session, data, model, link) {
   })
 
   shiny::observe({
-    rv$result <- with_success(vis_run(rv$configuration, parameters$result()))
+    rv$result <- with_success(vis_run(
+      rv$configuration, parameters$result(), control_run_default()))
   })
 
   shiny::observe({

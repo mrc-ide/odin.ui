@@ -84,3 +84,8 @@ control_run_options_validate <- function(options) {
     control_end_time = options$control_end_time %||% FALSE,
     replicates = options$replicates %||% FALSE)
 }
+
+
+control_run_default <- function() {
+  control_run_result(control_run_options(), NULL)
+}
