@@ -310,13 +310,16 @@ editor_include <- function(model, result, ns) {
     shiny::tagList(
       shiny::includeMarkdown(odin_ui_file("md/editor-info.md")),
       shinyjqui::orderInput(ns("var_show"), "Reorder variables", show,
-                            connect = ns(c("var_hide", "var_disable"))),
+                            connect = ns(c("var_hide", "var_disable")),
+                            class = "editor_include_show"),
       shinyjqui::orderInput(ns("var_hide"), "Hide variables", hide,
                             connect = ns(c("var_show", "var_disable")),
-                            placeholder = "Drag items here to hide"),
+                            placeholder = "Drag items here to hide",
+                            class = "editor_include_hide"),
       shinyjqui::orderInput(ns("var_disable"), "Disable variables", disable,
                             connect = ns(c("var_hide", "var_show")),
-                            placeholder = "Drag items here to disable")))
+                            placeholder = "Drag items here to disable",
+                            class = "editor_include_disable")))
 }
 
 
