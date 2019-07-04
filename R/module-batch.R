@@ -71,6 +71,10 @@ mod_batch_server <- function(input, output, session, model, data, link,
     batch_status_focal(rv$focal)
   })
 
+  output$status_batch <- shiny::renderUI({
+    batch_status(rv$result)
+  })
+
   shiny::observe({
     rv$configuration <- common_model_data_configuration(
       model(), data(), link(), control_run$result()$options)
@@ -96,7 +100,7 @@ mod_batch_server <- function(input, output, session, model, data, link,
   })
 
   output$import_button <- shiny::renderUI({
-    if (!is.null(import$user())) {
+    if (!is.null(import) && !is.null(import$user())) {
       shiny::actionButton(
         session$ns("import"), import$title, import$icon)
     }
@@ -220,7 +224,7 @@ batch_run <- function(configuration, focal, run_options) {
   central <- vis_run(configuration, user, run_options)
 
   ## Output types we'll work with:
-  types <- setdiff(names(central$simulation), "combined")
+  types <- setdiff(names(drop_null(central$simulation)), "combined")
 
   ## Then the sensitivity around that
   batch <- lapply(value, f)
@@ -231,8 +235,9 @@ batch_run <- function(configuration, focal, run_options) {
   ## Organise output that will download cleanly:
   simulation <- set_names(lapply(types, g), types)
 
-  ## Don't repeat data in the combined output
-  simulation$combined <- cbind(simulation$data, configuration$data$data)
+  if (!is.null(central$simulation$data)) {
+    simulation$combined <- cbind(simulation$data, configuration$data$data)
+  }
 
   ## Update with central runs too:
   simulation$user <- cbind(
