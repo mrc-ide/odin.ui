@@ -23,8 +23,8 @@ mod_parameters_server <- function(input, output, session, pars,
     if (with_option) {
       attr(values, "option") <- get_inputs(input, pars$id_option, pars$name)
     }
+    rv$status <- NULL
     rv$values <- values
-    output$status <- NULL
   })
 
   output$download <- shiny::downloadHandler(
@@ -42,15 +42,19 @@ mod_parameters_server <- function(input, output, session, pars,
       if (res$success) {
         set_inputs(session, res$value$id_value, res$value$value)
       }
-      output$status <- shiny::renderUI(parameters_status(res, TRUE))
+      rv$status <- parameter_notify_updated(res, TRUE)
     })
+
+  output$status <- shiny::renderUI({
+    rv$status
+  })
 
   set <- function(values, notify = TRUE) {
     res <- parameters_validate_user(values, rv$configuration$pars)
     if (res$success) {
       set_inputs(session, res$value$id_value, res$value$value)
     }
-    output$status <- shiny::renderUI(parameters_status(res, notify))
+    rv$status <- parameter_notify_updated(res, TRUE)
     res$success
   }
 
@@ -194,10 +198,8 @@ parameters_validate_user <- function(values, pars) {
 }
 
 
-parameters_status <- function(res, notify) {
-  if (!notify) {
-    NULL # also clears any previous notification
-  } else if (res$success) {
+parameters_status <- function(res) {
+  if (res$success) {
     simple_panel("success", "Parameters updated", NULL)
   } else {
     simple_panel("danger", "Error uploading parameters", res$error)
@@ -215,5 +217,24 @@ parameter_input <- function(name, id, value, range) {
     simple_numeric_input(name, id, value)
   } else {
     simple_slider_input(name, id, value, range)
+  }
+}
+
+
+parameter_changed <- function(values, previous) {
+  is.null(previous) ||
+    !isTRUE(all.equal(unname(values[previous$name]), as.list(previous$value)))
+}
+
+
+parameter_notify_updated <- function(res, notify) {
+  if (res$success) {
+    if (notify) {
+      shiny::showNotification(
+        "Parameters updated", type = "message", duration = 2)
+    }
+    NULL
+  } else {
+    simple_panel("danger", "Error updating parameters", res$error)
   }
 }
