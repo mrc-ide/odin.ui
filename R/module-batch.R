@@ -13,6 +13,7 @@ mod_batch_ui <- function(id) {
           mod_parameters_ui(ns("parameters")),
           mod_control_run_ui(ns("control_run")),
           shiny::uiOutput(ns("control_focal")),
+          shiny::uiOutput(ns("control_plot")),
           mod_lock_ui(ns("lock")),
           shiny::hr(),
           shiny::uiOutput(ns("import_button"), inline = TRUE),
@@ -84,6 +85,14 @@ mod_batch_server <- function(input, output, session, model, data, link,
     batch_control_focal(rv$configuration, session$ns)
   })
 
+  output$control_plot <- shiny::renderUI({
+    batch_control_plot(rv$configuration, session$ns)
+  })
+
+  output$control_plot_options <- shiny::renderUI({
+    batch_control_plot_options(rv$configuration, input$plot_type, session$ns)
+  })
+
   output$control_graph <- shiny::renderUI({
     batch_control_graph(rv$configuration, session$ns)
   })
@@ -121,8 +130,11 @@ mod_batch_server <- function(input, output, session, model, data, link,
     if (!is.null(rv$result$value)) {
       vars <- rv$configuration$vars
       y2_model <- get_inputs(input, vars$id_graph_option, vars$name)
+      options <- list(type = input$plot_type,
+                      slice_time = input$plot_slice_time,
+                      extreme_type = input$plot_extreme_type)
       batch_plot(rv$result$value, locked$result()$value,
-                 y2_model, input$logscale_y)
+                 y2_model, input$logscale_y, options)
     }
   })
 
@@ -185,6 +197,35 @@ batch_control_focal <- function(configuration, ns, restore = NULL) {
     simple_numeric_input("Number of runs", ns("focal_n"), n),
     shiny::textOutput(ns("status_focal")),
     ns = ns)
+}
+
+
+batch_control_plot <- function(configuration, ns, restore = NULL) {
+  if (is.null(configuration)) {
+    return(NULL)
+  }
+
+  types <- c("Trace over time" = "trace",
+             "Value at a single time" = "slice",
+             "Value at its min/max" = "extreme")
+
+  mod_model_control_section(
+    "Plot options",
+    simple_select_input("Type of plot", ns("plot_type"), types),
+    shiny::uiOutput(ns("control_plot_options")),
+    ns = ns)
+}
+
+
+batch_control_plot_options <- function(configuration, type, ns,
+                                       restore = NULL) {
+  switch(
+    type,
+    slice = simple_numeric_input(
+      "Time to use (default is last)", ns("plot_slice_time"), NA),
+    extreme = simple_select_input(
+      "Extreme to use", ns("plot_extreme_type"), c("max", "min")),
+    NULL)
 }
 
 
@@ -261,21 +302,79 @@ batch_run <- function(configuration, focal, run_options) {
 }
 
 
-batch_plot_series <- function(result, locked, y2_model) {
+batch_plot_series <- function(result, locked, y2_model, options) {
+  switch(
+    options$type,
+    trace = batch_plot_series_trace,
+    slice = batch_plot_series_slice,
+    extreme = batch_plot_series_extreme)(result, locked, y2_model, options)
+}
+
+
+batch_plot_series_slice <- function(result, locked, y2_model, options) {
+  cfg <- result$configuration
+  cols <- cfg$cols
+  vars <- cfg$vars[cfg$vars$include, ]
+  model_vars <- vars$name
+
+  xy <- result$simulation$central$simulation$smooth
+
+  t <- options$slice_time
+  if (is_missing(t)) {
+    i <- nrow(xy)
+  } else {
+    i <- which.min(abs(t - xy[, 1]))
+  }
+
+  x <- cfg$focal$value
+  tmp <- lapply(result$simulation$batch, function(x)
+    x$simulation$smooth[i, -1, drop = FALSE])
+  y <- do.call(rbind, tmp)
+
+  ## TODO: also add the central on as a point here?
+  ## TODO: also add the locked data on here
+  plot_plotly_series_bulk(x, y, cols, points = FALSE, y2 = y2_model)
+}
+
+
+batch_plot_series_extreme <- function(result, locked, y2_model, options) {
+  if (is_missing(options$extreme_type)) {
+    return(NULL)
+  }
+
+  cfg <- result$configuration
+  cols <- cfg$cols
+  vars <- cfg$vars[cfg$vars$include, ]
+  model_vars <- vars$name
+
+  ## There's some annotation work do to make this nicer.
+  f <- if (options$extreme_type == "max") max else min
+  x <- cfg$focal$value
+  tmp <- lapply(result$simulation$batch, function(x)
+    apply(x$simulation$smooth[, -1, drop = FALSE], 2, f))
+  y <- do.call(rbind, tmp)
+
+  ## TODO: also add the central on as a point here?
+  ## TODO: also add the locked data on here
+  plot_plotly_series_bulk(x, y, cols, points = FALSE, y2 = y2_model)
+}
+
+
+batch_plot_series_trace <- function(result, locked, y2_model, options) {
   cfg <- result$configuration
   y2 <- odin_y2(y2_model, cfg$data$name_vars, cfg$link$map)
-  c(batch_plot_series_locked(result, locked, y2),
-    batch_plot_series_focal(result, y2),
-    batch_plot_series_data(result, y2))
+  c(batch_plot_series_trace_locked(result, locked, y2),
+    batch_plot_series_trace_focal(result, y2),
+    batch_plot_series_trace_data(result, y2))
 }
 
 
-batch_plot_series_focal <- function(result, y2) {
-  batch_plot_series_modelled(result, y2, FALSE)
+batch_plot_series_trace_focal <- function(result, y2) {
+  batch_plot_series_trace_modelled(result, y2, FALSE)
 }
 
 
-batch_plot_series_locked <- function(result, locked, y2) {
+batch_plot_series_trace_locked <- function(result, locked, y2) {
   if (is.null(locked)) {
     return(NULL)
   }
@@ -284,11 +383,11 @@ batch_plot_series_locked <- function(result, locked, y2) {
   }
 
   model_vars <- intersect(locked$configuration$vars$name, y2)
-  batch_plot_series_modelled(locked, y2, TRUE)
+  batch_plot_series_trace_modelled(locked, y2, TRUE)
 }
 
 
-batch_plot_series_modelled <- function(result, y2, locked = FALSE) {
+batch_plot_series_trace_modelled <- function(result, y2, locked = FALSE) {
   cfg <- result$configuration
   cols <- cfg$cols
   vars <- cfg$vars[cfg$vars$include, ]
@@ -327,7 +426,7 @@ batch_plot_series_modelled <- function(result, y2, locked = FALSE) {
 }
 
 
-batch_plot_series_data <- function(result, include) {
+batch_plot_series_trace_data <- function(result, include) {
   cfg <- result$configuration
   cols <- cfg$cols
   data <- cfg$data$data
@@ -337,8 +436,9 @@ batch_plot_series_data <- function(result, include) {
 }
 
 
-batch_plot <- function(result, locked, include, logscale_y) {
-  plot_plotly(batch_plot_series(result, locked, include), logscale_y)
+batch_plot <- function(result, locked, include, logscale_y, options) {
+  plot_plotly(batch_plot_series(result, locked, include, options),
+              logscale_y)
 }
 
 
