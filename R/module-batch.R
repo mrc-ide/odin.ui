@@ -437,8 +437,13 @@ batch_plot_series_trace_data <- function(result, include) {
 
 
 batch_plot <- function(result, locked, include, logscale_y, options) {
+  xlab <- switch(
+    options$type,
+    trace = "Time",
+    slice = result$focal$name,
+    extreme = result$focal$name)
   plot_plotly(batch_plot_series(result, locked, include, options),
-              logscale_y)
+              logscale_y, xlab)
 }
 
 
