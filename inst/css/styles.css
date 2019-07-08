@@ -491,3 +491,8 @@ a.text-muted {
 /* default button style conveys intent here nicely */
 .editor_include_disabled .btn {
 }
+
+
+.model-code {
+    font-size: 80%;
+}
