@@ -11,6 +11,7 @@ mod_vis_compare_ui <- function(id) {
           shiny::uiOutput(ns("status_model")),
           ## TODO: status_configure but tone down warning to info
           mod_parameters_ui(ns("parameters")),
+          mod_control_run_ui(ns("control_run")),
           ## mod_lock_ui(ns("lock")),
           shiny::hr(),
           ##
@@ -28,23 +29,32 @@ mod_vis_compare_ui <- function(id) {
           mod_download_ui(ns("download")),
           shiny::uiOutput(ns("control_graph"))),
         shiny::fluidRow(
-          shiny::column(4, shiny::uiOutput(ns("statusvis")))))))
+          shiny::column(4, shiny::uiOutput(ns("statusvis")))),
+        mod_table_summary_ui(ns("table")))))
 }
 
 
-mod_vis_compare_server <- function(input, output, session, model1, model2) {
+mod_vis_compare_server <- function(input, output, session, model1, model2,
+                                   run_options = NULL) {
   rv <- shiny::reactiveValues()
+  run_options <- control_run_options(control_end_time = TRUE)
 
   parameters <- shiny::callModule(
     mod_parameters_server, "parameters",
     shiny::reactive(rv$configuration$pars))
+  control_run <- shiny::callModule(
+    mod_control_run_server, "control_run", model1, run_options)
 
   download <- shiny::callModule(
     mod_download_server, "download", shiny::reactive(rv$result$value),
     "compare")
 
+  table <- shiny::callModule(
+    mod_table_summary_server, "table", shiny::reactive(rv$result))
+
   shiny::observe({
-    rv$configuration <- compare_configuration(model1(), model2())
+    rv$configuration <- compare_configuration(
+      model1(), model2(), control_run$result()$options)
   })
 
   output$control_graph <- shiny::renderUI({
@@ -54,7 +64,8 @@ mod_vis_compare_server <- function(input, output, session, model1, model2) {
   shiny::observeEvent(
     input$run, {
       user <- parameters$result()
-      rv$result <- with_success(compare_vis_run(rv$configuration, user))
+      rv$result <- with_success(compare_vis_run(
+        rv$configuration, user, control_run$result()))
     })
 
   output$odin_output <- plotly::renderPlotly({
@@ -77,7 +88,7 @@ compare_union_metadata <- function(a, b, names) {
 }
 
 
-compare_configuration <- function(model1, model2) {
+compare_configuration <- function(model1, model2, run_options = NULL) {
   if (!isTRUE(model1$success) || !isTRUE(model2$success)) {
     return(NULL)
   }
@@ -105,7 +116,7 @@ compare_configuration <- function(model1, model2) {
 }
 
 
-compare_vis_run <- function(configuration, user) {
+compare_vis_run <- function(configuration, user, run_options) {
   if (is.null(configuration) || is.null(user)) {
     return(NULL)
   }
@@ -119,7 +130,11 @@ compare_vis_run <- function(configuration, user) {
   mod1 <- configuration$model1$model(user = user, unused_user_action = "ignore")
   mod2 <- configuration$model2$model(user = user, unused_user_action = "ignore")
 
-  t_end <- 30 # TODO - must be configurable, but where?
+  t_end <- run_options$values$end
+  if (is_missing(t_end)) {
+    stop("Model run end time must be specified")
+  }
+
   t_n <- 501 # TODO - should be configurable
 
   y1 <- model_run(mod1, t_end, t_n,

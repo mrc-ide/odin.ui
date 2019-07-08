@@ -48,7 +48,8 @@ mod_vis_ui <- function(id) {
           mod_download_ui(ns("download")),
           shiny::uiOutput(ns("control_graph"))),
         shiny::fluidRow(
-          shiny::column(4, shiny::uiOutput(ns("status_vis")))))))
+          shiny::column(4, shiny::uiOutput(ns("status_vis")))),
+        mod_model_code_ui(ns("code")))))
 }
 
 
@@ -66,6 +67,8 @@ mod_vis_server <- function(input, output, session, data, model, link,
     shiny::reactive(rv$configuration$pars))
   control_run <- shiny::callModule(
     mod_control_run_server, "control_run", model, run_options)
+  code <- shiny::callModule(
+    mod_model_code_server, "code", model)
 
   set_result <- function(result) {
     parameters$set(result$value$simulation$user)
