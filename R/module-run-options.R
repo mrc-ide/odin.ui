@@ -37,6 +37,7 @@ mod_control_run_server <- function(input, output, session, model, options) {
 }
 
 
+## TODO: this needs to cope better with *lists* of models
 control_run_configuration <- function(model, options) {
   if (!isTRUE(model$success)) {
     return(NULL)
