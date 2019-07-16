@@ -27,13 +27,13 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
     shiny::actionButton(ns("compile"), "Compile",
                         shiny::icon("cogs"),
                         class = "btn-blue"),
-    shiny::actionButton(ns("reset_button"), "Reset",
-                        shiny::icon("refresh"),
-                        class = "btn-grey"),
-
-    shiny::div(class = "pull-right",
-               shiny::downloadButton(
-                 ns("download_button"), "Save", class = "btn-blue")),
+    shiny::div(
+      class = "pull-right",
+      shiny::actionButton(ns("reset_button"), "Reset",
+                          shiny::icon("refresh"),
+                          class = "btn-danger"),
+      shiny::downloadButton(
+        ns("download_button"), "Save", class = "btn-blue")),
 
     ## And these should go elsewhere too
     shiny::actionButton(ns("validate_button"), "Validate",
