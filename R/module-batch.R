@@ -391,7 +391,9 @@ batch_plot_series_trace_modelled <- function(result, y2, locked = FALSE) {
   cfg <- result$configuration
   cols <- cfg$cols
   vars <- cfg$vars[cfg$vars$include, ]
-  model_vars <- vars$name
+  model_vars <- intersect(
+    vars$name,
+    colnames(result$simulation$central$simulation$smooth))
 
   if (locked) {
     width <- 1
@@ -436,13 +438,13 @@ batch_plot_series_trace_data <- function(result, include) {
 }
 
 
-batch_plot <- function(result, locked, include, logscale_y, options) {
+batch_plot <- function(result, locked, y2_model, logscale_y, options) {
   xlab <- switch(
     options$type,
     trace = "Time",
     slice = result$focal$name,
     extreme = result$focal$name)
-  plot_plotly(batch_plot_series(result, locked, include, options),
+  plot_plotly(batch_plot_series(result, locked, y2_model, options),
               logscale_y, xlab)
 }
 
