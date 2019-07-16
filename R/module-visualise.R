@@ -204,7 +204,7 @@ vis_run <- function(configuration, user, run_options) {
   }
 
   model <- configuration$model
-  mod <- model$model(user = user)
+  mod <- model$model(user = user, unused_user_action = "ignore")
 
   t_smooth <- seq(t_start, t_end, length.out = 501)
   result_smooth <- mod$run(c(if (t_smooth[[1]] > 0) 0, t_smooth))
