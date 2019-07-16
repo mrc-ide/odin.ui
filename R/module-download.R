@@ -12,7 +12,7 @@ mod_download_server <- function(input, output, session, data, prefix) {
   })
 
   output$ui <- shiny::renderUI({
-    download_ui(session$ns, rv$names)
+    download_ui(session$ns, rv$names, data()$simulation)
   })
 
   output$download_button <- shiny::downloadHandler(
@@ -26,10 +26,14 @@ mod_download_server <- function(input, output, session, data, prefix) {
 }
 
 
-download_ui <- function(ns, names) {
+download_ui <- function(ns, names, data) {
   if (is.null(names)) {
     return(NULL)
   }
+
+  ## Only offer elements that we actually have data for:
+  i <- !vlapply(names$data, function(el) is.null(data[[el]]))
+
   shiny::div(
     class = "form-inline mt-5",
     shiny::div(
@@ -38,7 +42,7 @@ download_ui <- function(ns, names) {
         ns("download_filename"), placeholder = "filename", value = "")),
     shiny::div(
       class = "form-group",
-      raw_select_input(ns("download_type"), choices = names$display)),
+      raw_select_input(ns("download_type"), choices = names$display[i])),
     shiny::downloadButton(
       ns("download_button"), "Download", class = "btn-blue"))
 }
@@ -57,8 +61,8 @@ download_filename <- function(filename, prefix, type, names) {
 
 
 download_data <- function(filename, data, type, names) {
-  data <- data[[match(type, names$display)]]
-  write_csv(data, filename)
+  nm <- names$data[[match(type, names$display)]]
+  write_csv(data[[nm]], filename)
 }
 
 
