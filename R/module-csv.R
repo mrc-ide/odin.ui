@@ -18,7 +18,7 @@ mod_csv_ui <- function(id) {
         shiny::hr(),
         shiny::div(
           class = "text-right",
-          shiny::actionButton(ns("clear"), "Clear", shiny::icon("refresh"),
+          shiny::actionButton(ns("clear"), "Clear", shiny::icon("times"),
                               class = "btn-danger"))),
       shiny::mainPanel(
         plotly::plotlyOutput(ns("data_plot")),

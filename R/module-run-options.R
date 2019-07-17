@@ -30,8 +30,15 @@ mod_control_run_server <- function(input, output, session, model, options) {
     set_inputs(session, names(state), state)
   }
 
+  reset <- function() {
+    if (!is.null(rv$configuration)) {
+      browser()
+    }
+  }
+
   list(
     result = shiny::reactive(rv$values),
+    reset = reset,
     get_state = get_state,
     set_state = set_state)
 }

@@ -16,9 +16,9 @@ mod_fit_ui <- function(id) {
           mod_lock_ui(ns("lock")),
           shiny::hr(),
           ##
-          shiny::actionButton(ns("reset_button"), "Reset",
+          shiny::actionButton(ns("reset"), "Reset",
                               shiny::icon("refresh"),
-                              class = "btn-grey pull-right ml-2"),
+                              class = "btn-danger pull-right ml-2"),
           shiny::actionButton(ns("fit"), "Fit model",
                               shiny::icon("play"),
                               class = "btn-blue pull-right"))),
@@ -105,6 +105,18 @@ mod_fit_server <- function(input, output, session, data, model, link) {
       if (rv$fit$success) {
         parameters$set(rv$fit$value$user, notify = FALSE)
       }
+    })
+
+  shiny::observeEvent(
+    input$reset, {
+      rv$fit <- NULL
+      rv$result <- NULL
+      parameters$reset()
+      locked$clear()
+      control_run$reset()
+      output$control_target <- shiny::renderUI(
+        fit_control_target(rv$configuration$link, session$ns))
+      ## TODO: reset control graph, but do that as a module call.
     })
 
   shiny::observe({

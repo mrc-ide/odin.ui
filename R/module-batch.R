@@ -17,10 +17,10 @@ mod_batch_ui <- function(id) {
           mod_lock_ui(ns("lock")),
           shiny::hr(),
           shiny::uiOutput(ns("import_button"), inline = TRUE),
-          shiny::actionButton(ns("reset_button"), "Reset",
+          shiny::actionButton(ns("reset"), "Reset",
                               shiny::icon("refresh"),
-                              class = "btn-grey pull-right ml-2"),
-          shiny::actionButton(ns("go_button"), "Run model",
+                              class = "btn-red pull-right ml-2"),
+          shiny::actionButton(ns("run"), "Run model",
                               shiny::icon("play"),
                               class = "btn-blue pull-right"))),
       shiny::mainPanel(
@@ -98,9 +98,21 @@ mod_batch_server <- function(input, output, session, model, data, link,
   })
 
   shiny::observeEvent(
-    input$go_button, {
+    input$run, {
       rv$result <- with_success(batch_run(
         rv$configuration, rv$focal, control_run$result()))
+    })
+
+  shiny::observeEvent(
+    input$reset, {
+      rv$result <- NULL
+      parameters$reset()
+      locked$clear()
+      control_run$reset()
+      output$control_focal <- shiny::renderUI(
+        batch_control_focal(rv$configuration, session$ns))
+      output$control_plot <- shiny::renderUI(
+        batch_control_plot(rv$configuration, session$ns))
     })
 
   shiny::observe({

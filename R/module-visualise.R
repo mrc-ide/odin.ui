@@ -29,10 +29,10 @@ mod_vis_ui <- function(id) {
           shiny::hr(),
           ##
           shiny::uiOutput(ns("import_button"), inline = TRUE),
-          shiny::actionButton(ns("reset_button"), "Reset",
+          shiny::actionButton(ns("reset"), "Reset",
                               shiny::icon("refresh"),
-                              class = "btn-grey pull-right ml-2"),
-          shiny::actionButton(ns("go_button"), "Run model",
+                              class = "btn-danger pull-right ml-2"),
+          shiny::actionButton(ns("run"), "Run model",
                               shiny::icon("play"),
                               class = "btn-blue pull-right"),
           shiny::div(
@@ -105,9 +105,17 @@ mod_vis_server <- function(input, output, session, data, model, link,
   })
 
   shiny::observeEvent(
-    input$go_button, {
+    input$run, {
       rv$result <- with_success(vis_run(
         rv$configuration, parameters$result(), control_run$result()))
+    })
+
+  shiny::observeEvent(
+    input$reset, {
+      rv$result <- NULL
+      parameters$reset()
+      locked$clear()
+      run_options$reset()
     })
 
   output$import_button <- shiny::renderUI({

@@ -33,6 +33,9 @@ download_ui <- function(ns, names, data) {
 
   ## Only offer elements that we actually have data for:
   i <- !vlapply(names$data, function(el) is.null(data[[el]]))
+  if (sum(i) == 0) {
+    return(NULL)
+  }
 
   shiny::div(
     class = "form-inline mt-5",

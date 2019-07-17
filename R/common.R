@@ -31,7 +31,7 @@ get_inputs <- function(input, ids, names = ids) {
 
 set_inputs <- function(session, ids, values, fn = shiny::updateNumericInput) {
   for (i in seq_along(ids)) {
-    shiny::updateNumericInput(session, ids[[i]], value = values[[i]])
+    fn(session, ids[[i]], value = values[[i]])
   }
 }
 
