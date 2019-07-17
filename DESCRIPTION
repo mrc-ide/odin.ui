@@ -12,6 +12,7 @@ Imports:
     dde (>= 0.0.6),
     dfoptim,
     dygraphs,
+    ids,
     jsonlite,
     plotly (>= 4.9.0),
     markdown,

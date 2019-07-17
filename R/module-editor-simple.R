@@ -219,7 +219,8 @@ editor_model_info <- function(result) {
     }
 
     title <- sprintf("Compilation: %s", title)
-    panel <- simple_panel(class, title, body, icon_name)
+    panel <- panel_collapseable(class, title, body, icon_name,
+                                collapsed = success)
   }
 
   panel

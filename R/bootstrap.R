@@ -1,10 +1,5 @@
 simple_panel <- function(class, title, body, icon_name = NULL) {
-  icon_name <- icon_name %||% switch(
-    class,
-    danger = "exclamation-circle",
-    success = "check-circle",
-    "info-circle")
-  icon <- shiny::icon(sprintf("%s fa-lg", icon_name))
+  icon <- panel_icon(icon_name, class)
   head <- shiny::div(class = "panel-heading", icon, title)
   if (!is.null(body) && !identical(body, "")) {
     body <- shiny::div(class = "panel-body", body)
@@ -15,6 +10,36 @@ simple_panel <- function(class, title, body, icon_name = NULL) {
     class = "panel-group",
     shiny::div(
       class = sprintf("panel panel-%s", class), head, body))
+}
+
+
+panel_collapseable <- function(class, title, body, icon_name = NULL,
+                               collapsed = FALSE, id = NULL) {
+  id <- id %||% ids::random_id()
+  icon <- panel_icon(icon_name, class)
+
+  head <- shiny::div(class = "panel-heading", icon, title,
+                     "data-toggle" = "collapse",
+                     "data-target" = paste0("#", id))
+  body_class <- paste0("panel-body", if (collapsed) " collapse" else "")
+  body <- shiny::div(class = body_class, id = id, body)
+
+  shiny::div(
+    class = "panel-group",
+    shiny::div(
+      class = sprintf("panel panel-%s", class), head, body))
+}
+
+
+panel_icon <- function(icon_name, class) {
+  if (is.null(icon_name)) {
+    icon_name <- switch(
+      class,
+      danger = "exclamation-circle",
+      success = "check-circle",
+      "info-circle")
+  }
+  shiny::icon(sprintf("%s fa-lg", icon_name))
 }
 
 
