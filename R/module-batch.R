@@ -219,7 +219,8 @@ batch_control_plot <- function(configuration, ns, restore = NULL) {
 
   types <- c("Trace over time" = "trace",
              "Value at a single time" = "slice",
-             "Value at its min/max" = "extreme")
+             "Value at its min/max" = "extreme",
+             "Time at value's min/max" = "textreme")
 
   mod_model_control_section(
     "Plot options",
@@ -236,6 +237,8 @@ batch_control_plot_options <- function(configuration, type, ns,
     slice = simple_numeric_input(
       "Time to use (default is last)", ns("plot_slice_time"), NA),
     extreme = simple_select_input(
+      "Extreme to use", ns("plot_extreme_type"), c("max", "min")),
+    textreme = simple_select_input(
       "Extreme to use", ns("plot_extreme_type"), c("max", "min")),
     NULL)
 }
@@ -315,11 +318,13 @@ batch_run <- function(configuration, focal, run_options) {
 
 
 batch_plot_series <- function(result, locked, y2_model, options) {
-  switch(
+  fn <- switch(
     options$type,
     trace = batch_plot_series_trace,
     slice = batch_plot_series_slice,
-    extreme = batch_plot_series_extreme)(result, locked, y2_model, options)
+    extreme = batch_plot_series_extreme,
+    textreme = batch_plot_series_textreme)
+  fn(result, locked, y2_model, options)
 }
 
 
@@ -365,6 +370,31 @@ batch_plot_series_extreme <- function(result, locked, y2_model, options) {
   tmp <- lapply(result$simulation$batch, function(x)
     apply(x$simulation$smooth[, -1, drop = FALSE], 2, f))
   y <- do.call(rbind, tmp)
+
+  ## TODO: also add the central on as a point here?
+  ## TODO: also add the locked data on here
+  plot_plotly_series_bulk(x, y, cols, points = FALSE, y2 = y2_model)
+}
+
+
+batch_plot_series_textreme <- function(result, locked, y2_model, options) {
+  if (is_missing(options$extreme_type)) {
+    return(NULL)
+  }
+
+  cfg <- result$configuration
+  cols <- cfg$cols
+  vars <- cfg$vars[cfg$vars$include, ]
+  model_vars <- vars$name
+
+  ## There's some annotation work do to make this nicer.
+  f <- if (options$extreme_type == "max") which.max else which.min
+  x <- cfg$focal$value
+  t <- result$simulation$central$simulation$smooth[, 1]
+  tmp <- lapply(result$simulation$batch, function(x)
+    apply(x$simulation$smooth[, -1, drop = FALSE], 2, f))
+  y <- do.call(rbind, tmp)
+  y[] <- t[c(y)]
 
   ## TODO: also add the central on as a point here?
   ## TODO: also add the locked data on here
@@ -451,13 +481,8 @@ batch_plot_series_trace_data <- function(result, include) {
 
 
 batch_plot <- function(result, locked, y2_model, logscale_y, options) {
-  xlab <- switch(
-    options$type,
-    trace = "Time",
-    slice = result$focal$name,
-    extreme = result$focal$name)
   plot_plotly(batch_plot_series(result, locked, y2_model, options),
-              logscale_y, xlab)
+              logscale_y, batch_xlab(options$type, result$focal))
 }
 
 
@@ -479,4 +504,24 @@ batch_status <- function(result) {
   if (!is.null(result$error)) {
     simple_panel("danger", "Error running model", result$error)
   }
+}
+
+
+batch_xlab <- function(type, focal) {
+  switch(
+    type,
+    trace = "Time",
+    slice = focal$name,
+    extreme = focal$name,
+    textreme = focal$name)
+}
+
+
+batch_ylab <- function(type, focal) {
+  switch(
+    type,
+    trace = NULL,
+    slice = NULL,
+    extreme = "Maximum value",
+    textreme = "Time")
 }

@@ -70,7 +70,8 @@ odin_y2 <- function(y2_model, name_data, link) {
 
 
 ##' @importFrom plotly plot_ly
-plot_plotly <- function(series, logscale_y = FALSE, xlab = "Time") {
+plot_plotly <- function(series, logscale_y = FALSE, xlab = "Time",
+                        ylab = NULL) {
   if (length(series) == 0L) {
     return(NULL)
   }
@@ -100,6 +101,9 @@ plot_plotly <- function(series, logscale_y = FALSE, xlab = "Time") {
 
   if (!is.null(xlab)) {
     p <- plotly::layout(p, xaxis = list(title = xlab))
+  }
+  if (!is.null(ylab)) {
+    p <- plotly::layout(p, yaxis = list(title = ylab))
   }
 
   if (isTRUE(logscale_y)) {

@@ -107,11 +107,11 @@ batch_compare_run <- function(configuration, focal, run_options) {
 
   f <- function(model) {
     configuration$model <- model
-    batch_run(configuration, focal, run_options)$simulation
+    batch_run(configuration, focal, run_options)
   }
 
-  y1 <- f(configuration$model1)
-  y2 <- f(configuration$model2)
+  res1 <- f(configuration$model1)
+  res2 <- f(configuration$model2)
 
   ## A bit of fairly ugly transformation on the download names:
   download_names <- download_names(
@@ -121,6 +121,7 @@ batch_compare_run <- function(configuration, focal, run_options) {
   i <- rep(1:2, each = length(download_names$display))
   model_names <- configuration$names
 
+  configuration <- res1$configuration
   configuration$download_names <- download_names(
     display = sprintf("%s (%s)", download_names$display, model_names$long[i]),
     filename = sprintf("%s-%s", download_names$filename, model_names$short[i]),
@@ -128,12 +129,14 @@ batch_compare_run <- function(configuration, focal, run_options) {
 
   list(configuration = configuration,
        focal = focal,
-       simulation = list(model1 = y1, model2 = y2))
+       simulation = list(model1 = res1$simulation, model2 = res2$simulation))
 }
 
 
 batch_compare_plot <- function(result, y2_model, logscale_y, options) {
-  plot_plotly(batch_compare_plot_series(result, y2_model, options), logscale_y)
+  plot_plotly(batch_compare_plot_series(result, y2_model, options),
+              logscale_y, batch_xlab(options$type, result$focal),
+              batch_ylab(options$type, result$focal))
 }
 
 
