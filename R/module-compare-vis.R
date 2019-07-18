@@ -15,7 +15,7 @@ mod_vis_compare_ui <- function(id) {
           ## mod_lock_ui(ns("lock")),
           shiny::hr(),
           ##
-          shiny::actionButton(ns("reset_button"), "Reset",
+          shiny::actionButton(ns("reset"), "Reset",
                               shiny::icon("refresh"),
                               class = "btn-grey pull-right ml-2"),
           shiny::actionButton(ns("run"), "Run model",
@@ -27,9 +27,9 @@ mod_vis_compare_ui <- function(id) {
         shiny::div(
           class = "pull-right",
           mod_download_ui(ns("download")),
-          shiny::uiOutput(ns("control_graph"))),
+          mod_control_graph_ui(ns("control_graph"))),
         shiny::fluidRow(
-          shiny::column(4, shiny::uiOutput(ns("statusvis")))),
+          shiny::column(4, shiny::uiOutput(ns("status_vis")))),
         mod_table_summary_ui(ns("table")))))
 }
 
@@ -42,6 +42,9 @@ mod_vis_compare_server <- function(input, output, session, model1, model2,
   parameters <- shiny::callModule(
     mod_parameters_server, "parameters",
     shiny::reactive(rv$configuration$pars))
+  control_graph <- shiny::callModule(
+    mod_control_graph_server, "control_graph",
+    shiny::reactive(rv$configuration))
   control_run <- shiny::callModule(
     mod_control_run_server, "control_run", model1, run_options)
 
@@ -57,10 +60,6 @@ mod_vis_compare_server <- function(input, output, session, model1, model2,
       model1(), model2(), control_run$result()$options)
   })
 
-  output$control_graph <- shiny::renderUI({
-    compare_control_graph(rv$configuration, session$ns)
-  })
-
   shiny::observeEvent(
     input$run, {
       user <- parameters$result()
@@ -68,12 +67,23 @@ mod_vis_compare_server <- function(input, output, session, model1, model2,
         rv$configuration, user, control_run$result()))
     })
 
+  shiny::observeEvent(
+    input$reset, {
+      rv$result <- NULL
+      ## modules
+      parameters$reset()
+      control_run$reset()
+      control_graph$reset()
+    })
+
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result$value)) {
-      vars <- rv$configuration$vars
-      y2_model <- get_inputs(input, vars$id_graph_option, vars$name)
-      compare_vis_plot(rv$result$value, y2_model, input$logscale_y)
+      compare_vis_plot(rv$result$value, control_graph$result())
     }
+  })
+
+  output$status_vis <- shiny::renderUI({
+    vis_status(rv$result)
   })
 }
 
@@ -147,8 +157,10 @@ compare_vis_run <- function(configuration, user, run_options) {
 }
 
 
-compare_vis_plot <- function(result, y2, logscale_y) {
-  plot_plotly(compare_vis_plot_series(result, y2), logscale_y)
+compare_vis_plot <- function(result, control) {
+  y2 <- control$y2
+  logscale <- control$logscale
+  plot_plotly(compare_vis_plot_series(result, y2), logscale)
 }
 
 
@@ -174,9 +186,4 @@ compare_vis_plot_series <- function(result, y2) {
     label = label2, legendgroup = vars2, dash = "dash")
 
   c(series1, series2)
-}
-
-
-compare_control_graph <- function(configuration, ns, restore = NULL) {
-  common_control_graph(configuration, ns, "Plot on second y axis", restore)
 }

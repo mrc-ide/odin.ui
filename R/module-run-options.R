@@ -31,9 +31,8 @@ mod_control_run_server <- function(input, output, session, model, options) {
   }
 
   reset <- function() {
-    if (!is.null(rv$configuration)) {
-      browser()
-    }
+    output$ui <- shiny::renderUI(
+        control_run_ui(rv$configuration, session$ns))
   }
 
   list(
