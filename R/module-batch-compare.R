@@ -17,7 +17,7 @@ mod_batch_compare_ui <- function(id) {
           ## mod_lock_ui(ns("lock")),
           shiny::hr(),
           ##
-          shiny::actionButton(ns("reset_button"), "Reset",
+          shiny::actionButton(ns("reset"), "Reset",
                               shiny::icon("refresh"),
                               class = "btn-grey pull-right ml-2"),
           shiny::actionButton(ns("run"), "Run model",
@@ -31,7 +31,7 @@ mod_batch_compare_ui <- function(id) {
         shiny::div(
           class = "pull-right",
           mod_download_ui(ns("download")),
-          shiny::uiOutput(ns("control_graph"))),
+          mod_control_graph_ui(ns("control_graph"))),
         shiny::fluidRow(
           shiny::column(4, shiny::uiOutput(ns("status_batch")))))))
 }
@@ -45,6 +45,9 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
   parameters <- shiny::callModule(
     mod_parameters_server, "parameters",
     shiny::reactive(rv$configuration$pars))
+  control_graph <- shiny::callModule(
+    mod_control_graph_server, "control_graph",
+    shiny::reactive(rv$configuration))
   control_run <- shiny::callModule(
     mod_control_run_server, "control_run", model1, run_options)
   download <- shiny::callModule(
@@ -78,6 +81,15 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
         rv$configuration, rv$focal, control_run$result()))
     })
 
+  shiny::observeEvent(
+    input$reset, {
+      rv$result <- NULL
+      ## modules
+      parameters$reset()
+      control_run$reset()
+      control_graph$reset()
+    })
+
   shiny::observe({
     rv$focal <- batch_focal(
       input$focal_name, input$focal_pct, input$focal_n, parameters$result())
@@ -85,12 +97,10 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
 
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result$value)) {
-      vars <- rv$configuration$vars
-      y2_model <- get_inputs(input, vars$id_graph_option, vars$name)
       options <- list(type = input$plot_type,
                       slice_time = input$plot_slice_time,
                       extreme_type = input$plot_extreme_type)
-      batch_compare_plot(rv$result$value, y2_model, input$logscale_y, options)
+      batch_compare_plot(rv$result$value, control_graph$result(), options)
     }
   })
 
@@ -133,10 +143,13 @@ batch_compare_run <- function(configuration, focal, run_options) {
 }
 
 
-batch_compare_plot <- function(result, y2_model, logscale_y, options) {
+batch_compare_plot <- function(result, control, options) {
+  y2_model <- control$y2
+  logscale <- control$logscale
+  xlab <- batch_xlab(options$type, result$focal)
+  ylab <- batch_ylab(options$type, result$focal)
   plot_plotly(batch_compare_plot_series(result, y2_model, options),
-              logscale_y, batch_xlab(options$type, result$focal),
-              batch_ylab(options$type, result$focal))
+              logscale, xlab, ylab)
 }
 
 
