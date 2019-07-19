@@ -28,7 +28,7 @@ mod_fit_ui <- function(id) {
         shiny::div(
           class = "pull-right",
           mod_download_ui(ns("download")),
-          shiny::uiOutput(ns("control_graph"))),
+          mod_control_graph_ui(ns("control_graph"))),
         shiny::textOutput(ns("goodness_of_fit")),
         shiny::fluidRow(
           shiny::column(4, shiny::uiOutput(ns("status_run")))),
@@ -43,6 +43,9 @@ mod_fit_server <- function(input, output, session, data, model, link) {
   parameters <- shiny::callModule(
     mod_parameters_server, "parameters",
     shiny::reactive(rv$configuration$pars), with_option = TRUE)
+  control_graph <- shiny::callModule(
+    mod_control_graph_server, "control_graph",
+    shiny::reactive(rv$configuration))
 
   set_result <- function(result) {
     parameters$set(result$value$simulation$user)
@@ -89,11 +92,6 @@ mod_fit_server <- function(input, output, session, data, model, link) {
     fit_control_target(rv$configuration$link, session$ns)
   })
 
-  ## TODO: this should *only* include
-  output$control_graph <- shiny::renderUI({
-    fit_control_graph(rv$configuration, session$ns)
-  })
-
   shiny::observeEvent(
     input$fit, {
       user <- parameters$result()
@@ -110,10 +108,8 @@ mod_fit_server <- function(input, output, session, data, model, link) {
   shiny::observeEvent(
     input$reset, {
       rv$fit <- NULL
-      rv$result <- NULL
       parameters$reset()
       locked$clear()
-      control_run$reset()
       output$control_target <- shiny::renderUI(
         fit_control_target(rv$configuration$link, session$ns))
       ## TODO: reset control graph, but do that as a module call.
@@ -134,10 +130,8 @@ mod_fit_server <- function(input, output, session, data, model, link) {
 
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result$value) && !is.null(input$target)) {
-      vars <- rv$configuration$vars[rv$configuration$vars$include, ]
-      y2_model <- get_inputs(input, vars$id_graph_option, vars$name)
       fit_plot(rv$result$value, locked$result()$value,
-               input$target, y2_model, input$logscale_y)
+               input$target, control_graph$result())
     }
   })
 
@@ -157,12 +151,9 @@ mod_fit_server <- function(input, output, session, data, model, link) {
     ## TODO: I wonder if we can strip this down earlier?
     vars <- rv$configuration$vars[rv$configuration$vars$include, ]
     user <- parameters$result()
-    control_graph <-
-      list(option = get_inputs(input, vars$id_graph_option, vars$name),
-           logscale_y = input$logscale_y)
     list(fit = rv$fit,
          control_target = input$target,
-         control_graph = control_graph,
+         control_graph = control_graph$get_state(),
          parameters = parameters$get_state(),
          locked = locked$get_state())
   }
@@ -174,6 +165,7 @@ mod_fit_server <- function(input, output, session, data, model, link) {
     rv$configuration <- fit_configuration(model(), data(), link())
     locked$set_state(state$locked)
     parameters$set_state(state$parameters)
+    control_graph$set_state(state$control_graph)
 
     rv$fit <- state$fit
     output$control_target <- shiny::renderUI(fit_control_target(
@@ -359,8 +351,10 @@ fit_plot_series_locked <- function(result, locked, target, y2) {
 }
 
 
-fit_plot <- function(result, locked, target, y2_model, logscale_y) {
-  plot_plotly(fit_plot_series(result, locked, target, y2_model), logscale_y)
+fit_plot <- function(result, locked, target, control) {
+  y2 <- control$y2
+  logscale <- control$logscale
+  plot_plotly(fit_plot_series(result, locked, target, y2), logscale)
 }
 
 

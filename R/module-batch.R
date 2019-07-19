@@ -31,7 +31,7 @@ mod_batch_ui <- function(id) {
         shiny::div(
           class = "pull-right",
           mod_download_ui(ns("download")),
-          shiny::uiOutput(ns("control_graph"))),
+          mod_control_graph_ui(ns("control_graph"))),
         shiny::fluidRow(
           shiny::column(4, shiny::uiOutput(ns("status_batch")))))))
 }
@@ -44,6 +44,9 @@ mod_batch_server <- function(input, output, session, model, data, link,
   parameters <- shiny::callModule(
     mod_parameters_server, "parameters",
     shiny::reactive(rv$configuration$pars))
+  control_graph <- shiny::callModule(
+    mod_control_graph_server, "control_graph",
+    shiny::reactive(rv$configuration))
   control_run <- shiny::callModule(
     mod_control_run_server, "control_run", model, run_options)
 
@@ -93,10 +96,6 @@ mod_batch_server <- function(input, output, session, model, data, link,
     batch_control_plot_options(rv$configuration, input$plot_type, session$ns)
   })
 
-  output$control_graph <- shiny::renderUI({
-    batch_control_graph(rv$configuration, session$ns)
-  })
-
   shiny::observeEvent(
     input$run, {
       rv$result <- with_success(batch_run(
@@ -140,13 +139,11 @@ mod_batch_server <- function(input, output, session, model, data, link,
 
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result$value)) {
-      vars <- rv$configuration$vars
-      y2_model <- get_inputs(input, vars$id_graph_option, vars$name)
       options <- list(type = input$plot_type,
                       slice_time = input$plot_slice_time,
                       extreme_type = input$plot_extreme_type)
       batch_plot(rv$result$value, locked$result()$value,
-                 y2_model, input$logscale_y, options)
+                 control_graph$result(), options)
     }
   })
 
@@ -156,16 +153,13 @@ mod_batch_server <- function(input, output, session, model, data, link,
     }
     vars <- rv$configuration$vars
     focal <- rv$result$value$focal
-    control_graph <-
-      list(option = get_inputs(input, vars$id_graph_option, vars$name),
-           logscale_y = input$logscale_y)
     control_focal <- list(name = input$focal_n,
                           pct = input$focal_pct,
                           n = input$focal_n)
     list(user = user,
          focal = focal,
          control_focal = control_focal,
-         control_graph = control_graph,
+         control_graph = control_graph$get_state(),
          parameters = parameters$get_state(),
          locked = locked$get_state())
   }
@@ -178,9 +172,8 @@ mod_batch_server <- function(input, output, session, model, data, link,
     rv$configuration <- common_model_data_configuration(
       model(), data(), link())
     parameters$set_state(state$parameters)
+    control_graph$set_state(state$control_graph)
     rv$result <- with_success(batch_run(rv$configuration, state$focal))
-    output$control_graph <- shiny::renderUI(
-      batch_control_graph(rv$configuration, session$ns, state$control_graph))
     output$control_focal <- shiny::renderUI(
       batch_control_focal(rv$configuration, session$ns, state$control_focal))
   }
@@ -480,15 +473,12 @@ batch_plot_series_trace_data <- function(result, include) {
 }
 
 
-batch_plot <- function(result, locked, y2_model, logscale_y, options) {
-  plot_plotly(batch_plot_series(result, locked, y2_model, options),
-              logscale_y, batch_xlab(options$type, result$focal))
-}
-
-
-batch_control_graph <- function(configuration, ns, restore = NULL) {
-  title <- "Plot on second y axis"
-  common_control_graph(configuration, ns, title, restore)
+batch_plot <- function(result, locked, control, options) {
+  y2 <- control$y2
+  logscale <- control$logscale
+  xlab <- batch_xlab(options$type, result$focal)
+  plot_plotly(batch_plot_series(result, locked, y2, options),
+              logscale, xlab)
 }
 
 

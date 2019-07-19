@@ -1,7 +1,7 @@
 mod_batch_compare_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
-    shiny::titlePanel("Visualise"),
+    shiny::titlePanel("Batch"),
     shiny::sidebarLayout(
       shiny::div(
         class = "col-sm-4 col-lg-3",

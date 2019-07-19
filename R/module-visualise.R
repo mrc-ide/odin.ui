@@ -46,7 +46,7 @@ mod_vis_ui <- function(id) {
         shiny::div(
           class = "pull-right",
           mod_download_ui(ns("download")),
-          shiny::uiOutput(ns("control_graph"))),
+          mod_control_graph_ui(ns("control_graph"))),
         shiny::fluidRow(
           shiny::column(4, shiny::uiOutput(ns("status_vis")))),
         mod_model_code_ui(ns("code")))))
@@ -65,6 +65,9 @@ mod_vis_server <- function(input, output, session, data, model, link,
   parameters <- shiny::callModule(
     mod_parameters_server, "parameters",
     shiny::reactive(rv$configuration$pars))
+  control_graph <- shiny::callModule(
+    mod_control_graph_server, "control_graph",
+    shiny::reactive(rv$configuration))
   control_run <- shiny::callModule(
     mod_control_run_server, "control_run", model, run_options)
   code <- shiny::callModule(
@@ -100,10 +103,6 @@ mod_vis_server <- function(input, output, session, data, model, link,
       model(), data(), link(), control_run$result()$options)
   })
 
-  output$control_graph <- shiny::renderUI({
-    vis_control_graph(rv$configuration, session$ns)
-  })
-
   shiny::observeEvent(
     input$run, {
       rv$result <- with_success(vis_run(
@@ -113,9 +112,11 @@ mod_vis_server <- function(input, output, session, data, model, link,
   shiny::observeEvent(
     input$reset, {
       rv$result <- NULL
+      ## modules
       parameters$reset()
+      control_run$reset()
+      control_graph$reset()
       locked$clear()
-      run_options$reset()
     })
 
   output$import_button <- shiny::renderUI({
@@ -136,10 +137,7 @@ mod_vis_server <- function(input, output, session, data, model, link,
 
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result$value)) {
-      vars <- rv$configuration$vars
-      y2_model <- get_inputs(input, vars$id_graph_option, vars$name)
-      vis_plot(rv$result$value, locked$result()$value,
-               y2_model, input$logscale_y)
+      vis_plot(rv$result$value, locked$result()$value, control_graph$result())
     }
   })
 
@@ -147,15 +145,11 @@ mod_vis_server <- function(input, output, session, data, model, link,
     if (is.null(rv$configuration)) {
       return(NULL)
     }
-    vars <- rv$configuration$vars
-    parameters <- parameters$get_state()
     user_result <- df_to_list(rv$result$value$simulation$user)
-    control_graph <-
-      list(option = get_inputs(input, vars$id_graph_option, vars$name),
-           logscale_y = input$logscale_y)
-    list(parameters = parameters,
-         user_result = user_result,
-         control_graph = control_graph,
+    list(user_result = user_result,
+         parameters = parameters$get_state(),
+         control_run = control_run$get_state(),
+         control_graph = control_graph$get_state(),
          locked = locked$get_state())
   }
 
@@ -164,13 +158,13 @@ mod_vis_server <- function(input, output, session, data, model, link,
       return()
     }
     shiny::isolate({
-      locked$set_state(state$locked)
       rv$configuration <- common_model_data_configuration(
         model(), data(), link())
+      locked$set_state(state$locked)
       parameters$set_state(state$parameters)
+      control_graph$set_state(state$control_graph)
+      control_run$set_state(state$control_run)
       rv$result <- with_success(vis_run(rv$configuration, state$user_result))
-      output$control_graph <- shiny::renderUI(
-        vis_control_graph(rv$configuration, session$ns, state$control_graph))
     })
   }
 
@@ -291,14 +285,10 @@ vis_plot_series_locked <- function(result, locked, y2) {
 
 
 
-vis_plot <- function(result, locked, y2_model, logscale_y) {
-  plot_plotly(vis_plot_series(result, locked, y2_model), logscale_y)
-}
-
-
-vis_control_graph <- function(configuration, ns, restore = NULL) {
-  title <- "Plot on second y axis"
-  common_control_graph(configuration, ns, title, restore)
+vis_plot <- function(result, locked, control) {
+  y2_model <- control$y2
+  logscale <- control$logscale
+  plot_plotly(vis_plot_series(result, locked, y2_model), logscale)
 }
 
 
