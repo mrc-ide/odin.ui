@@ -12,8 +12,8 @@ mod_batch_compare_ui <- function(id) {
           ## TODO: status_configure but tone down warning to info
           mod_parameters_ui(ns("parameters")),
           mod_control_run_ui(ns("control_run")),
-          shiny::uiOutput(ns("control_focal")),
-          shiny::uiOutput(ns("control_plot")),
+          mod_control_focal_ui(ns("control_focal")),
+          mod_control_batch_plot(ns("control_batch_plot")),
           ## mod_lock_ui(ns("lock")),
           shiny::hr(),
           ##
@@ -50,6 +50,13 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
     shiny::reactive(rv$configuration))
   control_run <- shiny::callModule(
     mod_control_run_server, "control_run", model1, run_options)
+  control_focal <- shiny::callModule(
+    mod_control_focal_server, "control_focal",
+    shiny::reactive(rv$configuration$pars),
+    parameters$result)
+  control_plot <- shiny::callModule(
+    mod_control_batch_plot_server, "control_batch_plot",
+    shiny::reactive(!is.null(rv$configuration)))
   download <- shiny::callModule(
     mod_download_server, "download", shiny::reactive(rv$result$value),
     "compare")
@@ -63,10 +70,6 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
     compare_control_graph(rv$configuration, session$ns)
   })
 
-  output$control_focal <- shiny::renderUI({
-    batch_control_focal(rv$configuration, session$ns)
-  })
-
   output$control_plot <- shiny::renderUI({
     batch_control_plot(rv$configuration, session$ns)
   })
@@ -78,7 +81,7 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
   shiny::observeEvent(
     input$run, {
       rv$result <- with_success(batch_compare_run(
-        rv$configuration, rv$focal, control_run$result()))
+        rv$configuration, control_focal$result(), control_run$result()))
     })
 
   shiny::observeEvent(
@@ -88,19 +91,14 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
       parameters$reset()
       control_run$reset()
       control_graph$reset()
+      control_focal$reset()
+      control_plot$reset()
     })
-
-  shiny::observe({
-    rv$focal <- batch_focal(
-      input$focal_name, input$focal_pct, input$focal_n, parameters$result())
-  })
 
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result$value)) {
-      options <- list(type = input$plot_type,
-                      slice_time = input$plot_slice_time,
-                      extreme_type = input$plot_extreme_type)
-      batch_compare_plot(rv$result$value, control_graph$result(), options)
+      batch_compare_plot(rv$result$value, control_graph$result(),
+                         control_plot$result())
     }
   })
 

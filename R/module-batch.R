@@ -71,10 +71,6 @@ mod_batch_server <- function(input, output, session, model, data, link,
     show_module_status_if_not_ok(model()$status)
   })
 
-  output$status_focal <- shiny::renderText({
-    batch_status_focal(rv$focal)
-  })
-
   output$status_batch <- shiny::renderUI({
     batch_status(rv$result)
   })
@@ -202,53 +198,6 @@ batch_control_focal <- function(configuration, ns, restore = NULL) {
     simple_numeric_input("Number of runs", ns("focal_n"), n),
     shiny::textOutput(ns("status_focal")),
     ns = ns)
-}
-
-
-batch_control_plot <- function(configuration, ns, restore = NULL) {
-  if (is.null(configuration)) {
-    return(NULL)
-  }
-
-  types <- c("Trace over time" = "trace",
-             "Value at a single time" = "slice",
-             "Value at its min/max" = "extreme",
-             "Time at value's min/max" = "textreme")
-
-  mod_model_control_section(
-    "Plot options",
-    simple_select_input("Type of plot", ns("plot_type"), types),
-    shiny::uiOutput(ns("control_plot_options")),
-    ns = ns)
-}
-
-
-batch_control_plot_options <- function(configuration, type, ns,
-                                       restore = NULL) {
-  switch(
-    type,
-    slice = simple_numeric_input(
-      "Time to use (default is last)", ns("plot_slice_time"), NA),
-    extreme = simple_select_input(
-      "Extreme to use", ns("plot_extreme_type"), c("max", "min")),
-    textreme = simple_select_input(
-      "Extreme to use", ns("plot_extreme_type"), c("max", "min")),
-    NULL)
-}
-
-
-batch_focal <- function(name, pct, n, user) {
-  if (is_missing(pct) || is_missing(name) || is_missing(n)) {
-    return(NULL)
-  }
-  value <- user[[name]]
-  if (is_missing(value)) {
-    return(NULL)
-  }
-  dy <- abs(pct / 100 * value)
-  from <- value - dy
-  to <- value + dy
-  list(base = user, name = name, value = value, n = n, from = from, to = to)
 }
 
 
@@ -479,14 +428,6 @@ batch_plot <- function(result, locked, control, options) {
   xlab <- batch_xlab(options$type, result$focal)
   plot_plotly(batch_plot_series(result, locked, y2, options),
               logscale, xlab)
-}
-
-
-batch_status_focal <- function(focal) {
-  if (!is.null(focal)) {
-    sprintf("%s - %s - %s",
-            focal$from, focal$value, focal$to)
-  }
 }
 
 
