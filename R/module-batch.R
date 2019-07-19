@@ -97,7 +97,7 @@ mod_batch_server <- function(input, output, session, model, data, link,
     input$reset, {
       rv$result <- NULL
       parameters$reset()
-      locked$clear()
+      locked$reset()
       control_run$reset()
       control_focal$reset()
       control_plot$reset()

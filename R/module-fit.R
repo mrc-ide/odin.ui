@@ -109,7 +109,7 @@ mod_fit_server <- function(input, output, session, data, model, link) {
     input$reset, {
       rv$fit <- NULL
       parameters$reset()
-      locked$clear()
+      locked$reset()
       output$control_target <- shiny::renderUI(
         fit_control_target(rv$configuration$link, session$ns))
       ## TODO: reset control graph, but do that as a module call.
