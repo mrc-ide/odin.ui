@@ -12,8 +12,8 @@ mod_batch_ui <- function(id) {
           shiny::uiOutput(ns("status_model")),
           mod_parameters_ui(ns("parameters")),
           mod_control_run_ui(ns("control_run")),
-          shiny::uiOutput(ns("control_focal")),
-          shiny::uiOutput(ns("control_plot")),
+          mod_control_focal_ui(ns("control_focal")),
+          mod_control_batch_plot(ns("control_batch_plot")),
           mod_lock_ui(ns("lock")),
           shiny::hr(),
           shiny::uiOutput(ns("import_button"), inline = TRUE),
@@ -49,6 +49,13 @@ mod_batch_server <- function(input, output, session, model, data, link,
     shiny::reactive(rv$configuration))
   control_run <- shiny::callModule(
     mod_control_run_server, "control_run", model, run_options)
+  control_focal <- shiny::callModule(
+    mod_control_focal_server, "control_focal",
+    shiny::reactive(rv$configuration$pars),
+    parameters$result)
+  control_plot <- shiny::callModule(
+    mod_control_batch_plot_server, "control_batch_plot",
+    shiny::reactive(!is.null(rv$configuration)))
 
   set_result <- function(result) {
     parameters$set(result$value$simulation$user)
@@ -80,22 +87,10 @@ mod_batch_server <- function(input, output, session, model, data, link,
       model(), data(), link(), control_run$result()$options)
   })
 
-  output$control_focal <- shiny::renderUI({
-    batch_control_focal(rv$configuration, session$ns)
-  })
-
-  output$control_plot <- shiny::renderUI({
-    batch_control_plot(rv$configuration, session$ns)
-  })
-
-  output$control_plot_options <- shiny::renderUI({
-    batch_control_plot_options(rv$configuration, input$plot_type, session$ns)
-  })
-
   shiny::observeEvent(
     input$run, {
       rv$result <- with_success(batch_run(
-        rv$configuration, rv$focal, control_run$result()))
+        rv$configuration, control_focal$result(), control_run$result()))
     })
 
   shiny::observeEvent(
@@ -104,16 +99,9 @@ mod_batch_server <- function(input, output, session, model, data, link,
       parameters$reset()
       locked$clear()
       control_run$reset()
-      output$control_focal <- shiny::renderUI(
-        batch_control_focal(rv$configuration, session$ns))
-      output$control_plot <- shiny::renderUI(
-        batch_control_plot(rv$configuration, session$ns))
+      control_focal$reset()
+      control_plot$reset()
     })
-
-  shiny::observe({
-    rv$focal <- batch_focal(
-      input$focal_name, input$focal_pct, input$focal_n, parameters$result())
-  })
 
   output$import_button <- shiny::renderUI({
     if (!is.null(import) && !is.null(import$user())) {
@@ -126,20 +114,18 @@ mod_batch_server <- function(input, output, session, model, data, link,
     input$import, {
       user <- import$user()
       if (parameters$set(user)) {
-        rv$focal <- batch_focal(
-          input$focal_name, input$focal_pct, input$focal_n, user)
-        rv$result <- with_success(batch_run(
-          rv$configuration, rv$focal, control_run$result()))
+        browser()
+        ## rv$focal <- batch_focal(
+        ##   input$focal_name, input$focal_pct, input$focal_n, user)
+        ## rv$result <- with_success(batch_run(
+        ##   rv$configuration, rv$focal, control_run$result()))
       }
     })
 
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result$value)) {
-      options <- list(type = input$plot_type,
-                      slice_time = input$plot_slice_time,
-                      extreme_type = input$plot_extreme_type)
       batch_plot(rv$result$value, locked$result()$value,
-                 control_graph$result(), options)
+                 control_graph$result(), control_plot$result())
     }
   })
 
@@ -149,13 +135,11 @@ mod_batch_server <- function(input, output, session, model, data, link,
     }
     vars <- rv$configuration$vars
     focal <- rv$result$value$focal
-    control_focal <- list(name = input$focal_n,
-                          pct = input$focal_pct,
-                          n = input$focal_n)
     list(user = user,
          focal = focal,
-         control_focal = control_focal,
+         control_focal = control_focal$get_state(),
          control_graph = control_graph$get_state(),
+         control_plot = control_plot$get_state(),
          parameters = parameters$get_state(),
          locked = locked$get_state())
   }
@@ -170,34 +154,12 @@ mod_batch_server <- function(input, output, session, model, data, link,
     parameters$set_state(state$parameters)
     control_graph$set_state(state$control_graph)
     rv$result <- with_success(batch_run(rv$configuration, state$focal))
-    output$control_focal <- shiny::renderUI(
-      batch_control_focal(rv$configuration, session$ns, state$control_focal))
+    control_focal$set_state(state$control_focal)
+    control_plot$set_state(state$control_plot)
   }
 
   list(get_state = get_state,
        set_state = set_state)
-}
-
-
-batch_control_focal <- function(configuration, ns, restore = NULL) {
-  if (is.null(configuration)) {
-    return(NULL)
-  }
-
-  pct <- restore$pct %||% 10
-  n <- restore$n %||% 10
-  name <- restore$name %||% configuration$pars$name[[1]]
-
-  mod_model_control_section(
-    "Vary parameter",
-    horizontal_form_group(
-      "Parameter to vary",
-      raw_select_input(
-        ns("focal_name"), configuration$pars$name, selected = name)),
-    simple_numeric_input("Variation (%)", ns("focal_pct"), pct),
-    simple_numeric_input("Number of runs", ns("focal_n"), n),
-    shiny::textOutput(ns("status_focal")),
-    ns = ns)
 }
 
 

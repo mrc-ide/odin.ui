@@ -70,14 +70,6 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
     compare_control_graph(rv$configuration, session$ns)
   })
 
-  output$control_plot <- shiny::renderUI({
-    batch_control_plot(rv$configuration, session$ns)
-  })
-
-  output$control_plot_options <- shiny::renderUI({
-    batch_control_plot_options(rv$configuration, input$plot_type, session$ns)
-  })
-
   shiny::observeEvent(
     input$run, {
       rv$result <- with_success(batch_compare_run(
