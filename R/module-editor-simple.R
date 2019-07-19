@@ -301,7 +301,8 @@ editor_include <- function(model, result, ns) {
     vars <- model$info$vars$name
     hide <- intersect(prev$name[prev$hide], vars)
     disable <- intersect(prev$name[prev$disable], vars)
-    show <- union(prev$name[prev$show], setdiff(vars, c(hide, disable)))
+    show <- union(intersect(prev$name[prev$show], vars),
+                  setdiff(vars, c(hide, disable)))
   }
 
   simple_panel(
