@@ -82,7 +82,7 @@ mod_parameters_server <- function(input, output, session, pars,
   }
 
   list(
-    result = shiny::reactive(rv$value),
+    result = shiny::reactive(rv$values),
     set = set,
     reset = reset,
     get_state = get_state,

@@ -132,7 +132,7 @@ mod_batch_server <- function(input, output, session, model, data, link,
   })
 
   get_state <- function() {
-    if (is.null(rv$configuration)) {
+    if (is.null(rv$configuration) || is.null(rv$result)) {
       return(NULL)
     }
     list(modules = modules$get_state())

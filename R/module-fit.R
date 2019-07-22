@@ -145,7 +145,7 @@ mod_fit_server <- function(input, output, session, data, model, link) {
   })
 
   get_state <- function() {
-    if (is.null(rv$configuration)) {
+    if (is.null(rv$configuration) || is.null(rv$fit)) {
       return(NULL)
     }
     list(fit = rv$fit,
@@ -158,10 +158,10 @@ mod_fit_server <- function(input, output, session, data, model, link) {
       return()
     }
     rv$configuration <- fit_configuration(model(), data(), link())
-    modules$set_state(state$modules)
     output$control_target <- shiny::renderUI(fit_control_target(
       rv$configuration$link, session$ns, state$control_target))
     rv$fit <- state$fit
+    modules$set_state(state$modules)
   }
 
   list(result = shiny::reactive(add_status(rv$fit$value, rv$status)),
@@ -264,7 +264,7 @@ fit_status <- function(result) {
   } else {
     class <- "danger"
     title <- "Error fitting model to data"
-    body <- result$message
+    body <- result$error
   }
   module_status(class, title, body)
 }

@@ -143,7 +143,7 @@ mod_vis_server <- function(input, output, session, data, model, link,
   })
 
   get_state <- function() {
-    if (is.null(rv$configuration)) {
+    if (is.null(rv$configuration) || is.null(rv$result)) {
       return(NULL)
     }
     list(user_result = df_to_list(rv$result$value$simulation$user),
@@ -154,12 +154,10 @@ mod_vis_server <- function(input, output, session, data, model, link,
     if (is.null(state)) {
       return()
     }
-    shiny::isolate({
-      rv$configuration <- common_model_data_configuration(
-        model(), data(), link())
-      modules$set_state(state$modules)
-      rv$result <- with_success(vis_run(rv$configuration, state$user_result))
-    })
+    rv$configuration <- common_model_data_configuration(
+      model(), data(), link())
+    modules$set_state(state$modules)
+    rv$result <- with_success(vis_run(rv$configuration, state$user_result))
   }
 
   list(get_state = get_state,
