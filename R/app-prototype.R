@@ -37,7 +37,7 @@ odin_prototype_ui <- function(initial_code) {
       shiny::tabPanel(
         shiny::tagList(
           "Load/Save",
-          shiny::uiOutput("status", inline = TRUE)),
+          mod_status_ui("status")),
         icon = shiny::icon("list"),
         mod_state_ui("state"))))
 }
@@ -68,17 +68,9 @@ odin_prototype_server <- function(initial_code) {
                           vis = vis, fit = fit, batch = batch)
     state <- shiny::callModule(
       mod_state_server, "state", modules, "prototype")
-
-    output$status <- shiny::renderUI({
-      class_data <- text_module_status(data$result()$status)
-      class_model <- text_module_status(model$result()$status)
-      class_link <- text_module_status(link$result()$status)
-      class_fit <- text_module_status(fit$result()$status)
-      shiny::tagList(
-        shiny::icon("table", class = class_data),
-        shiny::icon("edit", class = class_model),
-        shiny::icon("random", class = class_link),
-        shiny::icon("calculator", class = class_fit))
-    })
+    status <- shiny::callModule(
+      mod_status_server, "status",
+      list(table = data$result, edit = model$result,
+           random = link$result, calculator = fit$result))
   }
 }

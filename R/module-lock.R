@@ -1,6 +1,6 @@
 mod_lock_ui <- function(id) {
   ns <- shiny::NS(id)
-  shiny::uiOutput(ns("control_locked"))
+  shiny::uiOutput(ns("ui"))
 }
 
 
@@ -8,7 +8,7 @@ mod_lock_server <- function(input, output, session, render, current,
                             set_current) {
   rv <- shiny::reactiveValues(hidden = FALSE)
 
-  output$control_locked <- shiny::renderUI({
+  output$ui <- shiny::renderUI({
     lock_control(render(), session$ns)
   })
 
