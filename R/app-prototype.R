@@ -39,27 +39,7 @@ odin_prototype_ui <- function(initial_code) {
           "Load/Save",
           shiny::uiOutput("status", inline = TRUE)),
         icon = shiny::icon("list"),
-        shiny::tagList(
-          shiny::h2("Load & Save"),
-          shiny::hr(),
-
-          shiny::div(
-            class = "pull-right",
-            shiny::div(
-              class = "form-inline mt-5",
-              shiny::div(
-                class = "form-group",
-                raw_text_input("download_filename", placeholder = "filename",
-                               value = "")),
-              shiny::downloadButton("download_everything", "Download",
-                                    class = "btn-blue"))),
-          shiny::column(
-            6,
-            file_input("restore",
-                       "Load",
-                       multiple = FALSE,
-                       accept = c("application/octet-stream", ".rds"),
-                       button_class = "btn-grey"))))))
+        mod_state_ui("state"))))
 }
 
 
@@ -84,8 +64,10 @@ odin_prototype_server <- function(initial_code) {
       mod_batch_server, "odin_batch", model$result, data$result, link$result,
       import_from_fit(fit$user))
 
-    modules <- list(data = data, model = model, link = link,
-                    vis = vis, fit = fit, batch = batch)
+    modules <- submodules(data = data, model = model, link = link,
+                          vis = vis, fit = fit, batch = batch)
+    state <- shiny::callModule(
+      mod_state_server, "state", modules, "prototype")
 
     output$status <- shiny::renderUI({
       class_data <- text_module_status(data$result()$status)
@@ -98,40 +80,5 @@ odin_prototype_server <- function(initial_code) {
         shiny::icon("random", class = class_link),
         shiny::icon("calculator", class = class_fit))
     })
-
-    output$download_everything <- shiny::downloadHandler(
-      filename = function() {
-        app_filename(input$download_filename)
-      },
-      content = function(con) {
-        saveRDS(app_get_state(modules), con)
-      })
-
-    shiny::observeEvent(
-      input$restore, {
-        app_set_state(readRDS(input$restore$datapath), modules)
-      })
-  }
-}
-
-
-app_filename <- function(filename, prefix = "odin") {
-  if (!is.null(filename) && nzchar(filename)) {
-    filename <- ensure_extension(filename, "rds")
-  } else {
-    filename <- sprintf("%s-%s.rds", prefix, date_string())
-  }
-  filename
-}
-
-
-app_get_state <- function(modules) {
-  lapply(modules, function(m) m$get_state())
-}
-
-
-app_set_state <- function(state, modules) {
-  for (i in names(modules)) {
-    modules[[i]]$set_state(state[[i]])
   }
 }

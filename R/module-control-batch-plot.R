@@ -41,7 +41,7 @@ mod_control_batch_plot_server <- function(input, output, session, render) {
 
   list(result = shiny::reactive(rv$result),
        get_state = get_state,
-       set_state = get_state,
+       set_state = set_state,
        reset = reset)
 }
 
