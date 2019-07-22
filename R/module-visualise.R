@@ -117,11 +117,7 @@ mod_vis_server <- function(input, output, session, data, model, link,
   shiny::observeEvent(
     input$reset, {
       rv$result <- NULL
-      ## modules
-      parameters$reset()
-      control_run$reset()
-      control_graph$reset()
-      locked$reset()
+      modules$reset()
     })
 
   output$import_button <- shiny::renderUI({

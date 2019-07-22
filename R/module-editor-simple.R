@@ -48,7 +48,7 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
 
     shiny::uiOutput(ns("validation_info")),
     shiny::uiOutput(ns("model_info")),
-    shiny::uiOutput(ns("include")),
+    mod_variable_order_ui(ns("order")),
     shiny::uiOutput(ns("status")))
 
   shiny::fluidRow(
@@ -61,8 +61,11 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
                                      editor_status_body) {
   ns <- session$ns
   rv <- shiny::reactiveValues()
-
   initial_code <- editor_validate_initial_code(initial_code)
+
+  order <- shiny::callModule(
+    mod_variable_order_server, "order", shiny::reactive(rv$model$info$vars))
+  modules <- submodules(order = order)
 
   output$validation_info <- shiny::renderUI({
     editor_validation_info(rv$validation)
@@ -126,9 +129,7 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
     })
 
   shiny::observe({
-    rv$result <- editor_result(
-      rv$model, input$var_show_order, input$var_hide_order,
-      input$var_disable_order)
+    rv$result <- editor_result(rv$model, order$result())
   })
 
   shiny::observeEvent(
@@ -149,12 +150,16 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
 
   get_state <- function() {
     list(editor = input$editor,
-         model = if (!is.null(rv$model$model)) rv$model$code)
+         model = if (!is.null(rv$model$model)) rv$model$code,
+         modules = modules$get_state())
   }
 
   set_state <- function(state) {
+    browser()
     if (!is.null(state$model)) {
       rv$model <- common_odin_compile(common_odin_validate(state$model))
+      modules$set_state(state$modules)
+      rv$result <- editor_result(rv$model, order$result())
     }
     shinyAce::updateAceEditor(session, ns("editor"), value = state$editor)
     rv$validation <- common_odin_validate(state$editor)
@@ -286,60 +291,20 @@ editor_status <- function(result, body) {
 }
 
 
-editor_include <- function(model, result, ns) {
+editor_result <- function(model, order) {
   if (!isTRUE(model$success)) {
     return(NULL)
   }
-  show <- include <- vars <- model$info$vars$name
-
-  if (is.null(result)) {
-    show <- model$info$vars$name
-    hide <- character()
-    disable <- character()
-  } else {
-    prev <- result$info$vars
-    vars <- model$info$vars$name
-    hide <- intersect(prev$name[prev$hide], vars)
-    disable <- intersect(prev$name[prev$disable], vars)
-    show <- union(intersect(prev$name[prev$show], vars),
-                  setdiff(vars, c(hide, disable)))
-  }
-
-  simple_panel(
-    "info",
-    "Outputs to include in graphs",
-    icon_name = "gear",
-    shiny::tagList(
-      shiny::includeMarkdown(odin_ui_file("md/editor-info.md")),
-      shinyjqui::orderInput(ns("var_show"), "Reorder variables", show,
-                            connect = ns(c("var_hide", "var_disable")),
-                            class = "editor_include_show"),
-      shinyjqui::orderInput(ns("var_hide"), "Hide variables", hide,
-                            connect = ns(c("var_show", "var_disable")),
-                            placeholder = "Drag items here to hide",
-                            class = "editor_include_hide"),
-      shinyjqui::orderInput(ns("var_disable"), "Disable variables", disable,
-                            connect = ns(c("var_hide", "var_show")),
-                            placeholder = "Drag items here to disable",
-                            class = "editor_include_disable")))
-}
-
-
-editor_result <- function(model, show, hide, disable) {
-  if (!isTRUE(model$success)) {
-    return(NULL)
-  }
-  ## TODO: decent error if nothing shown
-  if (!isTRUE(model$success) || is.null(show)) {
+  if (!isTRUE(model$success) || length(order$show) == 0) {
     return(NULL)
   }
 
   vars <- model$info$vars
-  order <- c(show, hide, disable)
-  vars <- vars[match(order, vars$name), , drop = FALSE]
-  vars$show <- vars$name %in% show
-  vars$hide <- vars$name %in% hide
-  vars$disable <- vars$name %in% disable
+  vars_order <- c(order$show, order$hide, order$disable)
+  vars <- vars[match(vars_order, vars$name), , drop = FALSE]
+  vars$show <- vars$name %in% order$show
+  vars$hide <- vars$name %in% order$hide
+  vars$disable <- vars$name %in% order$disable
   vars$include <- vars$show | vars$hide
   model$info$vars <- vars
 
