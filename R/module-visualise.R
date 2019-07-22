@@ -114,6 +114,13 @@ mod_vis_server <- function(input, output, session, data, model, link,
         rv$configuration, parameters$result(), control_run$result()))
     })
 
+  shiny::observe({
+    if (input$auto_run) {
+      rv$result <- with_success(vis_run(
+        rv$configuration, parameters$result(), control_run$result()))
+    }
+  })
+
   shiny::observeEvent(
     input$reset, {
       rv$result <- NULL
