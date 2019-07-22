@@ -69,7 +69,7 @@ mod_parameters_server <- function(input, output, session, pars,
 
   get_state <- function() {
     pars <- rv$configuration$pars
-    ret <- list(values = get_inputs(input, pars$id_value, pars$id_value))
+    ret <- list(value = get_inputs(input, pars$id_value, pars$id_value))
     if (with_option) {
       ret$option <- get_inputs(input, pars$id_option, pars$id_option)
     }
@@ -77,15 +77,12 @@ mod_parameters_server <- function(input, output, session, pars,
   }
 
   set_state <- function(state) {
-    set_inputs(session, names(state$values), state$values)
-    if (with_option) {
-      set_inputs(session, names(state$option), state$option,
-                 shiny::updateCheckboxInput)
-    }
+    output$ui <- shiny::renderUI(
+      parameters_ui(rv$configuration, session$ns, state))
   }
 
   list(
-    result = shiny::reactive(rv$values),
+    result = shiny::reactive(rv$value),
     set = set,
     reset = reset,
     get_state = get_state,

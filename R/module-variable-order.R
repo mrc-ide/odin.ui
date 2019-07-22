@@ -21,6 +21,8 @@ mod_variable_order_server <- function(input, output, session, variables) {
     variable_order_status(rv$result)
   })
 
+  shiny::outputOptions(output, "ui", suspendWhenHidden = FALSE)
+
   get_state <- function() {
     list(show = input$show_order,
          hide = input$hide_order,

@@ -374,8 +374,8 @@ submodules <- function(...) {
         })
     },
     set_state = function(state) {
-      for (nm in names(has_state)[has_state]) {
-        modules[[nm]]$set_state(state[[nm]])
-      }
+      Map(function(m, s) m$set_state(s),
+          modules[names_if(has_state)],
+          state[names_if(has_state)])
     })
 }

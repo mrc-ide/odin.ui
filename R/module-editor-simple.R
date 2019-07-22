@@ -147,7 +147,6 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
       writeLines(input$editor, con)
     })
 
-
   get_state <- function() {
     list(editor = input$editor,
          validation = rv$validation$code,

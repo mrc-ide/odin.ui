@@ -236,3 +236,8 @@ accept_csv <- function() {
 has_function <- function(x, name) {
   is.function(x[[name]])
 }
+
+
+names_if <- function(x) {
+  names(x)[x]
+}

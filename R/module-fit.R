@@ -158,13 +158,11 @@ mod_fit_server <- function(input, output, session, data, model, link) {
       return()
     }
     rv$configuration <- fit_configuration(model(), data(), link())
+    modules$set_state(state$modules)
     output$control_target <- shiny::renderUI(fit_control_target(
       rv$configuration$link, session$ns, state$control_target))
     rv$fit <- state$fit
-    modules$set_state(state$modules)
   }
-
-  ## shiny::outputOptions(output, "control_parameters", suspendWhenHidden = FALSE)
 
   list(result = shiny::reactive(add_status(rv$fit$value, rv$status)),
        user = shiny::reactive(rv$fit$value$user),
