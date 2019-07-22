@@ -66,7 +66,7 @@ state_load <- function(path, modules, name) {
     stop("Incorrect state")
   }
   modules$set_state(state$data)
-  list(state = state, now = Sys.time())
+  list(state = state, saved = state$time, loaded = Sys.time())
 }
 
 
@@ -85,9 +85,8 @@ state_status <- function(x) {
     return(NULL)
   }
   if (x$success) {
-    then <- x$value$time %||% "(unknown)"
-    simple_panel("success", "Loaded saved state",
-                 sprintf("Saved on %s, loaded on %s", then, x$value$now))
+    msg <- sprintf("Saved on %s, loaded on %s", x$value$saved, x$value$loaded)
+    simple_panel("success", "Loaded saved state", msg)
   } else {
     simple_panel("danger", "Error loading state state", x$error)
   }

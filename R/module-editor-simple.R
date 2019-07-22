@@ -150,19 +150,20 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
 
   get_state <- function() {
     list(editor = input$editor,
-         model = if (!is.null(rv$model$model)) rv$model$code,
+         validation = rv$validation$code,
+         model = rv$model$code,
          modules = modules$get_state())
   }
 
   set_state <- function(state) {
-    browser()
     if (!is.null(state$model)) {
       rv$model <- common_odin_compile(common_odin_validate(state$model))
-      modules$set_state(state$modules)
-      rv$result <- editor_result(rv$model, order$result())
+    }
+    if (!is.null(state$validation)) {
+      rv$validation <- common_odin_validate(state$validation)
     }
     shinyAce::updateAceEditor(session, ns("editor"), value = state$editor)
-    rv$validation <- common_odin_validate(state$editor)
+    modules$set_state(state$modules)
   }
 
   list(result = shiny::reactive(add_status(rv$result, rv$status)),
