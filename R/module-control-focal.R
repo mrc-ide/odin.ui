@@ -41,6 +41,7 @@ mod_control_focal_server <- function(input, output, session, pars, user) {
   }
 
   list(result = shiny::reactive(rv$result),
+       recompute = function(user) control_focal_recompute(get_state(), user),
        reset = reset,
        get_state = get_state,
        set_state = set_state)
@@ -99,4 +100,9 @@ control_focal_status <- function(focal) {
     sprintf("%s - %s - %s",
             focal$from, focal$value, focal$to)
   }
+}
+
+
+control_focal_recompute <- function(focal, user) {
+  control_focal_result(focal$name, focal$pct, focal$n, user)
 }

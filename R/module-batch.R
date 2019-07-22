@@ -116,11 +116,9 @@ mod_batch_server <- function(input, output, session, model, data, link,
     input$import, {
       user <- import$user()
       if (parameters$set(user)) {
-        browser()
-        ## rv$focal <- batch_focal(
-        ##   input$focal_name, input$focal_pct, input$focal_n, user)
-        ## rv$result <- with_success(batch_run(
-        ##   rv$configuration, rv$focal, control_run$result()))
+        focal <- control_focal$recompute(user)
+        rv$result <- with_success(batch_run(
+          rv$configuration, focal, control_run$result()))
       }
     })
 
