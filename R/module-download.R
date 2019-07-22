@@ -23,6 +23,8 @@ mod_download_server <- function(input, output, session, data, prefix) {
     content = function(filename) {
       download_data(filename, data()$simulation, input$download_type, rv$names)
     })
+
+  NULL
 }
 
 

@@ -20,6 +20,8 @@ mod_model_code_server <- function(input, output, session, model) {
   output$code <- shiny::renderUI({
     model_code_block(model()$code)
   })
+
+  NULL
 }
 
 

@@ -60,6 +60,10 @@ mod_fit_server <- function(input, output, session, data, model, link) {
     mod_download_server, "download", shiny::reactive(rv$result$value),
     "visualise")
 
+  modules <- submodules(parameters = parameters,
+                        control_graph = control_graph,
+                        locked = locked, download = download)
+
   output$status_data <- shiny::renderUI({
     show_module_status_if_not_ok(data()$status)
   })
@@ -108,11 +112,9 @@ mod_fit_server <- function(input, output, session, data, model, link) {
   shiny::observeEvent(
     input$reset, {
       rv$fit <- NULL
-      parameters$reset()
-      locked$reset()
+      modules$reset()
       output$control_target <- shiny::renderUI(
         fit_control_target(rv$configuration$link, session$ns))
-      ## TODO: reset control graph, but do that as a module call.
     })
 
   shiny::observe({
@@ -146,16 +148,9 @@ mod_fit_server <- function(input, output, session, data, model, link) {
     if (is.null(rv$configuration)) {
       return(NULL)
     }
-    browser()
-    pars <- rv$configuration$pars
-    ## TODO: I wonder if we can strip this down earlier?
-    vars <- rv$configuration$vars[rv$configuration$vars$include, ]
-    user <- parameters$result()
     list(fit = rv$fit,
          control_target = input$target,
-         control_graph = control_graph$get_state(),
-         parameters = parameters$get_state(),
-         locked = locked$get_state())
+         modules = modules$get_state())
   }
 
   set_state <- function(state) {
@@ -163,17 +158,10 @@ mod_fit_server <- function(input, output, session, data, model, link) {
       return()
     }
     rv$configuration <- fit_configuration(model(), data(), link())
-    locked$set_state(state$locked)
-    parameters$set_state(state$parameters)
-    control_graph$set_state(state$control_graph)
-
-    rv$fit <- state$fit
     output$control_target <- shiny::renderUI(fit_control_target(
       rv$configuration$link, session$ns, state$control_target))
-    output$control_parameters <- shiny::renderUI(fit_control_parameters(
-      rv$configuration$pars, session$ns, state$control_parameters))
-    output$control_graph <- shiny::renderUI(
-      fit_control_graph(rv$configuration, session$ns, state$control_graph))
+    rv$fit <- state$fit
+    modules$set_state(state$modules)
   }
 
   ## shiny::outputOptions(output, "control_parameters", suspendWhenHidden = FALSE)

@@ -86,6 +86,11 @@ mod_vis_server <- function(input, output, session, data, model, link,
     mod_download_server, "download", shiny::reactive(rv$result$value),
     "visualise")
 
+  modules <- submodules(parameters = parameters,
+                        control_graph = control_graph,
+                        control_run = control_run,
+                        code = code, locked = locked, download = download)
+
   output$status_data <- shiny::renderUI({
     show_module_status_if_not_ok(data()$status)
   })
@@ -145,12 +150,8 @@ mod_vis_server <- function(input, output, session, data, model, link,
     if (is.null(rv$configuration)) {
       return(NULL)
     }
-    user_result <- df_to_list(rv$result$value$simulation$user)
-    list(user_result = user_result,
-         parameters = parameters$get_state(),
-         control_run = control_run$get_state(),
-         control_graph = control_graph$get_state(),
-         locked = locked$get_state())
+    list(user_result = df_to_list(rv$result$value$simulation$user),
+         modules = modules$get_state())
   }
 
   set_state <- function(state) {
@@ -160,10 +161,7 @@ mod_vis_server <- function(input, output, session, data, model, link,
     shiny::isolate({
       rv$configuration <- common_model_data_configuration(
         model(), data(), link())
-      locked$set_state(state$locked)
-      parameters$set_state(state$parameters)
-      control_graph$set_state(state$control_graph)
-      control_run$set_state(state$control_run)
+      modules$set_state(state$modules)
       rv$result <- with_success(vis_run(rv$configuration, state$user_result))
     })
   }

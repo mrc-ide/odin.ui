@@ -68,6 +68,7 @@ mod_parameters_server <- function(input, output, session, pars,
   }
 
   get_state <- function() {
+    pars <- rv$configuration$pars
     ret <- list(values = get_inputs(input, pars$id_value, pars$id_value))
     if (with_option) {
       ret$option <- get_inputs(input, pars$id_option, pars$id_option)

@@ -61,6 +61,11 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
     mod_download_server, "download", shiny::reactive(rv$result$value),
     "compare")
 
+  modules <- submodules(
+    parameters = parameters, control_graph = control_graph,
+    control_run = control_run, control_focal = control_focal,
+    control_plot = control_plot, download = download)
+
   shiny::observe({
     rv$configuration <- compare_configuration(
       model1(), model2(), control_run$result()$options)
@@ -79,12 +84,7 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
   shiny::observeEvent(
     input$reset, {
       rv$result <- NULL
-      ## modules
-      parameters$reset()
-      control_run$reset()
-      control_graph$reset()
-      control_focal$reset()
-      control_plot$reset()
+      modules$reset()
     })
 
   output$odin_output <- plotly::renderPlotly({

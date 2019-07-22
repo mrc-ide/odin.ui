@@ -231,3 +231,8 @@ accept_csv <- function() {
     "text/comma-separated-values,text/plain",
     ".csv")
 }
+
+
+has_function <- function(x, name) {
+  is.function(x[[name]])
+}

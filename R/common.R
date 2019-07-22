@@ -351,3 +351,31 @@ import_from_fit <- function(user = NULL) {
        title = "Import from fit",
        icon = shiny::icon("calculator"))
 }
+
+
+submodules <- function(...) {
+  modules <- list(...)
+
+  has_reset <- vlapply(modules, has_function, "reset")
+  has_state <- vlapply(modules, has_function, "get_state")
+
+  list(
+    reset = function() {
+      for (m in modules[has_reset]) {
+        m$reset()
+      }
+    },
+    get_state = function() {
+      tryCatch(
+        lapply(modules[has_state], function(m) m$get_state()),
+        error = function(e) {
+          message(e$message)
+          browser()
+        })
+    },
+    set_state = function(state) {
+      for (nm in names(has_state)[has_state]) {
+        modules[[nm]]$set_state(state[[nm]])
+      }
+    })
+}

@@ -70,6 +70,12 @@ mod_batch_server <- function(input, output, session, model, data, link,
     mod_download_server, "download", shiny::reactive(rv$result$value),
     "visualise")
 
+  modules <- submodules(
+    parameters = parameters, control_graph = control_graph,
+    control_run = control_run, control_focal = control_focal,
+    control_plot = control_plot, locked = locked,
+    download = download)
+
   output$status_data <- shiny::renderUI({
     show_module_status_if_not_ok(data()$status)
   })
@@ -96,11 +102,7 @@ mod_batch_server <- function(input, output, session, model, data, link,
   shiny::observeEvent(
     input$reset, {
       rv$result <- NULL
-      parameters$reset()
-      locked$reset()
-      control_run$reset()
-      control_focal$reset()
-      control_plot$reset()
+      modules$reset()
     })
 
   output$import_button <- shiny::renderUI({
@@ -133,29 +135,17 @@ mod_batch_server <- function(input, output, session, model, data, link,
     if (is.null(rv$configuration)) {
       return(NULL)
     }
-    vars <- rv$configuration$vars
-    focal <- rv$result$value$focal
-    list(user = user,
-         focal = focal,
-         control_focal = control_focal$get_state(),
-         control_graph = control_graph$get_state(),
-         control_plot = control_plot$get_state(),
-         parameters = parameters$get_state(),
-         locked = locked$get_state())
+    list(modules = modules$get_state())
   }
 
   set_state <- function(state) {
     if (is.null(state)) {
       return()
     }
-    locked$set_state(state$locked)
     rv$configuration <- common_model_data_configuration(
       model(), data(), link())
-    parameters$set_state(state$parameters)
-    control_graph$set_state(state$control_graph)
+    modules$set_state(state$modules)
     rv$result <- with_success(batch_run(rv$configuration, state$focal))
-    control_focal$set_state(state$control_focal)
-    control_plot$set_state(state$control_plot)
   }
 
   list(get_state = get_state,

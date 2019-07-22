@@ -23,11 +23,12 @@ mod_control_graph_server <- function(input, output, session, cfg) {
   })
 
   get_state <- function() {
-    browser()
+    c(list(logscale = input$logscale),
+      get_inputs(input, rv$configuration$id))
   }
 
   set_state <- function(state) {
-    browser()
+    set_inputs(session, names(state), state, shiny::updateCheckboxInput)
   }
 
   reset <- function() {

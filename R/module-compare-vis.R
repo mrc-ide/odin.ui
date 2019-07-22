@@ -47,13 +47,17 @@ mod_vis_compare_server <- function(input, output, session, model1, model2,
     shiny::reactive(rv$configuration))
   control_run <- shiny::callModule(
     mod_control_run_server, "control_run", model1, run_options)
-
   download <- shiny::callModule(
     mod_download_server, "download", shiny::reactive(rv$result$value),
     "compare")
-
   table <- shiny::callModule(
     mod_table_summary_server, "table", shiny::reactive(rv$result))
+
+  modules <- submodules(parameters = parameters,
+                        control_graph = control_graph,
+                        control_run = control_run,
+                        download = download,
+                        table = table)
 
   shiny::observe({
     rv$configuration <- compare_configuration(
@@ -70,10 +74,7 @@ mod_vis_compare_server <- function(input, output, session, model1, model2,
   shiny::observeEvent(
     input$reset, {
       rv$result <- NULL
-      ## modules
-      parameters$reset()
-      control_run$reset()
-      control_graph$reset()
+      modules$reset()
     })
 
   output$odin_output <- plotly::renderPlotly({
