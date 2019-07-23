@@ -68,7 +68,7 @@ mod_batch_server <- function(input, output, session, model, data, link,
 
   download <- shiny::callModule(
     mod_download_server, "download", shiny::reactive(rv$result$value),
-    "visualise")
+    "batch")
 
   modules <- submodules(
     parameters = parameters, control_graph = control_graph,

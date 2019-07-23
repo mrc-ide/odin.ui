@@ -59,7 +59,7 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
     shiny::reactive(!is.null(rv$configuration)))
   download <- shiny::callModule(
     mod_download_server, "download", shiny::reactive(rv$result$value),
-    "compare")
+    "batch")
 
   modules <- submodules(
     parameters = parameters, control_graph = control_graph,
@@ -107,31 +107,12 @@ batch_compare_run <- function(configuration, focal, run_options) {
     return(NULL)
   }
 
-  f <- function(model) {
-    configuration$model <- model
-    batch_run(configuration, focal, run_options)
-  }
-
-  res1 <- f(configuration$model1)
-  res2 <- f(configuration$model2)
-
-  ## A bit of fairly ugly transformation on the download names:
-  download_names <- download_names(
-    display = c("Modelled", "Combined", "Parameters"),
-    filename = c("modelled", "combined", "parameters"),
-    data = c("smooth", "combined", "user"))
-  i <- rep(1:2, each = length(download_names$display))
-  model_names <- configuration$names
-
-  configuration <- res1$configuration
-  configuration$download_names <- download_names(
-    display = sprintf("%s (%s)", download_names$display, model_names$long[i]),
-    filename = sprintf("%s-%s", download_names$filename, model_names$short[i]),
-    data = unname(Map(c, c("model1", "model2")[i], download_names$data)))
-
-  list(configuration = configuration,
-       focal = focal,
-       simulation = list(model1 = res1$simulation, model2 = res2$simulation))
+  res <- lapply(configuration$configuration, batch_run, focal, run_options)
+  configuration$configuration <- lapply(res, "[[", "configuration")
+  simulation <- lapply(res, "[[", "simulation")
+  configuration$download_names <-
+    compare_download_names(res, configuration$names)
+  list(configuration = configuration, simulation = simulation)
 }
 
 
@@ -146,13 +127,13 @@ batch_compare_plot <- function(result, control, options) {
 
 
 batch_compare_plot_series <- function(result, y2_model, options) {
-  f <- function(x) {
-    result$simulation <- x
-    batch_plot_series(result, NULL, y2_model, options)
+  f <- function(cfg, simulation) {
+    x <- list(configuration = cfg,
+              focal = result$focal,
+              simulation = simulation)
+    batch_plot_series(x, NULL, y2_model, options)
   }
 
-  series1 <- f(result$simulation$model1)
-  series2 <- f(result$simulation$model2)
-
-  plotly_combine_series(series1, series2, result$configuration$names)
+  series <- Map(f, result$configuration$configuration, result$simulation)
+  plotly_combine_series(series, result$configuration$names)
 }

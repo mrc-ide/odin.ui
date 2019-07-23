@@ -159,19 +159,7 @@ compare_vis_plot_series <- function(result, y2_model) {
     vis_plot_series(x, NULL, y2_model)
   }
   series <- Map(f, result$configuration$configuration, result$simulation)
-  dash <- c("solid", "dash")
-  long <- result$configuration$names$long
-
-  for (i in seq_along(series)) {
-    s <- series[[i]]
-    for (j in seq_along(s)) {
-      s[[j]]$name <- sprintf("%s (%s)", s[[j]]$name, long[[i]])
-      s[[j]]$line$dash <- dash[[i]]
-    }
-    series[[i]] <- s
-  }
-
-  unlist(series, FALSE, FALSE)
+  plotly_combine_series(series, result$configuration$names$long)
 }
 
 
