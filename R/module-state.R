@@ -27,7 +27,9 @@ mod_state_ui <- function(id) {
         class = "form-group",
         raw_text_input("download_filename", placeholder = "filename",
                        value = "")),
-      shiny::downloadButton(ns("save"), "Download", class = "btn-blue")))
+      shiny::downloadButton(ns("save"), "Download", class = "btn-blue")),
+    shiny::hr(),
+    odin_ui_version_information())
 }
 
 

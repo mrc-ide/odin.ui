@@ -379,3 +379,11 @@ submodules <- function(...) {
           state[names_if(has_state)])
     })
 }
+
+
+odin_ui_version_information <- function() {
+  shiny::tagList(
+    shiny::h2("Version information"),
+    shiny::p(sprintf("odin.ui version %s, odin version %s",
+                     packageVersion("odin.ui"), packageVersion("odin"))))
+}
