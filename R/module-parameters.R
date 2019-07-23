@@ -95,10 +95,7 @@ parameters_configuration <- function(pars, with_option, title) {
   }
   pars$id_value <- sprintf("value_%s", pars$name)
   pars$id_option <- sprintf("option_%s", pars$name)
-  pars$option <- FALSE
-
-  ## TODO: remove this cheat later
-  pars$option <- pars$name %in% c("I0", "cfr", "R0_before", "R0_after")
+  pars$option <- rep(FALSE, nrow(pars))
 
   title <- title %||% "Model parameters"
   list(pars = pars, with_option = with_option, title = title)
@@ -110,6 +107,9 @@ parameters_ui <- function(configuration, ns, restore = NULL) {
     return(NULL)
   }
   pars <- configuration$pars
+  if (nrow(pars) == 0L) {
+    return(NULL)
+  }
 
   value <- restore$value %||% pars$value %||%
     vnapply(pars$default_value, function(x) x %||% NA_real_)

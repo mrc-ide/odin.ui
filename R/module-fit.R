@@ -179,9 +179,6 @@ fit_configuration <- function(model, data, link) {
       sprintf("par_vary_%s", configuration$pars$name)
     ## Information about the default vary state (might be dropped later?)
     configuration$pars$vary <- FALSE
-    ## TODO: remove this cheat later
-    configuration$pars$vary <-
-      configuration$pars$name %in% c("I0", "cfr", "R0_before", "R0_after")
     configuration$vars$include <-
       configuration$vars$name %in% list_to_character(link$map)
   }
