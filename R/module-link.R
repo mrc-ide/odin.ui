@@ -35,7 +35,7 @@ mod_link_server <- function(input, output, session, data, model,
   output$link <- shiny::renderUI({
     ## TODO: get previous first
     prev <- shiny::isolate(rv$result)
-    link_link_ui(rv$configuration, prev, session$ns)
+    link_ui(rv$configuration, prev, session$ns)
   })
 
   shiny::observe({
@@ -51,7 +51,7 @@ mod_link_server <- function(input, output, session, data, model,
   shiny::observeEvent(
     input$clear, {
       output$link <- shiny::renderUI(
-        link_link_ui(rv$configuration, NULL, session$ns))
+        link_ui(rv$configuration, NULL, session$ns))
     })
 
   get_state <- function() {
@@ -60,7 +60,7 @@ mod_link_server <- function(input, output, session, data, model,
 
   set_state <- function(state) {
     rv$configuration <- link_configuration(data(), model())
-    output$link <- shiny::renderUI(link_link_ui(
+    output$link <- shiny::renderUI(link_ui(
       rv$configuration, NULL, session$ns, state))
     rv$result <- state$result
   }
@@ -73,7 +73,7 @@ mod_link_server <- function(input, output, session, data, model,
 }
 
 
-link_link_ui <- function(configuration, prev, ns, restore = NULL) {
+link_ui <- function(configuration, prev, ns, restore = NULL) {
   if (is.null(configuration)) {
     return(NULL)
   }

@@ -1,8 +1,8 @@
-context("module: configure")
+context("module: link")
 
 
 test_that("ui requires a configuration", {
-  expect_null(link_link_ui(NULL, NULL, identity))
+  expect_null(link_ui(NULL, NULL, identity))
 })
 
 
@@ -36,14 +36,15 @@ test_that("configuration: nonemtpy", {
             "initial(x) <- 1",
             "deriv(y) <- 2",
             "initial(y) <- 2")
-  model <- common_odin_compile_from_code(code)
+  model <- editor_result(common_odin_compile_from_code(code), NULL)
 
   d <- data.frame(t = 1:10, a = runif(10), b = runif(10), c = runif(10))
   data <- odin_data_source(d, "file.csv", "t")
 
   expect_equal(
     link_configuration(data, model),
-    list(data = data, model = model,
+    list(data = data,
+         model = model,
          vars = list(
            data = c("a", "b", "c"),
            model = c("x", "y"),
@@ -77,22 +78,4 @@ test_that("status", {
   expect_equal(
     link_status(result, NULL),
     link_status(result, "solution"))
-})
-
-
-test_that("link update", {
-  skip("Disabled")
-  vars_data <- c("A", "B")
-  vars_model <- c("a", "b", "c")
-  data <- list(name_vars = vars_data, configured = TRUE)
-  model <- list(result = list(info = list(vars = list(name = vars_model))))
-
-  ## Nothing selected:
-  expect_equal(
-    configure_link_ui_update(NULL, NULL, data, model, NULL),
-    list(
-      map = c(A = "link_data_A", B = "link_data_B"),
-      selected = list(A = NULL, B = NULL),
-      vars_data = vars_data,
-      vars_model = vars_model))
 })

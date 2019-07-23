@@ -294,6 +294,10 @@ editor_result <- function(model, order) {
   if (!isTRUE(model$success)) {
     return(NULL)
   }
+  if (is.null(order)) {
+    order <- list(show = model$info$vars$name,
+                  hide = character(0), disable = character(0))
+  }
   if (!isTRUE(model$success) || length(order$show) == 0) {
     return(NULL)
   }
