@@ -192,7 +192,7 @@ vis_run <- function(configuration, user, run_options) {
   data <- configuration$data
   has_data <- !is.null(data)
 
-  if (run_options$options$control_end_time) {
+  if (isTRUE(run_options$options$control_end_time)) {
     t_start <- 0
     t_end <- run_options$values$end
     if (is_missing(t_end)) {
@@ -279,7 +279,7 @@ vis_plot_series_locked <- function(result, locked, y2) {
   vars <- cfg$vars[cfg$vars$include, ]
 
   model_vars <- intersect(locked$configuration$vars$name,
-                          intersect(vars$name, names(y2)))
+                          intersect(vars$name, names(y2$model)))
   model_data <- locked$simulation$smooth
   show <- vars$show[match(model_vars, vars$name)]
   plot_plotly_series_bulk(
