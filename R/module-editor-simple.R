@@ -1,4 +1,3 @@
-## A simpler editor than the main one
 mod_editor_simple_ui <- function(id, initial_code, path_docs) {
   ns <- shiny::NS(id)
 
@@ -108,7 +107,7 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
     if (!is.null(rv$model)) {
       rv$model$is_current <- identical(rv$model$code, input$editor)
     }
-    if (input$auto_validate) {
+    if (isTRUE(input$auto_validate)) {
       rv$validation <- common_odin_validate(input$editor)
     }
   })

@@ -1,4 +1,4 @@
-model_static_ui <- function(id, code, path_docs = NULL, title = "Code") {
+mod_model_static_ui <- function(id, code, path_docs = NULL, title = "Code") {
   ns <- shiny::NS(id)
 
   editor <- shiny::tagList(
@@ -22,9 +22,9 @@ model_static_ui <- function(id, code, path_docs = NULL, title = "Code") {
 }
 
 
-model_static_server <- function(input, output, session, code,
-                                name = NULL, name_short = NULL,
-                                parameter_ranges = NULL) {
+mod_model_static_server <- function(input, output, session, code,
+                                    name = NULL, name_short = NULL,
+                                    parameter_ranges = NULL) {
   data <- model_static_setup(code, name, name_short,
                              parameter_ranges = parameter_ranges)
   rv <- shiny::reactiveValues()
