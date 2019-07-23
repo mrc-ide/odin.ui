@@ -111,9 +111,8 @@ parameters_ui <- function(configuration, ns, restore = NULL) {
   }
   pars <- configuration$pars
 
-  ## TODO: the id_value bit comes out to the configuration within the
-  ## module
-  value <- restore$value %||% pars$value
+  value <- restore$value %||% pars$value %||%
+    vnapply(pars$default_value, function(x) x %||% NA_real_)
   range <- pars$range
   if (configuration$with_option) {
     f <- function(name, id_value, value, range, id_option, option) {

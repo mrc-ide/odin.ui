@@ -22,8 +22,10 @@ mod_vis_compare_ui <- function(id) {
                               shiny::icon("play"),
                               class = "btn-blue pull-right"))),
       shiny::mainPanel(
-        shiny::div(class = "plotly-graph-wrapper",
-                   plotly::plotlyOutput(ns("odin_output"))),
+        shiny::div(
+          class = "plotly-graph-wrapper",
+          shinycssloaders::withSpinner(
+            plotly::plotlyOutput(ns("odin_output")))),
         shiny::div(
           class = "pull-right",
           mod_download_ui(ns("download")),
@@ -86,6 +88,9 @@ mod_vis_compare_server <- function(input, output, session, model1, model2,
   output$status_vis <- shiny::renderUI({
     vis_status(rv$result)
   })
+
+  ## TODO: support get/set
+  NULL
 }
 
 
@@ -104,24 +109,26 @@ compare_configuration <- function(model1, model2, run_options = NULL) {
     return(NULL)
   }
 
-  names <- list(long = c(model1$name, model2$name),
-                short = c(model1$name_short, model2$name_short))
+  model <- list(model1, model2)
+  cfg <- lapply(model, common_model_data_configuration,
+                NULL, NULL, run_options)
+  names <- list(long = vcapply(model, "[[", "name"),
+                short = vcapply(model, "[[", "name_short"))
 
   pars <- compare_union_metadata(model1$info$pars, model2$info$pars, names)
-  pars$value <- vnapply(pars$default_value, function(x) x %||% NA_real_)
-  pars$id_value <- sprintf("par_value_%s", pars$name)
-
   vars <- compare_union_metadata(model1$info$vars, model2$info$vars, names)
-  vars$id_graph_option <- sprintf("var_graph_option_%s", vars$name)
-
   cols <- odin_colours(vars$name, NULL, NULL)
+
+  for (i in seq_along(cfg)) {
+    cfg[[i]]$cols <- cols
+  }
 
   download_names <- download_names(
     display = c(names$long, "Parameters"),
     filename = c(names$short, "parameters"),
     data = c("model1", "model2", "user"))
 
-  list(data = NULL, model1 = model1, model2 = model2, link = NULL,
+  list(data = NULL, model, configuration = cfg, link = NULL,
        pars = pars, vars = vars, cols = cols, names = names,
        download_names = download_names)
 }
@@ -131,30 +138,11 @@ compare_vis_run <- function(configuration, user, run_options) {
   if (is.null(configuration) || is.null(user)) {
     return(NULL)
   }
-
-  err <- vlapply(user, is_missing)
-  if (any(err)) {
-    stop(sprintf("Missing parameter for %s",
-                 paste(names(user)[err], collapse = ", ")))
-  }
-
-  mod1 <- configuration$model1$model(user = user, unused_user_action = "ignore")
-  mod2 <- configuration$model2$model(user = user, unused_user_action = "ignore")
-
-  t_end <- run_options$values$end
-  if (is_missing(t_end)) {
-    stop("Model run end time must be specified")
-  }
-
-  t_n <- 501 # TODO - should be configurable
-
-  y1 <- model_run(mod1, t_end, t_n,
-                  configuration$model1$info$features$discrete)
-  y2 <- model_run(mod2, t_end, t_n,
-                  configuration$model2$info$features$discrete)
-
+  res <- lapply(configuration$configuration, vis_run, user, run_options)
+  configuration$download_names <-
+    compare_download_names(res, configuration$names)
   list(configuration = configuration,
-       simulation = list(model1 = y1, model2 = y2, user = list_to_df(user)))
+       simulation = lapply(res, "[[", "simulation"))
 }
 
 
@@ -165,26 +153,38 @@ compare_vis_plot <- function(result, control) {
 }
 
 
-compare_vis_plot_series <- function(result, y2) {
-  cfg <- result$configuration
-  cols <- cfg$cols
+compare_vis_plot_series <- function(result, y2_model) {
+  f <- function(cfg, simulation) {
+    x <- list(configuration = cfg, simulation = simulation)
+    vis_plot_series(x, NULL, y2_model)
+  }
+  series <- Map(f, result$configuration$configuration, result$simulation)
+  dash <- c("solid", "dash")
+  long <- result$configuration$names$long
 
-  vars1 <- cfg$model1$info$vars$name
-  vars2 <- cfg$model2$info$vars$name
-  label1 <- sprintf("%s (%s)", vars1, cfg$names$long[[1]])
-  label2 <- sprintf("%s (%s)", vars2, cfg$names$long[[2]])
-  model1 <- result$simulation$model1
-  model2 <- result$simulation$model2
+  for (i in seq_along(series)) {
+    s <- series[[i]]
+    for (j in seq_along(s)) {
+      s[[j]]$name <- sprintf("%s (%s)", s[[j]]$name, long[[i]])
+      s[[j]]$line$dash <- dash[[i]]
+    }
+    series[[i]] <- s
+  }
 
-  series1 <- plot_plotly_series_bulk(
-    model1[, 1], model1[, vars1, drop = FALSE],
-    col = cols$model, points = FALSE, y2 = y2,
-    label = label1, legendgroup = vars1)
+  unlist(series, FALSE, FALSE)
+}
 
-  series2 <- plot_plotly_series_bulk(
-    model2[, 1], model2[, vars2, drop = FALSE],
-    col = cols$model, points = FALSE, y2 = y2,
-    label = label2, legendgroup = vars2, dash = "dash")
 
-  c(series1, series2)
+compare_download_names <- function(res, model_names) {
+  display <- lapply(res, function(x) x$configuration$download_names$display)
+  filename <- lapply(res, function(x) x$configuration$download_names$filename)
+  data <- lapply(res, function(x)
+    match(x$configuration$download_names$data, names(x$simulation)))
+
+  n <- lengths(display)
+  i <- rep(seq_along(n), n)
+  download_names(
+    display = sprintf("%s (%s)", unlist(display), model_names$long[i]),
+    filename = sprintf("%s-%s", unlist(filename), model_names$short[i]),
+    data = Map(c, i, unlist(data)))
 }

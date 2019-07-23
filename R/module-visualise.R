@@ -245,11 +245,12 @@ vis_plot_series_focal <- function(result, y2) {
   cols <- cfg$cols
   vars <- cfg$vars[cfg$vars$include, ]
 
-  model_vars <- vars$name
+  model_vars <- intersect(vars$name, names(y2$model))
   model_data <- result$simulation$smooth
+  show <- vars$show[match(model_vars, vars$name)]
   series_model <- plot_plotly_series_bulk(
     model_data[, 1], model_data[, model_vars, drop = FALSE],
-    cols$model, FALSE, y2$model, legendgroup = TRUE, show = vars$show)
+    cols$model, FALSE, y2$model, legendgroup = TRUE, show = show)
 
   data_data <- cfg$data$data
   data_time <- cfg$data$name_time
@@ -273,7 +274,8 @@ vis_plot_series_locked <- function(result, locked, y2) {
   cols <- cfg$cols
   vars <- cfg$vars[cfg$vars$include, ]
 
-  model_vars <- intersect(locked$configuration$vars$name, vars$name)
+  model_vars <- intersect(locked$configuration$vars$name,
+                          vars$name, names(y2))
   model_data <- locked$simulation$smooth
   show <- vars$show[match(model_vars, vars$name)]
   plot_plotly_series_bulk(

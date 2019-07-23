@@ -11,7 +11,10 @@ model_static_ui <- function(id, code, path_docs = NULL, title = "Code") {
     shinyAce::aceEditor(ns("editor"), mode = "r", readOnly = TRUE),
     shiny::div(class = "pull-right",
                shiny::downloadButton(
-                 ns("download_button"), "Save", class = "btn-blue")))
+                 ns("download_button"), "Save", class = "btn-blue")),
+    shiny::tags$div(style = "clear:both;"),
+    mod_variable_order_ui(ns("order")),
+    shiny::uiOutput(ns("status")))
 
   shiny::fluidRow(
     shiny::column(6, editor),
@@ -24,11 +27,24 @@ model_static_server <- function(input, output, session, code,
                                 parameter_ranges = NULL) {
   data <- model_static_setup(code, name, name_short,
                              parameter_ranges = parameter_ranges)
+  rv <- shiny::reactiveValues()
 
-  output$title <- shiny::renderText(data$result$name)
+  order <- shiny::callModule(
+    mod_variable_order_server, "order", shiny::reactive(data$model$info$vars))
+  modules <- submodules(order = order)
+
+  output$title <- shiny::renderText(data$model$name)
 
   shiny::observe({
-    shinyAce::updateAceEditor(session, session$ns("editor"), data$result$code)
+    shinyAce::updateAceEditor(session, session$ns("editor"), data$model$code)
+  })
+
+  shiny::observe({
+    rv$result <- editor_result(data$model, order$result())
+  })
+
+  shiny::observe({
+    rv$status <- editor_status(rv$result, NULL)
   })
 
   output$download_button <- shiny::downloadHandler(
@@ -37,12 +53,21 @@ model_static_server <- function(input, output, session, code,
       writeLines(input$editor, con)
     })
 
-  list(result = shiny::reactive(add_status(data$result, data$status)))
+  get_state <- function() {
+    list(modules = modules$get_state())
+  }
+
+  set_state <- function(state) {
+    modules$set_state(state$modules)
+  }
+
+  list(result = shiny::reactive(add_status(rv$result, rv$status)),
+       get_state = get_state,
+       set_state = set_state)
 }
 
 
 model_static_setup <- function(code, name, name_short,
-                               show = NULL, hide = NULL, disable = NULL,
                                parameter_ranges = NULL) {
   if (length(code) == 1 && file.exists(code)) {
     code <- readLines(code)
@@ -51,17 +76,12 @@ model_static_setup <- function(code, name, name_short,
   model <- common_odin_compile(validation, name, name_short)
   stopifnot(model$success)
 
-  show <- show %||% model$info$vars$name
-  result <- editor_result(model, show, hide, disable)
-
   if (!is.null(parameter_ranges)) {
-    i <- match(result$info$pars$name, names(parameter_ranges))
-    result$info$pars$range <- I(parameter_ranges[i])
+    i <- match(model$info$pars$name, names(parameter_ranges))
+    model$info$pars$range <- I(parameter_ranges[i])
   }
 
-  status <- editor_status(result, NULL)
-
-  list(validation = validation, result = result, status = status)
+  list(validation = validation, model = model)
 }
 
 

@@ -14,6 +14,8 @@ mod_table_summary_server <- function(input, output, session, result) {
   output$table <- shiny::renderDataTable(
     table_summary_data(result()),
     options = list(paging = FALSE, dom = "t", searching = FALSE))
+
+  NULL
 }
 
 

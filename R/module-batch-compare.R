@@ -97,6 +97,8 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
   output$status_batch <- shiny::renderUI({
     batch_status(rv$result)
   })
+
+  NULL
 }
 
 
