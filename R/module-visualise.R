@@ -275,7 +275,7 @@ vis_plot_series_locked <- function(result, locked, y2) {
   vars <- cfg$vars[cfg$vars$include, ]
 
   model_vars <- intersect(locked$configuration$vars$name,
-                          vars$name, names(y2))
+                          intersect(vars$name, names(y2)))
   model_data <- locked$simulation$smooth
   show <- vars$show[match(model_vars, vars$name)]
   plot_plotly_series_bulk(
