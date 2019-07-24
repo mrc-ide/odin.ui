@@ -7,8 +7,8 @@ mod_vis_compare_ui <- function(id) {
         class = "col-sm-4 col-lg-3",
         shiny::tags$form(
           class = "form-horizontal",
-          shiny::uiOutput(ns("status_data")),
-          shiny::uiOutput(ns("status_model")),
+          shiny::uiOutput(ns("status_model1")),
+          shiny::uiOutput(ns("status_model2")),
           ## TODO: status_configure but tone down warning to info
           mod_parameters_ui(ns("parameters")),
           mod_control_run_ui(ns("control_run")),
@@ -48,7 +48,7 @@ mod_vis_compare_server <- function(input, output, session, model1, model2,
     mod_control_graph_server, "control_graph",
     shiny::reactive(rv$configuration))
   control_run <- shiny::callModule(
-    mod_control_run_server, "control_run", model1, run_options)
+    mod_control_run_server, "control_run", model2, run_options)
   download <- shiny::callModule(
     mod_download_server, "download", shiny::reactive(rv$result$value),
     "compare")
@@ -88,6 +88,14 @@ mod_vis_compare_server <- function(input, output, session, model1, model2,
 
   output$status_vis <- shiny::renderUI({
     vis_status(rv$result)
+  })
+
+  output$status_model1 <- shiny::renderUI({
+    show_module_status_if_not_ok(model1()$status)
+  })
+
+  output$status_model2 <- shiny::renderUI({
+    show_module_status_if_not_ok(model2()$status)
   })
 
   get_state <- function() {

@@ -8,7 +8,8 @@ mod_batch_compare_ui <- function(id) {
         shiny::tags$form(
           class = "form-horizontal",
           ## shiny::uiOutput(ns("status_data")),
-          shiny::uiOutput(ns("status_model")),
+          shiny::uiOutput(ns("status_model1")),
+          shiny::uiOutput(ns("status_model2")),
           ## TODO: status_configure but tone down warning to info
           mod_parameters_ui(ns("parameters")),
           mod_control_run_ui(ns("control_run")),
@@ -49,7 +50,7 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
     mod_control_graph_server, "control_graph",
     shiny::reactive(rv$configuration))
   control_run <- shiny::callModule(
-    mod_control_run_server, "control_run", model1, run_options)
+    mod_control_run_server, "control_run", model2, run_options)
   control_focal <- shiny::callModule(
     mod_control_focal_server, "control_focal",
     shiny::reactive(rv$configuration$pars),
@@ -92,6 +93,14 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
 
   output$status_batch <- shiny::renderUI({
     batch_status(rv$result)
+  })
+
+  output$status_model1 <- shiny::renderUI({
+    show_module_status_if_not_ok(model1()$status)
+  })
+
+  output$status_model2 <- shiny::renderUI({
+    show_module_status_if_not_ok(model2()$status)
   })
 
   NULL
