@@ -150,7 +150,7 @@ odin_model <- function(result, code, name = NULL, name_short = NULL) {
 
 
 common_odin_validate <- function(code) {
-  res <- odin::odin_validate(code, "text")
+  res <- odin::odin_validate(strip_linefeed(code), "text")
   if (!is.null(res$error)) {
     res$error <- res$error$message
   }

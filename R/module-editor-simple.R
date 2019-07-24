@@ -45,8 +45,6 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
     ## clever css rule.
     shiny::tags$style(".shiny-file-input-progress {display: none}"),
 
-    shiny::textOutput(ns("hex")),
-
     shiny::uiOutput(ns("validation_info")),
     shiny::uiOutput(ns("model_info")),
     mod_variable_order_ui(ns("order")),
@@ -78,10 +76,6 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
 
   shiny::observe({
     rv$status <- editor_status(rv$result, editor_status_body)
-  })
-
-  output$hex <- shiny::renderText({
-    paste(as.character(charToRaw(input$editor)), collapse = "")
   })
 
   output$status <- shiny::renderUI({

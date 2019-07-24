@@ -261,3 +261,8 @@ pad_matrix <- function(m, v) {
   extra <- matrix(NA, nrow(m), length(msg), dimnames = list(NULL, msg))
   cbind(m, extra)[, v, drop = FALSE]
 }
+
+
+strip_linefeed <- function(x) {
+  gsub("\\r", "", x)
+}
