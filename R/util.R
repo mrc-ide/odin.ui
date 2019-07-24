@@ -246,3 +246,18 @@ names_if <- function(x) {
 package_version <- function(name) {
   utils::packageVersion(name)
 }
+
+
+rbind_laxly <- function(a, b) {
+  v <- union(colnames(a), colnames(b))
+  res <- rbind(pad_matrix(a, v), pad_matrix(b, v))
+  rownames(res) <- NULL
+  res
+}
+
+
+pad_matrix <- function(m, v) {
+  msg <- setdiff(v, colnames(m))
+  extra <- matrix(NA, nrow(m), length(msg), dimnames = list(NULL, msg))
+  cbind(m, extra)[, v, drop = FALSE]
+}

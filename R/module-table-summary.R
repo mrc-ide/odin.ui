@@ -47,27 +47,14 @@ table_summary_data <- function(result) {
     return(NULL)
   }
 
-  if (!identical(names(result$value$simulation),
-                 c("model1", "model2", "user"))) {
+  simulation <- result$value$simulation
+  if (is.null(names(simulation)) && length(simulation) == 2L) {
+    end <- lapply(result$value$simulation, function(x)
+      utils::tail(x$smooth, 1))
+    d <- as.data.frame(rbind_laxly(end[[1]], end[[2]]))
+    cbind(model = result$value$configuration$names$long, d,
+          stringsAsFactors = FALSE)
+  } else {
     stop("Writeme")
   }
-
-  d <- as.data.frame(rbind_laxly(
-    utils::tail(result$value$simulation$model1, 1),
-    utils::tail(result$value$simulation$model2, 1)))
-  cbind(model = result$value$configuration$names$long, d,
-        stringsAsFactors = FALSE)
-}
-
-
-## TODO: respect exclusion lists
-rbind_laxly <- function(a, b) {
-  v <- union(colnames(a), colnames(b))
-  ma <- setdiff(v, colnames(a))
-  mb <- setdiff(v, colnames(b))
-  res <- rbind(
-    cbind(a, matrix(NA, nrow(a), length(ma), dimnames = list(NULL, ma))),
-    cbind(b, matrix(NA, nrow(b), length(mb), dimnames = list(NULL, mb))))
-  rownames(res) <- NULL
-  res
 }
