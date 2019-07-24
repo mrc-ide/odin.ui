@@ -339,9 +339,3 @@ fit_plot <- function(result, locked, target, control) {
   logscale <- control$logscale
   plot_plotly(fit_plot_series(result, locked, target, y2), logscale)
 }
-
-
-fit_control_graph <- function(configuration, ns, restore = NULL) {
-  title <- "Plot on second y axis"
-  common_control_graph(configuration, ns, title, restore)
-}

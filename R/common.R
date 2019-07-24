@@ -69,60 +69,6 @@ odin_y2 <- function(y2_model, name_data, link) {
 }
 
 
-common_control_graph <- function(configuration, ns, check_title,
-                                 restore = NULL) {
-  if (is.null(configuration)) {
-    return(NULL)
-  }
-
-  common_control_graph_settings(configuration, ns, check_title, restore)
-}
-
-
-common_control_graph_settings <- function(configuration, ns, check_title,
-                                          restore) {
-  title <- "Graph settings"
-  id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
-
-  vars <- configuration$vars[configuration$vars$include, , drop = FALSE]
-  if (nrow(vars) == 0L) {
-    return(NULL)
-  }
-
-  labels <- Map(function(lab, col)
-    shiny::span(lab, style = paste0("color:", col)),
-    vars$name, configuration$cols$model[vars$name])
-
-  if (!is.null(restore)) {
-    value_option <- restore$option
-    value_logscale_y <- restore$logscale_y
-  } else {
-    value_option <- FALSE
-    value_logscale_y <- FALSE
-  }
-
-  tags <- shiny::div(class = "form-group",
-                     raw_checkbox_input(ns("logscale_y"), "Log scale y axis",
-                                        value_logscale_y),
-                     shiny::tags$label(check_title),
-                     Map(raw_checkbox_input, ns(vars$id_graph_option),
-                         labels, value_option))
-
-  head <- shiny::a(style = "text-align: right; display: block;",
-                   "data-toggle" = "collapse",
-                   class = "text-muted",
-                   href = paste0("#", id),
-                   title, shiny::icon("gear", lib = "font-awesome"))
-
-  body <- shiny::div(id = id,
-                     class = "collapse box",
-                     style = "width: 300px;",
-                     list(tags))
-
-  shiny::div(class = "pull-right mt-3", head, body)
-}
-
-
 common_model_data_configuration <- function(model, data, link,
                                             run_options = NULL) {
   if (!isTRUE(model$success)) {
