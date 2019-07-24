@@ -1,5 +1,5 @@
 Package: odin.ui
-Version: 0.1.5
+Version: 0.1.6
 Title: Shiny User Interface for 'odin'
 Description: A user interface for 'odin', using Shiny.
 Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
