@@ -244,3 +244,14 @@ test_that("get_inputs", {
     get_inputs(input, c("id_a", "id_b"), c("a", "b")),
     list(a = 1, b = 2))
 })
+
+
+test_that("set_inputs", {
+  session <- new.env(parent = emptyenv())
+  fn <- function(session, id, value) {
+    session[[id]] <- value
+  }
+  set_inputs(session, c("a", "b"), 1:2, fn)
+  expect_equal(session$a, 1)
+  expect_equal(session$b, 2)
+})
