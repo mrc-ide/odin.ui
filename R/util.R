@@ -241,3 +241,8 @@ has_function <- function(x, name) {
 names_if <- function(x) {
   names(x)[x]
 }
+
+
+package_version <- function(name) {
+  utils::packageVersion(name)
+}
