@@ -32,3 +32,30 @@ test_that("simple_select_input", {
                           raw_select_input("label", choices = choices,
                                            selected = selected)))
 })
+
+
+## Hard to test these in any meaningful way:
+test_that("button row", {
+  expect_equal(
+    button_row("label", "id", "button"),
+    horizontal_form_group("label", shiny::actionButton("id", "button")))
+  expect_equal(
+    button_row("label", "id", "button", class = "cl"),
+    horizontal_form_group("label",
+                          shiny::actionButton("id", "button", class = "cl")))
+})
+
+
+test_that("simple slider", {
+  expect_equal(
+    simple_slider_input("name", "id", 0.5, list(from = 0, to = 1)),
+    list(
+      shiny::div(
+        class = "form-group slider-label",
+        shiny::div(class = "col-xs-12", shiny::tags$label("name"))),
+      shiny::div(
+        class = "form-group",
+        shiny::div(class = "col-xs-12 slider",
+                   shiny::sliderInput("id", label = NULL, min = 0, max = 1,
+                                      value = 0.5)))))
+})

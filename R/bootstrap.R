@@ -62,9 +62,10 @@ simple_select_input <- function(name, ...) {
 
 
 simple_slider_input <- function(name, id, value, range) {
-  list(shiny::div(
-    class = "form-group slider-label",
-    shiny::div(class = "col-xs-12", shiny::tags$label(name))),
+  list(
+    shiny::div(
+      class = "form-group slider-label",
+      shiny::div(class = "col-xs-12", shiny::tags$label(name))),
     shiny::div(
       class = "form-group",
       shiny::div(class = "col-xs-12 slider",
