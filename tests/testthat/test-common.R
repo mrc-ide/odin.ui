@@ -255,3 +255,15 @@ test_that("set_inputs", {
   expect_equal(session$a, 1)
   expect_equal(session$b, 2)
 })
+
+
+## just check unchanged for now - this will change in later versions
+## quite a bit I think.
+test_that("version", {
+  expect_equal(
+    odin_ui_version_information(),
+    shiny::tagList(
+      shiny::h2("Version information"),
+      shiny::p(sprintf("odin.ui version %s, odin version %s",
+                       package_version("odin.ui"), package_version("odin")))))
+})

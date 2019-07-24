@@ -142,3 +142,22 @@ test_that("protect", {
   expect_equal(g(4), 2)
   expect_equal(g(-4), NA)
 })
+
+
+test_that("names_if", {
+  expect_equal(names_if(c(a = TRUE, b = FALSE)), "a")
+  expect_equal(names_if(c(a = TRUE, b = TRUE)), c("a", "b"))
+  expect_equal(names_if(c(a = FALSE, b = FALSE)), character())
+})
+
+
+test_that("package_version", {
+  expect_identical(package_version("odin"), packageVersion("odin"))
+})
+
+
+test_that("has_function", {
+  expect_false(has_function(NULL, "f"))
+  expect_false(has_function(list(f = 1), "f"))
+  expect_true(has_function(list(f = identity), "f"))
+})
