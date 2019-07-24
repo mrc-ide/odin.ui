@@ -69,8 +69,9 @@ mod_vis_compare_server <- function(input, output, session, model1, model2,
   shiny::observeEvent(
     input$run, {
       user <- parameters$result()
-      rv$result <- with_success(compare_vis_run(
-        rv$configuration, user, control_run$result()))
+      control <- control_run$result()
+      rv$result <- with_success(
+        compare_vis_run(rv$configuration, user, control))
     })
 
   shiny::observeEvent(
@@ -89,8 +90,32 @@ mod_vis_compare_server <- function(input, output, session, model1, model2,
     vis_status(rv$result)
   })
 
-  ## TODO: support get/set
-  NULL
+  get_state <- function() {
+    if (is.null(rv$configuration) || is.null(rv$result)) {
+      return(NULL)
+    }
+    list(user = rv$result$value$inputs$user,
+         options = rv$result$value$inputs$options,
+         modules = modules$get_state())
+  }
+
+  set_state <- function(state) {
+    if (is.null(state)) {
+      return()
+    }
+    rv$configuration <- compare_configuration(
+      model1(), model2(), control_run$result()$options)
+    modules$set_state(state$modules)
+    ## TODO: not sure why this is not working, but we're not getting
+    ## the previous model here correctly.
+    if (!is.null(rv$configuration)) {
+      rv$result <- with_success(compare_vis_run(
+        rv$configuration, state$user, state$options))
+    }
+  }
+
+  list(get_state = get_state,
+       set_state = set_state)
 }
 
 
@@ -134,14 +159,15 @@ compare_configuration <- function(model1, model2, run_options = NULL) {
 }
 
 
-compare_vis_run <- function(configuration, user, run_options) {
+compare_vis_run <- function(configuration, user, options) {
   if (is.null(configuration) || is.null(user)) {
     return(NULL)
   }
-  res <- lapply(configuration$configuration, vis_run, user, run_options)
+  res <- lapply(configuration$configuration, vis_run, user, options)
   configuration$download_names <-
     compare_download_names(res, configuration$names)
   list(configuration = configuration,
+       inputs = list(user = user, options = options),
        simulation = lapply(res, "[[", "simulation"))
 }
 

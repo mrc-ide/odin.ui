@@ -43,7 +43,7 @@ table_summary_ui <- function(result, ns) {
 ## general we'll want this to work for the simpler single model too.
 ## Not sure how we easily tell the difference.
 table_summary_data <- function(result) {
-  if (!isTRUE(result$success)) {
+  if (!isTRUE(result$success) || is.null(result$value)) {
     return(NULL)
   }
 
