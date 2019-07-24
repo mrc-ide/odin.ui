@@ -182,14 +182,6 @@ odin_data_source <- function(data, filename, name_time) {
 }
 
 
-odin_const_model <- function(code) {
-  result <- odin::odin_build(odin::odin_parse_(code))
-  stopifnot(result$success)
-  code <- list_to_character(odin::odin_ir_deserialise(result$ir)$source)
-  odin_model(result, code)
-}
-
-
 ## result here must be the output of odin::odin_build, which includes:
 ##
 ## success, elapsed, output, model, ir & error
