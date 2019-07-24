@@ -8,7 +8,7 @@ mod_variable_order_server <- function(input, output, session, variables) {
   rv <- shiny::reactiveValues()
 
   output$ui <- shiny::renderUI({
-    variable_order_ui(variables(), session$ns, get_state())
+    variable_order_ui(variables(), session$ns, prev = get_state())
   })
 
   shiny::observe({
@@ -30,8 +30,13 @@ mod_variable_order_server <- function(input, output, session, variables) {
   }
 
   set_state <- function(state) {
-    output$ui <- shiny::renderUI(
+    ## TODO: this is broken - we should be able to pass in the state
+    ## here, but that means that all subsequent updates end up using
+    ## the same state.  At the same time, I am not seeing the 'prev'
+    ## come through *ever* below (see commented out debug).
+    ui <- shiny::isolate(
       variable_order_ui(variables(), session$ns, restore = state))
+    output$ui <- shiny::renderUI(ui)
   }
 
   reset <- function() {
@@ -51,6 +56,8 @@ variable_order_ui <- function(variables, ns, prev = NULL, restore = NULL) {
     return(NULL)
   }
 
+  ## message(sprintf("Drawing order ui prev = %s, restore = %s",
+  ##                 !is.null(prev), !is.null(restore)))
   show <- include <- vars <- variables$name
 
   if (!is.null(restore)) {
