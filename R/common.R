@@ -212,9 +212,10 @@ submodules <- function(...) {
         })
     },
     set_state = function(state) {
-      Map(function(m, s) m$set_state(s),
-          modules[names_if(has_state)],
-          state[names_if(has_state)])
+      nms <- names_if(has_state)
+      Map(function(n, m, s) {
+        m$set_state(s)
+      }, nms, modules[nms], state[nms])
     })
 }
 

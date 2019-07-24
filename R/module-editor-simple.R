@@ -144,6 +144,7 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
     list(editor = input$editor,
          validation = rv$validation$code,
          model = rv$model$code,
+         order = order$result(),
          modules = modules$get_state())
   }
 
@@ -156,7 +157,14 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
     }
     shinyAce::updateAceEditor(session, ns("editor"), value = state$editor)
     modules$set_state(state$modules)
+    if (!is.null(state$order)) {
+      rv$result <- editor_result(rv$model, state$modules$order)
+    }
   }
+
+  shiny::outputOptions(output, "validation_info", suspendWhenHidden = FALSE)
+  shiny::outputOptions(output, "model_info", suspendWhenHidden = FALSE)
+  shiny::outputOptions(output, "status", suspendWhenHidden = FALSE)
 
   list(result = shiny::reactive(add_status(rv$result, rv$status)),
        get_state = get_state,
