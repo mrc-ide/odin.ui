@@ -53,8 +53,8 @@ table_summary_data <- function(result) {
   }
 
   d <- as.data.frame(rbind_laxly(
-    tail(result$value$simulation$model1, 1),
-    tail(result$value$simulation$model2, 1)))
+    utils::tail(result$value$simulation$model1, 1),
+    utils::tail(result$value$simulation$model2, 1)))
   cbind(model = result$value$configuration$names$long, d,
         stringsAsFactors = FALSE)
 }
