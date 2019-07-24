@@ -53,59 +53,62 @@ test_that("editor validation info: success", {
 
 
 test_that("editor compilation info: empty", {
-  expect_null(editor_result_info(NULL))
+  expect_null(editor_model_info(NULL))
 })
 
 
 test_that("editor compilation info: success", {
+  id <- ids::random_id()
   d1 <- list(success = TRUE,
              elapsed = list(elapsed = 1.2),
              output = c("a", "b"),
              error = NULL,
              is_current = TRUE)
-  expect_equal(editor_result_info(d1),
-               simple_panel(
+  expect_equal(editor_model_info(d1, id = id),
+               panel_collapseable(
                  "success",
                  "Compilation: success, 1.20 s elapsed",
-                 shiny::pre("a\nb")))
+                 shiny::pre("a\nb"),
+                 collapsed = TRUE, id = id))
 
   d1$is_current <- FALSE
-  expect_equal(editor_result_info(d1),
-               simple_panel(
+  expect_equal(editor_model_info(d1, id = id),
+               panel_collapseable(
                  "default",
                  paste("Compilation: success, 1.20 s elapsed",
                        "(code has changed since this was run)"),
                  shiny::pre("a\nb"),
-                 "check-circle"))
+                 "check-circle", collapsed = TRUE, id = id))
+
   d1$output <- character(0)
-  expect_equal(editor_result_info(d1),
-               simple_panel(
+  expect_equal(editor_model_info(d1, id = id),
+               panel_collapseable(
                  "default",
                  paste("Compilation: success, 1.20 s elapsed",
                        "(code has changed since this was run)"),
                  NULL,
-                 "check-circle"))
+                 "check-circle", collapsed = TRUE, id = id))
 
   d2 <- list(success = FALSE,
              elapsed = list(elapsed = 1.2),
              output = NULL,
              error = "failure",
              is_current = TRUE)
-  expect_equal(editor_result_info(d2),
-               simple_panel(
+  expect_equal(editor_model_info(d2, id = id),
+               panel_collapseable(
                  "danger",
                  "Compilation: error, 1.20 s elapsed",
                  shiny::pre("failure"),
-                 "times-circle"))
+                 "times-circle", collapsed = FALSE, id = id))
 
   d2$is_current <- FALSE
-  expect_equal(editor_result_info(d2),
-               simple_panel(
+  expect_equal(editor_model_info(d2, id = id),
+               panel_collapseable(
                  "warning",
                  paste("Compilation: error, 1.20 s elapsed",
                        "(code has changed since this was run)"),
                shiny::pre("failure"),
-               "times-circle"))
+               "times-circle", collapsed = FALSE, id = id))
 })
 
 
@@ -121,28 +124,37 @@ test_that("model status: no callback", {
     editor_status(NULL, "solution"),
     module_status("danger", "Please compile a model", "solution"))
 
+  code <- c("deriv(x) <- 1",
+            "initial(x) <- a",
+            "a <- user(3, min = 0)",
+            "b <- user(max = 1)",
+            "deriv(z) <- 1",
+            "initial(z) <- 1",
+            "deriv(y) <- 2",
+            "initial(y) <- b")
+  m <- editor_result(common_odin_compile_from_code(code), NULL)
+  expect_equal(
+    editor_status(m, NULL),
+    module_status("success", "Model with 2 parameters and 3 variables/outputs",
+                  NULL))
+  expect_equal(
+    editor_status(m, "solution"),
+    module_status("success", "Model with 2 parameters and 3 variables/outputs",
+                  NULL))
+
+  m$is_current <- FALSE
   expect_equal(
     editor_status(m, NULL),
     module_status(
-      "warning", "Model with 3 parameters and 4 variables/outputs",
+      "warning", "Model with 2 parameters and 3 variables/outputs",
       "Warning: model is out of date, consider recompiling the model."))
   expect_equal(
     editor_status(m, "solution"),
     module_status(
-      "warning", "Model with 3 parameters and 4 variables/outputs",
+      "warning", "Model with 2 parameters and 3 variables/outputs",
       shiny::tagList(
         "Warning: model is out of date, consider recompiling the model.",
         "solution")))
-
-  m$is_current <- TRUE
-  expect_equal(
-    editor_status(m, NULL),
-    module_status("success", "Model with 3 parameters and 4 variables/outputs",
-                  NULL))
-  expect_equal(
-    editor_status(m, "solution"),
-    module_status("success", "Model with 3 parameters and 4 variables/outputs",
-                  NULL))
 })
 
 

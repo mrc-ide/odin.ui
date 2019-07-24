@@ -195,7 +195,7 @@ editor_validation_info <- function(status) {
 }
 
 
-editor_model_info <- function(result) {
+editor_model_info <- function(result, id = NULL) {
   if (is.null(result)) {
     panel <- NULL
   } else {
@@ -224,7 +224,7 @@ editor_model_info <- function(result) {
 
     title <- sprintf("Compilation: %s", title)
     panel <- panel_collapseable(class, title, body, icon_name,
-                                collapsed = success)
+                                collapsed = success, id = id)
   }
 
   panel
