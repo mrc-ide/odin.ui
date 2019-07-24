@@ -112,18 +112,12 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
     }
   })
 
-  ## Here is the first part of the exit route out of the module
   shiny::observeEvent(
     input$compile, {
-      prev <- shiny::isolate(rv$result)
       shiny::withProgress(
         message = "Compiling...", value = 1, {
           rv$validation <- common_odin_validate(input$editor)
-          model <- common_odin_compile(rv$validation)
-          rv$model <- model
-          output$include <- shiny::renderUI({
-            editor_include(model, prev, session$ns)
-          })
+          rv$model <- common_odin_compile(rv$validation)
         })
     })
 
