@@ -19,7 +19,7 @@ mod_batch_compare_ui <- function(id) {
           ##
           shiny::actionButton(ns("reset"), "Reset",
                               shiny::icon("refresh"),
-                              class = "btn-grey pull-right ml-2"),
+                              class = "btn-danger pull-right ml-2"),
           shiny::actionButton(ns("run"), "Run model",
                               shiny::icon("play"),
                               class = "btn-blue pull-right"))),

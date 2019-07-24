@@ -13,7 +13,7 @@ mod_state_ui <- function(id) {
                  NULL,
                  multiple = FALSE,
                  accept = c("application/octet-stream", ".rds"),
-                 button_class = "btn-grey")),
+                 button_class = "btn-blue")),
     shiny::uiOutput(ns("status")),
     shiny::hr(),
     shiny::h2("Save"),

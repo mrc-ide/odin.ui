@@ -85,7 +85,7 @@ lock_control <- function(render, ns, collapsed = TRUE) {
     button_row("", ns("clear"), "Clear locked", shiny::icon("trash"),
                class = "btn-danger"),
     button_row("", ns("swap"), "Swap locked and current",
-               shiny::icon("refresh"), class = "btn-grey"),
+               shiny::icon("random"), class = "btn-grey"),
     ns = ns, collapsed = TRUE)
 }
 

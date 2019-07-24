@@ -16,7 +16,7 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
                     "Upload model file",
                     multiple = FALSE,
                     accept = c("text/plain", ".R"),
-                    button_class = "btn-grey")
+                    button_class = "btn-blue")
       )),
     ## The ace editor setting "showPrintMargin" is the one to control
     ## the 80 char bar but I don't see how to get that through here.
