@@ -155,12 +155,17 @@ batch_run <- function(configuration, focal, run_options) {
   if (is.null(focal)) {
     return(NULL)
   }
+
   name <- focal$name
   n <- constrain(focal$n, 2, 20)
   value <- seq(focal$from, focal$to, length.out = n)
   pars <- configuration$pars
   i <- match(name, pars$name)
-  value <- value[value >= pars$min[[i]] & value <= pars$max[[i]]]
+  if (is.na(i)) {
+    value <- focal$value
+  } else {
+    value <- value[value >= pars$min[[i]] & value <= pars$max[[i]]]
+  }
 
   user <- focal$base
   f <- function(p) {
