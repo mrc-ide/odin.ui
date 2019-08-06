@@ -1,6 +1,6 @@
 ## These are not real apps but things that are for driving modules
 ## individually.
-odin_ui_csv_app <- function() {
+testing_csv_app <- function() {
   ui <- shiny::shinyUI(
     shiny::navbarPage(
       "csv app",

@@ -55,3 +55,21 @@ nth_tab <- function(dr, n, id = "odin_ui_navbar") {
   el <- dr$findElement("xpath", xpath)
   el
 }
+
+
+download_file <- function(element, path = "downloads") {
+  files <- dir(path)
+  element$clickElement()
+  retry(function() length(setdiff(dir(path), files)) > 0L)
+  filename <- file.path(path, setdiff(dir(path), files))
+
+  size <- 0L
+  finished <- function() {
+    prev <- size
+    size <<- file.size(filename)
+    size == prev
+  }
+  retry(finished)
+
+  filename
+}
