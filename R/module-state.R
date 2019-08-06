@@ -42,7 +42,8 @@ mod_state_server <- function(input, output, session, modules, app_name) {
     },
     content = function(con) {
       saveRDS(state_save(modules, app_name), con)
-    })
+    },
+    contentType = "application/octet-stream")
 
   shiny::observeEvent(
     input$load, {

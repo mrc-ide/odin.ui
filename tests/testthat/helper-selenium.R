@@ -8,8 +8,28 @@ selenium_driver <- function() {
     ## No point running a test if we can't launch the application either
     testthat::skip_if_not_installed("callr")
   }
+
+  ## Automated downloading of files from the selenium tests:
+
+  ## This is all suboptimal: we download into a path that's hard coded
+  ## for the docker test and that only works sometimes because on most
+  ## systems the uid will work out nicely for us (that's in particular
+  ## unlikely to work on travis if the process runs as root).
+
+  ## https://github.com/ropensci/RSelenium/issues/185
+  ## https://stackoverflow.com/questions/44072022/python-unable-to-download-with-selenium-in-webpage
+  ## https://stackoverflow.com/questions/34899836/how-to-read-a-file-downloaded-by-selenium-webdriver-in-python/34900612#34900612
   tryCatch({
-    dr <- RSelenium::remoteDriver()
+    dr <- RSelenium::remoteDriver(
+      browserName = "firefox",
+      extraCapabilities = RSelenium::makeFirefoxProfile(list(
+        "browser.download.dir" = "/host/tests/testthat/downloads",
+        ## This is an enum, '2' means use the value in the
+        ## browser.download.dir parameter
+        "browser.download.folderList" = 2L,
+        "browser.download.manager.showWhenStarting" = FALSE,
+        "browser.helperApps.neverAsk.saveToDisk" = "application/octet-stream"
+      )))
     dr$open(silent = TRUE)
     dr$maxWindowSize()
     dr
@@ -23,36 +43,16 @@ selenium_driver <- function() {
 }
 
 
-path_remote <- function(path) {
-  file.path("/host", path, fsep = "/")
-}
-
-
-launch_prototype <- function() {
-  launch_app(function(port) {
-    options(error = traceback)
-    app <- odin.ui:::odin_prototype(character(0))
-    shiny::runApp(app, port = port)
-  })
-}
-
-
-launch_csv <- function() {
-  launch_app(function(port) {
-    options(error = traceback)
-    app <- odin.ui:::odin_ui_csv_app()
-    shiny::runApp(app, port = port)
-  })
-}
-
-
 ## This version is totally built around our demo app - we'll need to
 ## generalise this later.
-launch_app <- function(driver) {
+launch_app <- function(fn, args = list()) {
   port <- get_free_port()
-  args <- list(port)
 
-  process <- callr::r_bg(driver, args = args)
+  process <- callr::r_bg(function(port, fn, args) {
+    options(error = traceback)
+    app <- do.call(fn, args, quote = TRUE)
+    shiny::runApp(app, port = port)
+  }, args = list(port, fn, args))
 
   url <- paste0("http://localhost:", port)
   ## It will take a short while before the server is responsive to
@@ -136,35 +136,6 @@ check_port <- function(port) {
   }
   close(con)
   FALSE
-}
-
-
-element_exists <- function(driver, value, using = "id") {
-  length(driver$findElements(using, value)) > 0
-}
-
-
-retry_until_element_exists <- function(driver, value, using = "id", ...) {
-  retry(function() element_exists(driver, value, using),
-        sprintf("Searching for element %s = %s", using, value))
-  driver$findElement(using, value)
-}
-
-
-expect_with_retry <- function(expectation, fn, ..., timeout = 5, poll = 0.1) {
-  give_up <- Sys.time() + timeout
-  repeat {
-    res <- tryCatch(
-      expectation(fn(), ...),
-      error = identity)
-    if (!inherits(res, "error")) {
-      return(invisible(res))
-    }
-    if (Sys.time() > give_up) {
-      stop(res)
-    }
-    Sys.sleep(poll)
-  }
 }
 
 
