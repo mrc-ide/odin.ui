@@ -1,11 +1,12 @@
-# R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
-
-language: R
+language: r
 sudo: false
 cache: packages
 
-r_github_packages:
-  - mrc-ide/odin
+services:
+  - docker
+before_script:
+  ./scripts/selenium-start
+
 r_packages:
   - covr
 after_success:
