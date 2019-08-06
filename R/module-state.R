@@ -25,7 +25,7 @@ mod_state_ui <- function(id) {
       class = "form-inline mt-5",
       shiny::div(
         class = "form-group",
-        raw_text_input("download_filename", placeholder = "filename",
+        raw_text_input(ns("download_filename"), placeholder = "filename",
                        value = "")),
       shiny::downloadButton(ns("save"), "Download", class = "btn-blue")),
     shiny::hr(),
