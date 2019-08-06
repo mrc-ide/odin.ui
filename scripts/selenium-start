@@ -1,11 +1,30 @@
 #!/usr/bin/env bash
+set -e
 HERE=$(dirname $0)
 ODIN_UI_ROOT=$(realpath $HERE/..)
-# or use 2.53.0
 SELENIUM_VERSION=latest
+CONTAINER_NAME=odin-ui-selenium
 
+if [ "$#" -eq 0 ]; then
+    IMAGE=selenium/standalone-firefox:$SELENIUM_VERSION
+    DEBUG=false
+elif [ "'$*'" == "'--debug'" ]; then
+    IMAGE=selenium/standalone-firefox-debug:$SELENIUM_VERSION
+    DEBUG=true
+else
+    echo "Usage: $0 [--debug]"
+    exit 1
+fi
+
+echo "Starting docker container"
 docker run -d --rm \
-       --name shinysel-selenium \
+       --name $CONTAINER_NAME \
        --network=host \
-       -v ${ODIN_UI_ROOT}:/host \
-       selenium/standalone-firefox:$SELENIUM_VERSION
+       -v ${ODIN_UI_ROOT}:/host:ro \
+       selenium/standalone-firefox-debug:$SELENIUM_VERSION
+
+if [ "$DEBUG" == "true" ]; then
+    echo "Connect a VNC client to localhost:5900 to see the browser"
+fi
+
+echo "Run ./scripts/selenium-stop to stop the server"
