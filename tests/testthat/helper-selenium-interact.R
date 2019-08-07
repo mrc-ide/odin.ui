@@ -57,20 +57,60 @@ nth_tab <- function(dr, n, id = "odin_ui_navbar") {
 }
 
 
-download_file <- function(element, path = "downloads") {
-  files <- dir(path)
+## download_file <- function(element, path = "downloads") {
+##   files <- dir(path)
+##   element$clickElement()
+##   retry(function() length(setdiff(dir(path), files)) > 0L,
+##         "downloaded file appeared")
+##   filename <- file.path(path, setdiff(dir(path), files))
+
+##   size <- 0L
+##   finished <- function() {
+##     prev <- size
+##     size <<- file.size(filename)
+##     size == prev
+##   }
+##   retry(finished, "file finished downloading")
+
+##   filename
+## }
+
+
+docker_list_files <- function(container, path) {
+  res <- container$exec(c("ls", "-1", path), stream = FALSE)
+  if (res$exit_code != 0L) {
+    stop("Error listing directory")
+  }
+  output <- format(res$output, filter = "stdout", style = "plain")
+  unlist(strsplit(output, "\n", fixed = TRUE))
+}
+
+
+download_file <- function(element, dat) {
+  container <- dat$container
+  download_dir <- dat$download_dir
+
+  prev <- docker_list_files(container, download_dir)
+  files <- character(0)
+
+  appeared <- function() {
+    files <<- setdiff(docker_list_files(container, download_dir), prev)
+    length(files) > 0L
+  }
   element$clickElement()
-  retry(function() length(setdiff(dir(path), files)) > 0L,
-        "downloaded file appeared")
-  filename <- file.path(path, setdiff(dir(path), files))
+  retry(appeared, "downloaded file appeared")
+  filename <- file.path(download_dir, files)
 
   size <- 0L
   finished <- function() {
     prev <- size
-    size <<- file.size(filename)
+    size <<- container$path_stat(filename)$size
     size == prev
   }
-  retry(finished, "file finished downloading")
 
-  filename
+  retry(finished, "file finished downloading")
+  tmp <- tempfile()
+  container$cp_out(filename, tmp)
+  list(local = tmp,
+       remote = filename)
 }

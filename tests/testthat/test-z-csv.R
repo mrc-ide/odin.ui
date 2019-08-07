@@ -1,7 +1,9 @@
 context("selenium: csv")
 
 test_that("upload data", {
-  dr <- selenium_driver()
+  dat <- selenium_prepare()
+  dr <- dat$dr
+
   app <- launch_app(testing_csv_app, list())
   dr$navigate(app$url)
   on.exit(dr$close())
@@ -37,8 +39,8 @@ test_that("upload data", {
   ## Grab a download of state
   nth_tab(dr, 2)$clickElement()
   download <- retry_until_element_exists(dr, shiny::NS("state", "save"))
-  filename <- download_file(download)
-  d <- readRDS(filename)
+  filename <- download_file(download, dat)
+  d <- readRDS(filename$local)
 
   ## Go back to the main page
   nth_tab(dr, 1)$clickElement()
@@ -65,8 +67,7 @@ test_that("upload data", {
   dr$refresh()
   nth_tab(dr, 2)$clickElement()
   upload <- retry_until_element_exists(dr, shiny::NS("state", "load"))
-  path <- path_remote(file.path("tests/testthat", filename))
-  upload$sendKeysToElement(list(path))
+  upload$sendKeysToElement(list(filename$remote))
 
   ## Go back to the main page
   nth_tab(dr, 1)$clickElement()

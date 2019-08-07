@@ -20,7 +20,7 @@ echo "Starting docker container"
 docker run -d --rm \
        --name $CONTAINER_NAME \
        --network=host \
-       -v ${ODIN_UI_ROOT}:/host \
+       -v ${ODIN_UI_ROOT}:/host:ro \
        selenium/standalone-firefox-debug:$SELENIUM_VERSION
 
 if [ "$DEBUG" == "true" ]; then
