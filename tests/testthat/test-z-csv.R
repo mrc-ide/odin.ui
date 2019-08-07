@@ -11,6 +11,11 @@ test_that("upload data", {
 
   upload <- retry_until_element_exists(dr, shiny::NS("odin_csv", "filename"))
 
+  ## Just try a long sleep here for now
+  if (on_travis()) {
+    Sys.sleep(5)
+  }
+
   ## Upload data into the app:
   path <- path_remote("tests/testthat/examples/data/trig.csv")
   upload$sendKeysToElement(list(path))

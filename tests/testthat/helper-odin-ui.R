@@ -28,3 +28,8 @@ example_data_fit <- function() {
   list(model = model, data = data, link = link,
        configuration = fit_configuration(model, data, link))
 }
+
+
+on_travis <- function() {
+  identical(Sys.getenv("TRAVIS"), "true")
+}
