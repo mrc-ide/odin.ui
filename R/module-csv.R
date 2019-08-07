@@ -5,14 +5,9 @@ mod_csv_ui <- function(id) {
     shiny::titlePanel("Upload data"),
     shiny::sidebarLayout(
       shiny::sidebarPanel(
-        shiny::p(paste(
-          "Upload data for the epidemic; this file should include",
-          "a column for time and one or more response variables.",
-          "The data must have a header row, and all columns must contain",
-          "only numbers. Missing data is allowed.")),
+        shiny::includeMarkdown(odin_ui_file("md/csv_instructions.md")),
         shiny::fileInput(ns("filename"), NULL, accept = accept_csv()),
-        shiny::selectInput(ns("name_time"),
-                           "Select time variable",
+        shiny::selectInput(ns("name_time"), "Select time variable",
                            character(0)),
         shiny::uiOutput(ns("summary")),
         shiny::hr(),
@@ -198,19 +193,20 @@ csv_import_result <- function(data, filename) {
   value <- list(data = data,
                 filename = filename,
                 info = csv_guess_time(data))
+  if (length(value$info$choices) == 0L) {
+    return(csv_import_error("None of the columns are strictly increasing"))
+  }
   list(success = TRUE, value = value, error = NULL)
 }
 
 
 csv_guess_time <- function(data) {
   vars <- names(data)
-  pos <- vlapply(data, is_increasing)
+  vars <- names(data)[vlapply(data, is_increasing)]
   name_times <- c("t", "time", "day", "date", "week", "year")
   i <- which(tolower(vars) %in% name_times)
 
-  if (sum(pos) == 1L) {
-    guess <- vars[pos]
-  } else if (length(i) == 1L) {
+  if (length(i) == 1L) {
     guess <- vars[[i]]
   } else {
     guess <- NA

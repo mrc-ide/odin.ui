@@ -5,7 +5,7 @@ test_that("read simple csv", {
   filename <- "myfile.csv"
   on.exit(unlink(path))
 
-  d <- data_frame(a = 1:5, b = runif(5), c = runif(5))
+  d <- data_frame(a = 1:5, b = 1:5, c = 1:5)
   write_csv(d, path)
 
   cmp <- list(success = TRUE,
@@ -97,9 +97,11 @@ test_that("Invalid csv", {
 test_that("guess time column", {
   d <- data_frame(a = 1:5, b = runif(5), c = runif(5))
   expect_equal(csv_guess_time(cbind(d, d = 6:10)),
-               list(choices = c("a", "b", "c", "d"), selected = NA))
+               list(choices = c("a", "d"), selected = NA))
   expect_equal(csv_guess_time(d),
-               list(choices = c("a", "b", "c"), selected = "a"))
+               list(choices = "a", selected = "a"))
+
+  d[] <- 1:5
 
   f <- function(x) {
     names(d)[seq_along(x)] <- x
@@ -145,6 +147,17 @@ test_that("csv summary: configured", {
     simple_panel("success",
                  "Uploaded 4 rows and 3 columns",
                  "Response variables: b, c"))
+})
+
+
+test_that("can't import a csv with no increasing data", {
+  n <- 1000
+  d <- data.frame(a = runif(n), b = runif(n), c = runif(n))
+  f <- "myfile.csv"
+  imported <- csv_validate(d, f, 1, 1)
+  expect_equal(
+    imported,
+    csv_import_error("None of the columns are strictly increasing"))
 })
 
 
