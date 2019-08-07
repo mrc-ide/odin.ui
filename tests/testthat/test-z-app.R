@@ -3,6 +3,7 @@ context("selenium: app")
 ## TODO: this can be factored out into a test for the csv module but I
 ## do need a driver for that.
 test_that("upload data", {
+  skip("disabled")
   dr <- selenium_driver()
 
   app <- launch_prototype()
