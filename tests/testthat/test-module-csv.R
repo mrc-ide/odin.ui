@@ -257,3 +257,18 @@ test_that("csv result returns an odin_data_source", {
   expect_equal(csv_result(result$value, "b"),
                odin_data_source(d, filename, "b"))
 })
+
+
+test_that("can't use files with missing column names", {
+  d <- data.frame("x" = 1:10, b = runif(10), c = runif(10))
+  names(d)[[1]] <- ""
+  expect_equal(
+    csv_validate(d, "file.csv", 1, 1),
+    csv_import_error("Data contains blank column names (1)"))
+  names(d)[[3]] <- ""
+  expect_equal(
+    csv_validate(d, "file.csv", 1, 1),
+    csv_import_error(
+      c("Data contains duplicate names ('')",
+        "Data contains blank column names (1, 3)")))
+})

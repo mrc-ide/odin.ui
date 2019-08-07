@@ -101,6 +101,11 @@ csv_validate <- function(data, filename, min_cols, min_rows) {
     error <- c(error, sprintf("Data contains duplicate names (%s)",
                               paste(squote(dup), collapse = ", ")))
   }
+  if (any(!nzchar(names(data)))) {
+    msg <- which(!nzchar(names(data)))
+    error <- c(error, sprintf("Data contains blank column names (%s)",
+                              paste(msg, collapse = ", ")))
+  }
   is_numeric <- vapply(data, is.numeric, logical(1))
   if (!all(is_numeric)) {
     err <- paste(squote(names(data)[!is_numeric]), collapse = ", ")
@@ -201,7 +206,6 @@ csv_import_result <- function(data, filename) {
 
 
 csv_guess_time <- function(data) {
-  vars <- names(data)
   vars <- names(data)[vlapply(data, is_increasing)]
   name_times <- c("t", "time", "day", "date", "week", "year")
   i <- which(tolower(vars) %in% name_times)
