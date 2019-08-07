@@ -204,13 +204,18 @@ csv_import_result <- function(data, filename) {
 
 csv_guess_time <- function(data) {
   vars <- names(data)
+  pos <- vlapply(data, is_increasing)
   name_times <- c("t", "time", "day", "date", "week", "year")
   i <- which(tolower(vars) %in% name_times)
-  if (length(i) == 1L) {
+
+  if (sum(pos) == 1L) {
+    guess <- vars[pos]
+  } else if (length(i) == 1L) {
     guess <- vars[[i]]
   } else {
     guess <- NA
   }
+
   list(choices = vars, selected = guess)
 }
 

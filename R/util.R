@@ -266,3 +266,8 @@ pad_matrix <- function(m, v) {
 strip_linefeed <- function(x) {
   gsub("\\r", "", x)
 }
+
+
+is_increasing <- function(x) {
+  all(diff(x) > 0)
+}

@@ -96,8 +96,10 @@ test_that("Invalid csv", {
 
 test_that("guess time column", {
   d <- data_frame(a = 1:5, b = runif(5), c = runif(5))
+  expect_equal(csv_guess_time(cbind(d, d = 6:10)),
+               list(choices = c("a", "b", "c", "d"), selected = NA))
   expect_equal(csv_guess_time(d),
-               list(choices = c("a", "b", "c"), selected = NA))
+               list(choices = c("a", "b", "c"), selected = "a"))
 
   f <- function(x) {
     names(d)[seq_along(x)] <- x
