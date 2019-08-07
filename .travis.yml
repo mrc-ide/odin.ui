@@ -10,5 +10,7 @@ before_script:
 
 r_packages:
   - covr
+r_github_packages:
+  - cran/curl@3.3
 after_success:
   - Rscript -e 'covr::codecov(quiet = FALSE)'
