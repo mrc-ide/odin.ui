@@ -63,7 +63,7 @@ mod_csv_server <- function(input, output, session, csv_status_body) {
       shinyjs::reset("filename")
       rv$result <- NULL
       rv$imported <- NULL
-      update_select_input(session, "name_time", NULL)
+      clear_select_input(session, "name_time")
     })
 
   get_state <- function() {
