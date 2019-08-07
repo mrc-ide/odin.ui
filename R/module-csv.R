@@ -208,6 +208,8 @@ csv_guess_time <- function(data) {
 
   if (length(i) == 1L) {
     guess <- vars[[i]]
+  } else if (length(vars) == 1L) {
+    guess <- vars
   } else {
     guess <- NA
   }
