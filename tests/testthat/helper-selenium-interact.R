@@ -60,7 +60,8 @@ nth_tab <- function(dr, n, id = "odin_ui_navbar") {
 download_file <- function(element, path = "downloads") {
   files <- dir(path)
   element$clickElement()
-  retry(function() length(setdiff(dir(path), files)) > 0L)
+  retry(function() length(setdiff(dir(path), files)) > 0L,
+        "downloaded file appeared")
   filename <- file.path(path, setdiff(dir(path), files))
 
   size <- 0L
@@ -69,7 +70,7 @@ download_file <- function(element, path = "downloads") {
     size <<- file.size(filename)
     size == prev
   }
-  retry(finished)
+  retry(finished, "file finished downloading")
 
   filename
 }
