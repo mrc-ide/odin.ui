@@ -1,7 +1,7 @@
 language: r
 sudo: false
 cache: packages
-dist: xenial
+dist: bionic
 
 services:
   - docker
