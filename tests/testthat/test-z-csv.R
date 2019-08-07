@@ -1,10 +1,6 @@
 context("selenium: csv")
 
 test_that("upload data", {
-  ## Annoyingly, this is not working on travis.  We'll see what can be
-  ## done...
-  skip_on_travis()
-
   dr <- selenium_driver()
   app <- launch_app(testing_csv_app, list())
   dr$navigate(app$url)
