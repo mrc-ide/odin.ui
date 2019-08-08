@@ -54,9 +54,9 @@ Start a selenium server with either
 or
 
 ```
-./scripts/selenium-start-debug
+./scripts/selenium-start --debug
 ```
 
-(with the latter you can connect over VNC to `localhost:5900`, which is useful for writing the tests and debugging failures, but not needed for running the suite).
+(with the latter you can connect over VNC to `localhost:5900`, which is useful for writing the tests and debugging failures, but not needed for running the suite - the password is `secret` [see the docker-selenium repo](https://github.com/SeleniumHQ/docker-selenium)).
 
 The package *must* be installed before running the tests because we use `callr::r_bg` to create a backgrounded R process that will run the shiny app.

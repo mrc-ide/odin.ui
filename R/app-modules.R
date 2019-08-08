@@ -1,12 +1,29 @@
 ## These are not real apps but things that are for driving modules
 ## individually.
-odin_ui_csv_app <- function() {
+testing_csv_app <- function() {
+  ui <- shiny::shinyUI(
+    shiny::navbarPage(
+      "csv app",
+      id = "odin_ui_navbar",
+      shiny::tabPanel(
+        "Data",
+        icon = shiny::icon("table"),
+        mod_csv_ui("odin_csv")),
+      shiny::tabPanel(
+        shiny::tagList(
+          "Load/Save",
+          mod_status_ui("status")),
+        icon = shiny::icon("list"),
+        mod_state_ui("state"))))
   shiny::shinyApp(
-    ui = shiny::shinyUI(
-      shiny::fluidPage(
-        mod_csv_ui("odin_csv"))),
+    ui = ui,
     server = function(input, output, session) {
-      shiny::callModule(mod_csv_server, "odin_csv")
+      data <- shiny::callModule(mod_csv_server, "odin_csv", NULL)
+      modules <- submodules(data = data)
+      state <- shiny::callModule(
+        mod_state_server, "state", modules, "prototype")
+      status <- shiny::callModule(
+        mod_status_server, "status", list(table = data$result))
     })
 }
 

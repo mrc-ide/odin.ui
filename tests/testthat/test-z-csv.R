@@ -1,18 +1,17 @@
 context("selenium: csv")
 
 test_that("upload data", {
-  dr <- selenium_driver()
+  dat <- selenium_prepare()
+  dr <- dat$dr
 
-  app <- launch_csv()
-
+  app <- launch_app(testing_csv_app, list())
   dr$navigate(app$url)
   on.exit(dr$close())
 
   title <- dr$getTitle()[[1]]
-  expect_equal(title, "Upload data")
+  expect_equal(title, "csv app")
 
   upload <- retry_until_element_exists(dr, shiny::NS("odin_csv", "filename"))
-  upload <- dr$findElement("id", shiny::NS("odin_csv", "filename"))
 
   ## Upload data into the app:
   path <- path_remote("tests/testthat/examples/data/trig.csv")
@@ -32,6 +31,21 @@ test_that("upload data", {
     expect_true,
     function() plot$isElementDisplayed()[[1]])
 
+  ## this will need work when we have more than one!
+  status <- dr$findElement("id", "status-ui")
+  el <- status$findChildElement("xpath", ".//i")
+  expect_match(el$getElementAttribute("class")[[1]], "text-success")
+
+  ## Grab a download of state
+  nth_tab(dr, 2)$clickElement()
+  download <- retry_until_element_exists(dr, shiny::NS("state", "save"))
+  filename <- download_file(download, dat)
+  d <- readRDS(filename$local)
+
+  ## Go back to the main page
+  nth_tab(dr, 1)$clickElement()
+
+  ## Try resetting everything
   table <- dr$findElement("id", shiny::NS("odin_csv", "data_table"))
   table_head <- table$findChildElement("xpath", ".//thead/tr")
   expect_equal(vcapply(table_head$findChildElements("tag name", "th"),
@@ -45,8 +59,21 @@ test_that("upload data", {
   expect_with_retry(
     expect_equal,
     function() summary$getElementText()[[1]],
-    "")
+    "Upload a data set to begin")
 
   expect_false(plot$isElementDisplayed()[[1]])
   expect_equal(table$findChildElements("xpath", "div"), list())
+
+  dr$refresh()
+  nth_tab(dr, 2)$clickElement()
+  upload <- retry_until_element_exists(dr, shiny::NS("state", "load"))
+  upload$sendKeysToElement(list(filename$remote))
+
+  ## Go back to the main page
+  nth_tab(dr, 1)$clickElement()
+  summary <- dr$findElement("id", shiny::NS("odin_csv", "summary"))
+  expect_with_retry(
+    expect_match,
+    function() summary$getElementText()[[1]],
+    "Uploaded 51 rows and 3 columns\\s+Response variables: a, b")
 })
