@@ -81,15 +81,19 @@ control_run_result <- function(options, values) {
 }
 
 
-control_run_options <- function(control_end_time = FALSE, replicates = FALSE) {
-  list(control_end_time = control_end_time, replicates = replicates)
+control_run_options <- function(control_end_time = FALSE, replicates = FALSE,
+                                scale_time = FALSE) {
+  list(control_end_time = control_end_time,
+       replicates = replicates,
+       scale_time = scale_time)
 }
 
 
 control_run_options_validate <- function(options) {
   control_run_options(
     control_end_time = options$control_end_time %||% FALSE,
-    replicates = options$replicates %||% FALSE)
+    replicates = options$replicates %||% FALSE,
+    scale_time = options$scale_time %||% FALSE)
 }
 
 

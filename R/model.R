@@ -257,5 +257,5 @@ model_run <- function(model, t_end, t_n, is_discrete, ..., name_scale = "dt") {
 discrete_times <- function(t_end, t_n, dt) {
   by <- ceiling(t_end / dt / t_n)
   step_end <- ceiling(t_end / dt)
-  seq(0, step_end, by = by)
+  union(seq(0, step_end, by = by), step_end)
 }

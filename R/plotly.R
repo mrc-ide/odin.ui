@@ -116,10 +116,20 @@ plot_plotly_series_bulk <- function(x, y, col, points, y2,
   dash <- expand_and_name(dash, nms)
   symbol <- expand_and_name(symbol, nms)
   show <- expand_and_name(show, nms)
+  col <- expand_and_name(col, nms)
   lapply(nms, function(i)
     plot_plotly_series(x, y[, i], label[[i]], col[[i]], points, y2[[i]],
                        showlegend = showlegend,
                        legendgroup = legendgroup[[i]],
                        width = width[[i]], dash = dash[[i]],
                        symbol = symbol[[i]], show = show[[i]]))
+}
+
+
+plot_plotly_series_replicate <- function(x, y, ..., showlegend = TRUE) {
+  if (!is.matrix(y) && length(y) == length(x)) {
+    y <- matrix(y, ncol = 1)
+  }
+  lapply(seq_len(ncol(y)), function(i)
+    plot_plotly_series(x, y[, i], showlegend = showlegend && i == 1, ...))
 }

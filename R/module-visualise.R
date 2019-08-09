@@ -10,6 +10,8 @@
 ##
 ## Then we'll use this as a base for the batch plot and the phase plot
 
+MAX_REPLICATES <- 20
+
 mod_vis_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
@@ -115,7 +117,7 @@ mod_vis_server <- function(input, output, session, data, model, link,
     })
 
   shiny::observe({
-    if (input$auto_run) {
+    if (isTRUE(input$auto_run)) {
       rv$result <- with_success(vis_run(
         rv$configuration, parameters$result(), control_run$result()))
     }
@@ -189,6 +191,16 @@ vis_run <- function(configuration, user, run_options) {
                  paste(names(user)[err], collapse = ", ")))
   }
 
+  ## TODO: also split below here base on data.
+  if (run_options$options$replicates) {
+    vis_run_replicate(configuration, user, run_options)
+  } else {
+    vis_run_single(configuration, user, run_options)
+  }
+}
+
+
+vis_run_single <- function(configuration, user, run_options) {
   data <- configuration$data
   has_data <- !is.null(data)
 
@@ -211,6 +223,9 @@ vis_run <- function(configuration, user, run_options) {
     mod <- model$model()
   }
 
+  if (model$info$features$discrete) {
+    stop("Discrete time models are not supported")
+  }
   t_smooth <- seq(t_start, t_end, length.out = 501)
   result_smooth <- mod$run(c(if (t_smooth[[1]] > 0) 0, t_smooth))
   i <- setdiff(colnames(result_smooth), vars$name[!vars$include])
@@ -229,6 +244,7 @@ vis_run <- function(configuration, user, run_options) {
   }
 
   list(configuration = configuration,
+       type = "single",
        simulation = list(data = result_data,
                          combined = result_combined,
                          smooth = result_smooth,
@@ -236,11 +252,59 @@ vis_run <- function(configuration, user, run_options) {
 }
 
 
+vis_run_replicate <- function(configuration, user, run_options) {
+  if (!configuration$model$info$features$has_stochastic) {
+    stop("Replication interface only meaningful for stochastic models")
+  }
+  if (!is.null(configuration$data)) {
+    stop("Data not supported")
+  }
+  if (!run_options$options$control_end_time) {
+    stop("Need control over end time")
+  }
+
+  replicates <- run_options$values$replicates
+  if (is_missing(replicates)) {
+    stop("Replicates must be specified")
+  }
+
+  t_start <- 0
+  t_end <- run_options$values$end
+  if (is_missing(t_end)) {
+    stop("Model run end time must be specified")
+  }
+
+  model <- configuration$model
+  if (model$info$features$has_user) {
+    mod <- model$model(user = user, unused_user_action = "ignore")
+  } else {
+    mod <- model$model()
+  }
+
+  dt <- if (run_options$options$scale_time) mod$contents()$dt else 1
+  nsteps <- 500
+  t <- discrete_times(t_end, nsteps, dt)
+
+  result <- mod$run(t, replicate = replicates)
+
+  list(configuration = configuration,
+       type = "replicate",
+       simulation = list(replicates = result,
+                         mean = rowMeans(result, dims = 2),
+                         time = t * dt,
+                         user = list_to_df(user)))
+}
+
+
 vis_plot_series <- function(result, locked, y2_model) {
   cfg <- result$configuration
   y2 <- odin_y2(y2_model, cfg$data$name_vars, cfg$link$map)
-  c(vis_plot_series_locked(result, locked, y2),
-    vis_plot_series_focal(result, y2))
+  if (identical(result$type, "replicate")) {
+    vis_plot_series_replicates(result, y2)
+  } else {
+    c(vis_plot_series_locked(result, locked, y2),
+      vis_plot_series_focal(result, y2))
+  }
 }
 
 
@@ -263,6 +327,39 @@ vis_plot_series_focal <- function(result, y2) {
     data_data[[data_time]], data_data[data_vars], cols$data, TRUE, y2$data)
 
   c(series_model, series_data)
+}
+
+
+vis_plot_series_replicates <- function(result, y2) {
+  cfg <- result$configuration
+  cols <- cfg$cols
+  vars <- cfg$vars[cfg$vars$include, ]
+
+  model_vars <- intersect(vars$name, names(y2$model))
+  show <- set_names(vars$show[match(model_vars, vars$name)], model_vars)
+
+  xy_replicates <- result$simulation$replicates
+  xy_mean <- result$simulation$mean[, model_vars, drop = FALSE]
+  time <- result$simulation$time
+
+  n <- dim(xy_replicates)[[3]]
+  if (n <= MAX_REPLICATES) {
+    series_replicates <- lapply(model_vars, function(nm)
+      plot_plotly_series_replicate(time, xy_replicates[, nm, ], nm,
+                                   col = transp(cols$model[[nm]]),
+                                   points = FALSE,
+                                   y2 = y2$model[[nm]], legendgroup = nm,
+                                   show = show[[nm]], width = 0.5))
+    series_replicates <- unlist(series_replicates, FALSE, FALSE)
+  } else {
+    series_replicates <- NULL
+  }
+
+  label_mean <- sprintf("%s (mean)", model_vars)
+  series_mean <- plot_plotly_series_bulk(time, xy_mean, cols$model,
+                                         points = FALSE, y2 = y2$model,
+                                         show = show, label = label_mean)
+  c(series_replicates, series_mean)
 }
 
 
