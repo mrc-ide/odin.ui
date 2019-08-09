@@ -79,9 +79,11 @@ mod_vis_server <- function(input, output, session, data, model, link,
     parameters$set(result$value$simulation$user)
     rv$result <- result
   }
+
+  show_locked <- shiny::reactive(
+    !is.null(rv$configuration) && !control_run$result()$options$replicates)
   locked <- shiny::callModule(
-    mod_lock_server, "lock",
-    shiny::reactive(!is.null(rv$configuration)), shiny::reactive(rv$result),
+    mod_lock_server, "lock", show_locked, shiny::reactive(rv$result),
     set_result)
 
   download <- shiny::callModule(
