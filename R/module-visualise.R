@@ -286,15 +286,29 @@ vis_run_replicate <- function(configuration, user, run_options) {
 
   dt <- if (run_options$options$scale_time) mod$contents()$dt else 1
   nsteps <- 500
-  t <- discrete_times(t_end, nsteps, dt)
+  steps <- discrete_times(t_end, nsteps, dt)
+  t <- steps * dt
 
-  result <- mod$run(t, replicate = replicates)
+  result <- mod$run(steps, replicate = replicates)
+  result <- result[, configuration$vars$name, , drop = FALSE]
+  result_mean <- cbind(t = t, rowMeans(result, dims = 2))
+
+  ## Identify deterministic outputs:
+  if (replicates == 1L) {
+    fixed <- rep(TRUE, ncols(result_mean))
+  } else {
+    fixed <- apply(apply(result, 2, diff) == 0, 2, all)
+  }
+  if (any(fixed)) {
+    result <- result[, !fixed, , drop = FALSE]
+  }
 
   list(configuration = configuration,
        type = "replicate",
        run_options = run_options,
        simulation = list(replicates = result,
-                         mean = rowMeans(result, dims = 2),
+                         smooth = result_mean,
+                         fixed = fixed,
                          time = t * dt,
                          user = list_to_df(user)))
 }
@@ -343,14 +357,15 @@ vis_plot_series_replicates <- function(result, y2) {
   show <- set_names(vars$show[match(model_vars, vars$name)], model_vars)
 
   xy_replicates <- result$simulation$replicates
-  xy_mean <- result$simulation$mean[, model_vars, drop = FALSE]
-  time <- result$simulation$time
+  xy_mean <- result$simulation$smooth
+  time <- xy_mean[, 1]
 
   n <- dim(xy_replicates)[[3]]
   if (result$run_options$values$no_show) {
     series_replicates <- NULL
   } else {
-    series_replicates <- lapply(model_vars, function(nm)
+    v <- intersect(model_vars, dimnames(xy_replicates)[[2]])
+    series_replicates <- lapply(v, function(nm)
       plot_plotly_series_replicate(time, xy_replicates[, nm, ], nm,
                                    col = transp(cols$model[[nm]]),
                                    points = FALSE,
@@ -359,8 +374,11 @@ vis_plot_series_replicates <- function(result, y2) {
     series_replicates <- unlist(series_replicates, FALSE, FALSE)
   }
 
-  label_mean <- sprintf("%s (mean)", model_vars)
-  series_mean <- plot_plotly_series_bulk(time, xy_mean, cols$model,
+  y <- xy_mean[, model_vars, drop = FALSE]
+  label_mean <- sprintf("%s (mean)", colnames(y))
+  label_mean[result$simulation$fixed] <-
+    colnames(y)[result$simulation$fixed]
+  series_mean <- plot_plotly_series_bulk(time, y, cols$model,
                                          points = FALSE, y2 = y2$model,
                                          show = show, label = label_mean)
   c(series_replicates, series_mean)
