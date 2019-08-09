@@ -41,8 +41,10 @@ mod_vis_ui <- function(id) {
               class = "col-sm-12",
               raw_checkbox_input(ns("auto_run"), "Auto run", value = FALSE))))),
       shiny::mainPanel(
-        shiny::div(class = "plotly-graph-wrapper",
-                   plotly::plotlyOutput(ns("odin_output"))),
+        shiny::div(
+          class = "plotly-graph-wrapper",
+          shinycssloaders::withSpinner(
+            plotly::plotlyOutput(ns("odin_output")))),
         shiny::div(
           class = "pull-right",
           mod_download_ui(ns("download")),
