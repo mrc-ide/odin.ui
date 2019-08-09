@@ -10,8 +10,6 @@
 ##
 ## Then we'll use this as a base for the batch plot and the phase plot
 
-MAX_REPLICATES <- 20
-
 mod_vis_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
@@ -267,6 +265,9 @@ vis_run_replicate <- function(configuration, user, run_options) {
   if (is_missing(replicates)) {
     stop("Replicates must be specified")
   }
+  if (run_options$values$no_run) {
+    stop("Too many replicates requested")
+  }
 
   t_start <- 0
   t_end <- run_options$values$end
@@ -289,6 +290,7 @@ vis_run_replicate <- function(configuration, user, run_options) {
 
   list(configuration = configuration,
        type = "replicate",
+       run_options = run_options,
        simulation = list(replicates = result,
                          mean = rowMeans(result, dims = 2),
                          time = t * dt,
@@ -343,7 +345,9 @@ vis_plot_series_replicates <- function(result, y2) {
   time <- result$simulation$time
 
   n <- dim(xy_replicates)[[3]]
-  if (n <= MAX_REPLICATES) {
+  if (result$run_options$values$no_show) {
+    series_replicates <- NULL
+  } else {
     series_replicates <- lapply(model_vars, function(nm)
       plot_plotly_series_replicate(time, xy_replicates[, nm, ], nm,
                                    col = transp(cols$model[[nm]]),
@@ -351,8 +355,6 @@ vis_plot_series_replicates <- function(result, y2) {
                                    y2 = y2$model[[nm]], legendgroup = nm,
                                    show = show[[nm]], width = 0.5))
     series_replicates <- unlist(series_replicates, FALSE, FALSE)
-  } else {
-    series_replicates <- NULL
   }
 
   label_mean <- sprintf("%s (mean)", model_vars)
