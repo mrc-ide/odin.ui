@@ -6,7 +6,6 @@ mod_batch_compare_ui <- function(id) {
       odin_sidebar(
         run = ns("run"),
         reset = ns("reset"),
-        import = ns("import_button"),
         auto_run = NULL,
         controls = shiny::tagList(
           mod_parameters_ui(ns("parameters")),

@@ -7,7 +7,6 @@ mod_fit_ui <- function(id) {
         run = shiny::actionButton(ns("fit"), "Fit model",
                                   shiny::icon("play"), class = "btn-blue"),
         reset = ns("reset"),
-        import = NULL,
         auto_run = NULL,
         control = shiny::tagList(
           shiny::uiOutput(ns("control_target")),

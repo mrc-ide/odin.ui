@@ -6,7 +6,6 @@ mod_vis_compare_ui <- function(id) {
       odin_sidebar(
         run = ns("run"),
         reset = ns("reset"),
-        import = NULL,
         auto_run = NULL,
         control = shiny::tagList(
           mod_parameters_ui(ns("parameters")),

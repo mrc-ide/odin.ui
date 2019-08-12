@@ -6,7 +6,6 @@ mod_batch_ui <- function(id) {
       odin_sidebar(
         run = ns("run"),
         reset = ns("reset"),
-        import = ns("import_button"),
         auto_run = NULL,
         controls = shiny::tagList(
           mod_parameters_ui(ns("parameters")),
@@ -37,7 +36,7 @@ mod_batch_server <- function(input, output, session, model, data, link,
 
   parameters <- shiny::callModule(
     mod_parameters_server, "parameters",
-    shiny::reactive(rv$configuration$pars))
+    shiny::reactive(rv$configuration$pars), import = import)
   control_graph <- shiny::callModule(
     mod_control_graph_server, "control_graph",
     shiny::reactive(rv$configuration))
@@ -98,23 +97,6 @@ mod_batch_server <- function(input, output, session, model, data, link,
     input$reset, {
       rv$result <- NULL
       modules$reset()
-    })
-
-  output$import_button <- shiny::renderUI({
-    if (!is.null(import) && !is.null(import$user())) {
-      shiny::actionButton(
-        session$ns("import"), import$title, import$icon)
-    }
-  })
-
-  shiny::observeEvent(
-    input$import, {
-      user <- import$user()
-      if (parameters$set(user)) {
-        focal <- control_focal$recompute(user)
-        rv$result <- with_success(batch_run(
-          rv$configuration, focal, control_run$result()))
-      }
     })
 
   output$odin_output <- plotly::renderPlotly({

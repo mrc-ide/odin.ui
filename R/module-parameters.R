@@ -6,7 +6,8 @@ mod_parameters_ui <- function(id) {
 
 mod_parameters_server <- function(input, output, session, pars,
                                   with_option = FALSE, title = NULL,
-                                  download_prefix = "parameters") {
+                                  download_prefix = "parameters",
+                                  import = NULL) {
   rv <- shiny::reactiveValues()
 
   shiny::observe({
@@ -26,6 +27,16 @@ mod_parameters_server <- function(input, output, session, pars,
     rv$status <- NULL
     rv$values <- values
   })
+
+  output$import_button <- shiny::renderUI({
+    if (!is.null(import) && !is.null(import$user())) {
+      shiny::actionButton(
+        session$ns("import"), import$title, import$icon)
+    }
+  })
+
+  shiny::observeEvent(
+    input$import, set(import$user()))
 
   output$download <- shiny::downloadHandler(
     filename = function() {
@@ -155,6 +166,7 @@ parameters_io <- function(ns) {
       class = "form-inline mt-5",
       shiny::div(
         class = "form-group",
+        shiny::uiOutput(ns("import_button")),
         raw_text_input(ns("download_filename"), placeholder = "filename",
                        value = "")),
       shiny::downloadButton(ns("download"), "Download", class = "btn-blue")),
