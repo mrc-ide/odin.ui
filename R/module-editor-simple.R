@@ -32,7 +32,7 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
                           shiny::icon("refresh"),
                           class = "btn-danger"),
       shiny::downloadButton(
-        ns("download_button"), "Save", class = "btn-blue")),
+        ns("download"), "Save", class = "btn-blue")),
 
     ## And these should go elsewhere too
     shiny::actionButton(ns("validate_button"), "Validate",
@@ -134,7 +134,7 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
       rv$validation <- NULL
     })
 
-  output$download_button <- shiny::downloadHandler(
+  output$download <- shiny::downloadHandler(
     filename = "odin.R", # TODO: customisable?
     content = function(con) {
       writeLines(input$editor, con)
