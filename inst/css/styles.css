@@ -357,6 +357,10 @@ body > .container-fluid > .tab-content {
     border-bottom: 1px solid #ddd;
 }
 
+.odin-sidebar-buttons {
+    text-align: right;
+}
+
 .odin-options .list-group-item, .odin-options .list-group-item:focus {
     border-right: 0;
     border-left: 0;

@@ -3,26 +3,24 @@ mod_batch_ui <- function(id) {
   shiny::tagList(
     shiny::titlePanel("Sensitivity"),
     shiny::sidebarLayout(
-      ## NOTE: almost the same as the visualiser
-      shiny::div(
-        class = "col-sm-4 col-lg-3",
-        shiny::tags$form(
-          class = "form-horizontal",
-          shiny::uiOutput(ns("status_data")),
-          shiny::uiOutput(ns("status_model")),
+      odin_sidebar(
+        shiny::tagList(
+          shiny::uiOutput(ns("import_button"), inline = TRUE),
+          shiny::actionButton(ns("reset"), "Reset",
+                              shiny::icon("refresh"),
+                              class = "btn-red ml-2"),
+          shiny::actionButton(ns("run"), "Run model",
+                              shiny::icon("play"),
+                              class = "btn-blue")),
+        shiny::tagList(
           mod_parameters_ui(ns("parameters")),
           mod_control_run_ui(ns("control_run")),
           mod_control_focal_ui(ns("control_focal")),
           mod_control_batch_plot(ns("control_batch_plot")),
-          mod_lock_ui(ns("lock")),
-          shiny::hr(),
-          shiny::uiOutput(ns("import_button"), inline = TRUE),
-          shiny::actionButton(ns("reset"), "Reset",
-                              shiny::icon("refresh"),
-                              class = "btn-red pull-right ml-2"),
-          shiny::actionButton(ns("run"), "Run model",
-                              shiny::icon("play"),
-                              class = "btn-blue pull-right"))),
+          mod_lock_ui(ns("lock"))),
+        shiny::tagList(
+          shiny::uiOutput(ns("status_data")),
+          shiny::uiOutput(ns("status_model")))),
       shiny::mainPanel(
         shiny::div(
           class = "plotly-graph-wrapper",
