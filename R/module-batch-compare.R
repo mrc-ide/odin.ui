@@ -1,7 +1,7 @@
 mod_batch_compare_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
-    shiny::titlePanel("Batch"),
+    shiny::titlePanel("Sensitivity"),
     shiny::sidebarLayout(
       odin_sidebar(
         run = ns("run"),
