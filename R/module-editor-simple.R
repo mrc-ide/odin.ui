@@ -9,6 +9,10 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
     odin_css(),
     shiny::includeCSS(path_editor_css),
     shiny::titlePanel("Editor"),
+    shiny::div(
+      class = "text-right",
+      help_button(ns("help"))),
+
     shiny::fluidRow(
       shiny::column(6),
       shiny::column(6,
@@ -133,6 +137,10 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
       rv$model <- NULL
       rv$validation <- NULL
     })
+
+  help <- help_modal(odin_ui_file("md/editor.md"))
+  shiny::observeEvent(
+    input$help, shiny::showModal(help))
 
   output$download <- shiny::downloadHandler(
     filename = "odin.R", # TODO: customisable?

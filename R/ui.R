@@ -19,3 +19,15 @@ odin_sidebar <- function(run, reset, auto_run, controls, status = NULL) {
       class = "form-horizontal",
       shiny::div(class = "list-group odin-options", controls)))
 }
+
+
+help_modal <- function(path, title = "odin help") {
+  shiny::modalDialog(shiny::includeMarkdown(path), title = title,
+                     size = "l", easyClose = TRUE, fade = FALSE)
+}
+
+
+help_button <- function(id, title = "Help") {
+  shiny::actionButton(id, title, class = "btn-warning",
+                      icon = shiny::icon("question-circle"))
+}
