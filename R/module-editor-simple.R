@@ -1,8 +1,6 @@
-mod_editor_simple_ui <- function(id, initial_code, path_docs) {
+mod_editor_simple_ui <- function(id) {
   ns <- shiny::NS(id)
 
-  initial_code <- editor_validate_initial_code(initial_code)
-  docs <- shiny::includeMarkdown(path_docs %||% odin_ui_file("md/editor.md"))
   path_editor_css <- odin_ui_file("css/styles-editor.css")
 
   editor <- shiny::tagList(
@@ -25,8 +23,7 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
     ## The ace editor setting "showPrintMargin" is the one to control
     ## the 80 char bar but I don't see how to get that through here.
     ## https://github.com/ajaxorg/ace/wiki/Configuring-Ace
-    shinyAce::aceEditor(ns("editor"), mode = "r", value = initial_code,
-                        debounce = 100),
+    shinyAce::aceEditor(ns("editor"), mode = "r", debounce = 100),
     shiny::actionButton(ns("compile"), "Compile",
                         shiny::icon("cogs"),
                         class = "btn-blue"),
@@ -70,6 +67,11 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
   order <- shiny::callModule(
     mod_variable_order_server, "order", shiny::reactive(rv$model$info$vars))
   modules <- submodules(order = order)
+
+  ## Will only run once:
+  shiny::observe({
+    shinyAce::updateAceEditor(session, ns("editor"), value = initial_code)
+  })
 
   output$validation_info <- shiny::renderUI({
     editor_validation_info(rv$validation)

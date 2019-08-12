@@ -1,10 +1,10 @@
 odin_prototype <- function(initial_code) {
-  shiny::shinyApp(ui = odin_prototype_ui(initial_code),
+  shiny::shinyApp(ui = odin_prototype_ui(),
                   server = odin_prototype_server(initial_code))
 }
 
 
-odin_prototype_ui <- function(initial_code) {
+odin_prototype_ui <- function() {
   shiny::shinyUI(
     shiny::navbarPage(
       "odin editor",
@@ -17,7 +17,7 @@ odin_prototype_ui <- function(initial_code) {
       shiny::tabPanel(
         "Editor",
         icon = shiny::icon("edit"),
-        mod_editor_simple_ui("odin_editor", initial_code, NULL)),
+        mod_editor_simple_ui("odin_editor")),
       shiny::tabPanel(
         "Link",
         icon = shiny::icon("random"),

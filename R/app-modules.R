@@ -28,12 +28,11 @@ testing_csv_app <- function() {
 }
 
 
-odin_ui_editor_simple <- function(initial_code = character(0),
-                                  path_docs = NULL) {
+odin_ui_editor_simple <- function(initial_code = character(0)) {
   shiny::shinyApp(
     ui = shiny::shinyUI(
       shiny::fluidPage(
-        mod_editor_simple_ui("editor", initial_code, path_docs))),
+        mod_editor_simple_ui("editor"))),
     server = function(input, output, session) {
       shiny::callModule(mod_editor_simple_server, "editor", initial_code)
     })
