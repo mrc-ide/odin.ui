@@ -161,11 +161,10 @@ common_odin_validate <- function(code) {
 
 
 common_odin_compile <- function(validation, name = NULL, name_short = NULL) {
-  if (validation$success) {
-    result <- odin::odin_build(validation$result)
-  } else {
-    result <- NULL
+  if (!validation$success) {
+    return(NULL)
   }
+  result <- odin::odin_build(validation$result)
   odin_model(result, validation$code, name = name, name_short = name_short)
 }
 

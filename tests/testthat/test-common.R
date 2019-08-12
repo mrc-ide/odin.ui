@@ -145,11 +145,7 @@ test_that("odin code compilation success", {
 
 test_that("odin code compilation failure", {
   code <- "deriv(a) <- 1; b <- user(min = 0)"
-  res <- common_odin_compile(common_odin_validate(code))
-  expect_false(res$success)
-  expect_null(res$model)
-  expect_equal(res$code, code)
-  expect_true(res$is_current)
+  expect_null(common_odin_compile(common_odin_validate(code)))
 })
 
 
