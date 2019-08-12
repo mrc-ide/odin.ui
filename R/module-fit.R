@@ -27,7 +27,8 @@ mod_fit_ui <- function(id) {
         shiny::fluidRow(
           shiny::column(4, shiny::uiOutput(ns("status_run")))),
         shiny::fluidRow(
-          shiny::column(4, shiny::uiOutput(ns("status_fit")))))))
+          shiny::column(4, shiny::uiOutput(ns("status_fit")))),
+        mod_model_code_ui(ns("code")))))
 }
 
 
@@ -40,6 +41,8 @@ mod_fit_server <- function(input, output, session, data, model, link) {
   control_graph <- shiny::callModule(
     mod_control_graph_server, "control_graph",
     shiny::reactive(rv$configuration))
+  code <- shiny::callModule(
+    mod_model_code_server, "code", model)
 
   set_result <- function(result) {
     parameters$set(result$value$simulation$user)
