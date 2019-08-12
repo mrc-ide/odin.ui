@@ -12,13 +12,16 @@ mod_model_static_ui <- function(id, code, path_docs = NULL, title = "Code") {
     shiny::div(class = "pull-right",
                shiny::downloadButton(
                  ns("download_button"), "Save", class = "btn-blue")),
-    shiny::tags$div(style = "clear:both;"),
+    shiny::tags$div(style = "clear:both;"))
+
+  status <- shiny::tagList(
+    model_static_info(),
     mod_variable_order_ui(ns("order")),
     shiny::uiOutput(ns("status")))
 
   shiny::fluidRow(
     shiny::column(6, editor),
-    shiny::column(6, shiny::includeMarkdown(model_static_docs(path_docs))))
+    shiny::column(6, status))
 }
 
 
@@ -87,4 +90,9 @@ model_static_setup <- function(code, name, name_short,
 
 model_static_docs <- function(path_docs) {
   path_docs %||% odin_ui_file("md/model_static.md")
+}
+
+
+model_static_info <- function() {
+  simple_panel("info", "Fixed model", "This model is not editable")
 }
