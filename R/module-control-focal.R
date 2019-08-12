@@ -24,6 +24,10 @@ mod_control_focal_server <- function(input, output, session, pars, user) {
     control_focal_status(rv$focal)
   })
 
+  output$focal <- shiny::renderUI({
+    control_focal_ui_focal(input$type, session$ns)
+  })
+
   get_state <- function() {
     list(name = input$name,
          pct = input$pct,
@@ -63,7 +67,6 @@ control_focal_ui <- function(configuration, ns, restore = NULL) {
     return(NULL)
   }
 
-  pct <- restore$pct %||% 10
   n <- restore$n %||% 10
   name <- restore$name %||% pars[[1]]
 
@@ -73,10 +76,29 @@ control_focal_ui <- function(configuration, ns, restore = NULL) {
       "Parameter to vary",
       raw_select_input(
         ns("name"), pars, selected = name)),
-    simple_numeric_input("Variation (%)", ns("pct"), pct),
+    simple_select_input("Variation type", ns("type"), c("Percentage", "Range")),
+    shiny::uiOutput(ns("focal")),
     simple_numeric_input("Number of runs", ns("n"), n),
     shiny::textOutput(ns("status")),
     ns = ns)
+}
+
+
+control_focal_ui_focal <- function(type, ns, restore = NULL) {
+  if (is_missing(type)) {
+    return(NULL)
+  }
+  message("rebuilding ui focal")
+  if (type == "Percentage") {
+    pct <- restore$pct %||% 10
+    simple_numeric_input("Variation (%)", ns("pct"), pct)
+  } else {
+    from <- restore$from %||% NA
+    to <- restore$to %||% NA
+    shiny::tagList(
+      simple_numeric_input("From", ns("from"), from),
+      simple_numeric_input("To", ns("to"), to))
+  }
 }
 
 
