@@ -506,3 +506,16 @@ a.text-muted {
 .model-code {
     font-size: 80%;
 }
+
+/* Disable input spinners */
+input[type=number] {
+    -moz-appearance:textfield;
+}
+input[type=number]::{
+    -moz-appearance:textfield;
+}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
