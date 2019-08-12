@@ -1,4 +1,4 @@
-mod_model_static_ui <- function(id, code, path_docs = NULL, title = "Code") {
+mod_model_static_ui <- function(id) {
   ns <- shiny::NS(id)
 
   editor <- shiny::tagList(
