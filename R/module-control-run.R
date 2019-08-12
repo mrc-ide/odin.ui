@@ -5,7 +5,8 @@ mod_control_run_ui <- function(id) {
 
 
 ## This will need some work for a *pair* of models?
-mod_control_run_server <- function(input, output, session, model, options) {
+mod_control_run_server <- function(input, output, session, model, options,
+                                   warn_show = TRUE) {
   rv <- shiny::reactiveValues()
   options <- control_run_options_validate(options)
 
@@ -23,7 +24,7 @@ mod_control_run_server <- function(input, output, session, model, options) {
   })
 
   output$status <- shiny::renderUI({
-    control_run_status(rv$values)
+    control_run_status(rv$values, warn_show)
   })
 
   get_state <- function() {
@@ -99,13 +100,13 @@ control_run_ui <- function(configuration, ns) {
 }
 
 
-control_run_status <- function(values) {
+control_run_status <- function(values, warn_show) {
   if (is_missing(values$values$replicates)) {
     return(NULL)
   }
   if (isTRUE(values$values$no_run)) {
     simple_panel("danger", "Too many replicates requested", NULL)
-  } else if (isTRUE(values$values$no_show)) {
+  } else if (warn_show && isTRUE(values$values$no_show)) {
     simple_panel("warning", "Individual traces will be hidden", NULL)
   }
 }
