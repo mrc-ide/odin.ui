@@ -1,6 +1,6 @@
 ## Write odin code
 
-Write code in this editor and press "Compile" and the odin model will be created!  A new tab will be opened corresponding to the title of your model.  If the tab exists then the previous version will be replaced without warning
+Write code in this editor and press "Compile" and the odin model will be created, which will be available for use in the other tabs.
 
 ## Key bits to remember
 
@@ -14,7 +14,7 @@ Specifies that `X` is a *variable* will change over time, but that we can only d
 initial(X) <- ...
 ```
 
-The code here looks like R but is not R.  Not everything will work
+The code here looks like R but is not R.
 
 ## Validating the code
 

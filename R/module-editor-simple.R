@@ -47,8 +47,9 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
     ## TODO: this disables _all_ progress - ideally we'd do this
     ## just for this id, which is going to be a slightly more
     ## clever css rule.
-    shiny::tags$style(".shiny-file-input-progress {display: none}"),
+    shiny::tags$style(".shiny-file-input-progress {display: none}"))
 
+  status <- shiny::tagList(
     shiny::uiOutput(ns("validation_info")),
     shiny::uiOutput(ns("model_info")),
     mod_variable_order_ui(ns("order")),
@@ -56,7 +57,7 @@ mod_editor_simple_ui <- function(id, initial_code, path_docs) {
 
   shiny::fluidRow(
     shiny::column(6, editor),
-    shiny::column(6, docs))
+    shiny::column(6, status))
 }
 
 
