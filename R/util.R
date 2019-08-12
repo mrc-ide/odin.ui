@@ -271,3 +271,11 @@ strip_linefeed <- function(x) {
 is_increasing <- function(x) {
   all(diff(x) > 0)
 }
+
+
+seq_log <- function(from, to, ...) {
+  if (from <= 0) {
+    stop("Logarithmic sequences require the range to be positive")
+  }
+  exp(seq(log(from), log(to), ...))
+}

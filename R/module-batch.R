@@ -135,7 +135,11 @@ batch_run <- function(configuration, focal, run_options) {
 
   name <- focal$name
   n <- constrain(focal$n, 2, 20)
-  value <- seq(focal$from, focal$to, length.out = n)
+  if (isTRUE(focal$logarithmic)) {
+    value <- seq_log(focal$from, focal$to, length.out = n)
+  } else {
+    value <- seq(focal$from, focal$to, length.out = n)
+  }
   pars <- configuration$pars
   i <- match(name, pars$name)
   if (is.na(i)) {
@@ -356,10 +360,11 @@ batch_plot_series_trace_data <- function(result, include) {
 
 batch_plot <- function(result, locked, control, options) {
   y2 <- control$y2
-  logscale <- control$logscale
+  logscale_y <- control$logscale
   xlab <- batch_xlab(options$type, result$focal)
+  logscale_x <- batch_logscale_x(options$type, result$focal)
   plot_plotly(batch_plot_series(result, locked, y2, options),
-              logscale, xlab)
+              logscale_y, xlab, logscale_x = logscale_x)
 }
 
 
@@ -377,6 +382,11 @@ batch_xlab <- function(type, focal) {
     slice = focal$name,
     extreme = focal$name,
     textreme = focal$name)
+}
+
+
+batch_logscale_x <- function(type, focal) {
+  isTRUE(focal$logarithmic) && type != "trace"
 }
 
 

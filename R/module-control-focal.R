@@ -19,7 +19,8 @@ mod_control_focal_server <- function(input, output, session, pars, user) {
 
   shiny::observe({
     rv$result <- control_focal_result(
-      input$name, input$type, input$pct, input$from, input$to, input$n, user())
+      input$name, input$scale, input$type,
+      input$pct, input$from, input$to, input$n, user())
   })
 
   output$status <- shiny::renderText({
@@ -34,6 +35,7 @@ mod_control_focal_server <- function(input, output, session, pars, user) {
   get_state <- function() {
     list(name = input$name,
          type = input$type,
+         scale = input$scale,
          pct = input$pct,
          from = input$from,
          to = input$to,
@@ -81,9 +83,12 @@ control_focal_ui <- function(configuration, ns, restore = NULL) {
     simple_select_input(
       "Parameter to vary", ns("name"), pars, selected = name),
     simple_select_input(
+      "Scale type", ns("scale"), c("Arithmetic", "Logarithmic")),
+    simple_select_input(
       "Variation type", ns("type"), c("Percentage", "Range")),
     shiny::uiOutput(ns("focal")),
     simple_numeric_input("Number of runs", ns("n"), n),
+
     shiny::textOutput(ns("status")),
     ns = ns)
 }
@@ -116,7 +121,7 @@ control_focal_ui_focal <- function(type, result, ns, restore = NULL) {
 }
 
 
-control_focal_result <- function(name, type, pct, from, to, n, user) {
+control_focal_result <- function(name, scale, type, pct, from, to, n, user) {
   if (is_missing(pct) || is_missing(name) || is_missing(n)) {
     return(NULL)
   }
@@ -132,7 +137,7 @@ control_focal_result <- function(name, type, pct, from, to, n, user) {
     pct <- control_focal_range_to_pct(value, from, to)
   }
   list(base = user, name = name, value = value, n = n, pct = pct,
-       from = from, to = to)
+       from = from, to = to, logarithmic = scale == "Logarithmic")
 }
 
 

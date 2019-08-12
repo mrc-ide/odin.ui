@@ -25,7 +25,7 @@ plotly_combine_series <- function(series, names) {
 
 ##' @importFrom plotly plot_ly
 plot_plotly <- function(series, logscale_y = FALSE, xlab = "Time",
-                        ylab = NULL) {
+                        ylab = NULL, logscale_x = FALSE) {
   if (length(series) == 0L) {
     return(NULL)
   }
@@ -65,6 +65,9 @@ plot_plotly <- function(series, logscale_y = FALSE, xlab = "Time",
 
   if (isTRUE(logscale_y)) {
     p <- plotly::layout(p, yaxis = list(type = "log"))
+  }
+  if (isTRUE(logscale_x)) {
+    p <- plotly::layout(p, xaxis = list(type = "log"))
   }
 
   if (any(vcapply(series, "[[", "yaxis") == "y2")) {
