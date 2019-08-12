@@ -359,6 +359,12 @@ body > .container-fluid > .tab-content {
 
 .odin-sidebar-buttons {
     text-align: right;
+    clear: both;
+    margin-bottom: 1em;
+}
+
+.odin-sidebar-status {
+    clear: both;
 }
 
 .odin-options .list-group-item, .odin-options .list-group-item:focus {

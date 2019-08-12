@@ -4,21 +4,17 @@ mod_batch_ui <- function(id) {
     shiny::titlePanel("Sensitivity"),
     shiny::sidebarLayout(
       odin_sidebar(
-        shiny::tagList(
-          shiny::uiOutput(ns("import_button"), inline = TRUE),
-          shiny::actionButton(ns("reset"), "Reset",
-                              shiny::icon("refresh"),
-                              class = "btn-red ml-2"),
-          shiny::actionButton(ns("run"), "Run model",
-                              shiny::icon("play"),
-                              class = "btn-blue")),
-        shiny::tagList(
+        run = ns("run"),
+        reset = ns("reset"),
+        import = ns("import_button"),
+        auto_run = NULL,
+        controls = shiny::tagList(
           mod_parameters_ui(ns("parameters")),
           mod_control_run_ui(ns("control_run")),
           mod_control_focal_ui(ns("control_focal")),
           mod_control_batch_plot(ns("control_batch_plot")),
           mod_lock_ui(ns("lock"))),
-        shiny::tagList(
+        status = shiny::tagList(
           shiny::uiOutput(ns("status_data")),
           shiny::uiOutput(ns("status_model")))),
       shiny::mainPanel(

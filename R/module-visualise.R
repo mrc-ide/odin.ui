@@ -14,32 +14,20 @@ mod_vis_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
     shiny::titlePanel("Visualise"),
-    ## shiny::p(class = "mt-5"),
     shiny::sidebarLayout(
-      shiny::div(
-        class = "col-sm-4 col-lg-3",
-        shiny::tags$form(
-          class = "form-horizontal",
-          shiny::uiOutput(ns("status_data")),
-          shiny::uiOutput(ns("status_model")),
-          ## TODO: status_configure but tone down warning to info
+      odin_sidebar(
+        run = ns("run"),
+        reset = ns("reset"),
+        import = ns("import_button"),
+        auto_run = ns("auto_run"),
+        controls = shiny::tagList(
           mod_parameters_ui(ns("parameters")),
           mod_control_run_ui(ns("control_run")),
-          mod_lock_ui(ns("lock")),
-          shiny::hr(),
-          ##
-          shiny::uiOutput(ns("import_button"), inline = TRUE),
-          shiny::actionButton(ns("reset"), "Reset",
-                              shiny::icon("refresh"),
-                              class = "btn-danger pull-right ml-2"),
-          shiny::actionButton(ns("run"), "Run model",
-                              shiny::icon("play"),
-                              class = "btn-blue pull-right"),
-          shiny::div(
-            class = "form-group pull-right", style = "clear:both;",
-            shiny::div(
-              class = "col-sm-12",
-              raw_checkbox_input(ns("auto_run"), "Auto run", value = FALSE))))),
+          mod_lock_ui(ns("lock"))),
+        status = shiny::tagList(
+          shiny::uiOutput(ns("status_data")),
+          shiny::uiOutput(ns("status_model")))),
+
       shiny::mainPanel(
         shiny::div(
           class = "plotly-graph-wrapper",
@@ -116,7 +104,7 @@ mod_vis_server <- function(input, output, session, data, model, link,
     input$run, {
       rv$result <- with_success(vis_run(
         rv$configuration, parameters$result(), control_run$result()))
-    })
+   })
 
   shiny::observe({
     if (isTRUE(input$auto_run)) {
@@ -204,6 +192,7 @@ vis_run <- function(configuration, user, run_options) {
 
 vis_run_single <- function(configuration, user, run_options) {
   data <- configuration$data
+  vars <- configuration$vars
   has_data <- !is.null(data)
 
   if (isTRUE(run_options$options$control_end_time)) {

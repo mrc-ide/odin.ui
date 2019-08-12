@@ -3,27 +3,20 @@ mod_batch_compare_ui <- function(id) {
   shiny::tagList(
     shiny::titlePanel("Batch"),
     shiny::sidebarLayout(
-      shiny::div(
-        class = "col-sm-4 col-lg-3",
-        shiny::tags$form(
-          class = "form-horizontal",
-          ## shiny::uiOutput(ns("status_data")),
-          shiny::uiOutput(ns("status_model1")),
-          shiny::uiOutput(ns("status_model2")),
-          ## TODO: status_configure but tone down warning to info
+      odin_sidebar(
+        run = ns("run"),
+        reset = ns("reset"),
+        import = ns("import_button"),
+        auto_run = NULL,
+        controls = shiny::tagList(
           mod_parameters_ui(ns("parameters")),
           mod_control_run_ui(ns("control_run")),
           mod_control_focal_ui(ns("control_focal")),
-          mod_control_batch_plot(ns("control_batch_plot")),
-          ## mod_lock_ui(ns("lock")),
-          shiny::hr(),
-          ##
-          shiny::actionButton(ns("reset"), "Reset",
-                              shiny::icon("refresh"),
-                              class = "btn-danger pull-right ml-2"),
-          shiny::actionButton(ns("run"), "Run model",
-                              shiny::icon("play"),
-                              class = "btn-blue pull-right"))),
+          mod_control_batch_plot(ns("control_batch_plot"))),
+        status = shiny::tagList(
+          shiny::uiOutput(ns("status_model1")),
+          shiny::uiOutput(ns("status_model2")))),
+
       shiny::mainPanel(
         shiny::div(
           class = "plotly-graph-wrapper",
