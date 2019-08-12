@@ -30,7 +30,8 @@ plot_plotly <- function(series, logscale_y = FALSE, xlab = "Time",
     return(NULL)
   }
   p <- plotly::plot_ly()
-  p <- plotly::config(p, displaylogo = FALSE)
+  p <- plotly::config(p, displaylogo = FALSE,
+                      modeBarButtonsToRemove = I("autoScale2d"))
 
   ## Don't truncate labels:
   hoverlabel <- list(namelength = -1)
