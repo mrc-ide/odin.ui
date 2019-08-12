@@ -1,3 +1,5 @@
+MOD_CONTROL_FOCAL_DEFAULT_PCT <- 10
+
 mod_control_focal_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::uiOutput(ns("ui"))
@@ -17,7 +19,7 @@ mod_control_focal_server <- function(input, output, session, pars, user) {
 
   shiny::observe({
     rv$result <- control_focal_result(
-      input$name, input$pct, input$n, user())
+      input$name, input$type, input$pct, input$from, input$to, input$n, user())
   })
 
   output$status <- shiny::renderText({
@@ -25,12 +27,16 @@ mod_control_focal_server <- function(input, output, session, pars, user) {
   })
 
   output$focal <- shiny::renderUI({
-    control_focal_ui_focal(input$type, session$ns)
+    result <- shiny::isolate(rv$result)
+    control_focal_ui_focal(input$type, result, session$ns)
   })
 
   get_state <- function() {
     list(name = input$name,
+         type = input$type,
          pct = input$pct,
+         from = input$from,
+         to = input$to,
          n = input$n)
   }
 
@@ -67,16 +73,15 @@ control_focal_ui <- function(configuration, ns, restore = NULL) {
     return(NULL)
   }
 
-  n <- restore$n %||% 10
+  n <- restore$n %||% MOD_CONTROL_FOCAL_DEFAULT_PCT
   name <- restore$name %||% pars[[1]]
 
   mod_model_control_section(
     "Vary parameter",
-    horizontal_form_group(
-      "Parameter to vary",
-      raw_select_input(
-        ns("name"), pars, selected = name)),
-    simple_select_input("Variation type", ns("type"), c("Percentage", "Range")),
+    simple_select_input(
+      "Parameter to vary", ns("name"), pars, selected = name),
+    simple_select_input(
+      "Variation type", ns("type"), c("Percentage", "Range")),
     shiny::uiOutput(ns("focal")),
     simple_numeric_input("Number of runs", ns("n"), n),
     shiny::textOutput(ns("status")),
@@ -84,17 +89,26 @@ control_focal_ui <- function(configuration, ns, restore = NULL) {
 }
 
 
-control_focal_ui_focal <- function(type, ns, restore = NULL) {
+control_focal_ui_focal <- function(type, result, ns, restore = NULL) {
   if (is_missing(type)) {
     return(NULL)
   }
-  message("rebuilding ui focal")
   if (type == "Percentage") {
-    pct <- restore$pct %||% 10
+    if (is.null(restore)) {
+      pct <- control_focal_range_to_pct(result$value, result$from, result$to)
+    } else {
+      pct <- restore$pct %||% MOD_CONTROL_FOCAL_DEFAULT_PCT
+    }
     simple_numeric_input("Variation (%)", ns("pct"), pct)
   } else {
-    from <- restore$from %||% NA
-    to <- restore$to %||% NA
+    if (is.null(restore)) {
+      r <- control_focal_pct_to_range(result$value, result$pct)
+      from <- r$from
+      to <- r$to
+    } else {
+      from <- restore$from %||% NA
+      to <- restore$to %||% NA
+    }
     shiny::tagList(
       simple_numeric_input("From", ns("from"), from),
       simple_numeric_input("To", ns("to"), to))
@@ -102,7 +116,7 @@ control_focal_ui_focal <- function(type, ns, restore = NULL) {
 }
 
 
-control_focal_result <- function(name, pct, n, user) {
+control_focal_result <- function(name, type, pct, from, to, n, user) {
   if (is_missing(pct) || is_missing(name) || is_missing(n)) {
     return(NULL)
   }
@@ -110,10 +124,15 @@ control_focal_result <- function(name, pct, n, user) {
   if (is_missing(value)) {
     return(NULL)
   }
-  dy <- abs(pct / 100 * value)
-  from <- value - dy
-  to <- value + dy
-  list(base = user, name = name, value = value, n = n, from = from, to = to)
+  if (type == "Percentage") {
+    r <- control_focal_pct_to_range(value, pct)
+    from <- r$from
+    to <- r$to
+  } else {
+    pct <- control_focal_range_to_pct(value, from, to)
+  }
+  list(base = user, name = name, value = value, n = n, pct = pct,
+       from = from, to = to)
 }
 
 
@@ -127,4 +146,23 @@ control_focal_status <- function(focal) {
 
 control_focal_recompute <- function(focal, user) {
   control_focal_result(focal$name, focal$pct, focal$n, user)
+}
+
+
+control_focal_pct_to_range <- function(value, pct) {
+  if (is_missing(value) || is_missing(pct)) {
+    list(from = NA, to = NA)
+  } else {
+    dy <- abs(pct / 100 * value)
+    list(from = value - dy, to = value + dy)
+  }
+}
+
+
+control_focal_range_to_pct <- function(value, from, to) {
+  if (is_missing(value) || is_missing(from) || is_missing(to)) {
+    MOD_CONTROL_FOCAL_DEFAULT_PCT
+  } else {
+    round((to - from) / value / 2 * 100)
+  }
 }
