@@ -176,9 +176,9 @@ batch_run <- function(configuration, focal, run_options) {
   ## First, the central runs as our base set:
   central <- vis_run(configuration, user, run_options)
 
-  ## Output types we'll work with:
-  types <- setdiff(names(drop_null(central$simulation)), "combined")
-
+  ## Output types we'll work with (TODO: whitelist will be easier)
+  types <- setdiff(names(drop_null(central$simulation)),
+                   c("combined", "replicates", "fixed", "time"))
   ## Then the sensitivity around that
   batch <- lapply(value, f)
   g <- function(type) {
