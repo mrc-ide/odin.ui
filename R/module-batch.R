@@ -208,7 +208,7 @@ batch_plot_series <- function(result, locked, y2_model, options) {
 
 batch_plot_series_slice <- function(result, locked, y2_model, options) {
   cfg <- result$configuration
-  cols <- cfg$cols
+  cols <- cfg$cols$model
   vars <- cfg$vars[cfg$vars$include, ]
   model_vars <- vars$name
 
@@ -228,7 +228,8 @@ batch_plot_series_slice <- function(result, locked, y2_model, options) {
 
   ## TODO: also add the central on as a point here?
   ## TODO: also add the locked data on here
-  plot_plotly_series_bulk(x, y, cols, points = FALSE, y2 = y2_model)
+  plot_plotly_series_bulk(x, y, cols, points = FALSE, y2 = y2_model,
+                          legendgroup = colnames(y))
 }
 
 
@@ -238,7 +239,7 @@ batch_plot_series_extreme <- function(result, locked, y2_model, options) {
   }
 
   cfg <- result$configuration
-  cols <- cfg$cols
+  cols <- cfg$cols$model
   vars <- cfg$vars[cfg$vars$include, ]
   model_vars <- vars$name
 
@@ -251,7 +252,8 @@ batch_plot_series_extreme <- function(result, locked, y2_model, options) {
 
   ## TODO: also add the central on as a point here?
   ## TODO: also add the locked data on here
-  plot_plotly_series_bulk(x, y, cols, points = FALSE, y2 = y2_model)
+  plot_plotly_series_bulk(x, y, cols, points = FALSE, y2 = y2_model,
+                          legendgroup = colnames(y))
 }
 
 
@@ -261,7 +263,7 @@ batch_plot_series_textreme <- function(result, locked, y2_model, options) {
   }
 
   cfg <- result$configuration
-  cols <- cfg$cols
+  cols <- cfg$cols$model
   vars <- cfg$vars[cfg$vars$include, ]
   model_vars <- vars$name
 
@@ -276,7 +278,8 @@ batch_plot_series_textreme <- function(result, locked, y2_model, options) {
 
   ## TODO: also add the central on as a point here?
   ## TODO: also add the locked data on here
-  plot_plotly_series_bulk(x, y, cols, points = FALSE, y2 = y2_model)
+  plot_plotly_series_bulk(x, y, cols, points = FALSE, y2 = y2_model,
+                          legendgroup = colnames(y))
 }
 
 
