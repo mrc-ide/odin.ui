@@ -149,7 +149,8 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
     filename = "odin.R", # TODO: customisable?
     content = function(con) {
       writeLines(input$editor, con)
-    })
+    },
+    contentType = "text/plain;charset=UTF-8")
 
   get_state <- function() {
     list(editor = input$editor,
