@@ -67,11 +67,11 @@ control_run_configuration <- function(model, options) {
 
 control_run_control <- function(default_end_time = NA,
                                 default_replicates = 10,
-                                max_replicates_shown = 20,
+                                max_replicates_show = 20,
                                 max_replicates_run = 1000) {
   list(default_end_time = default_end_time,
        default_replicates = default_replicates,
-       max_replicates_shown = max_replicates_show,
+       max_replicates_show = max_replicates_show,
        max_replicates_run = max_replicates_run)
 }
 
