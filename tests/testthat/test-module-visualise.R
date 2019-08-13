@@ -17,9 +17,10 @@ test_that("run model, with missing zero time", {
   data <- odin_data_source(d, "file.csv", "t")
   link <- link_result(list(a = "x", c = "y"))
   configuration <- common_model_data_configuration(model, data, link)
+  run_options <- control_run_options_validate(NULL)
 
   user <- list(a = 2, b = 1)
-  res <- vis_run(configuration, user = user, run_options = NULL)
+  res <- vis_run(configuration, user = user, run_options = run_options)
   expect_equal(res$configuration, configuration)
   expect_setequal(names(res$simulation),
                   c("data", "combined", "smooth", "user"))
@@ -51,9 +52,11 @@ test_that("run model, with missing zero time", {
   data <- odin_data_source(d, "file.csv", "t")
   link <- link_result(list(a = "x", c = "y"))
   configuration <- common_model_data_configuration(model, data, link)
+  run_options <- control_run_options_validate(NULL)
 
   user <- list(a = NA, b = 1)
-  res <- with_success(vis_run(configuration, user = user, run_options = NULL))
+  res <- with_success(vis_run(configuration, user = user,
+                              run_options = run_options))
   expect_equal(
     res,
     list(success = FALSE, value = NULL, error = "Missing parameter for a"))
@@ -72,8 +75,9 @@ test_that("plot", {
   data <- odin_data_source(d, "file.csv", "t")
   link <- link_result(list(a = "x", c = "y"))
   configuration <- common_model_data_configuration(model, data, link)
+  run_options <- control_run_options_validate(NULL)
   user <- list(a = 2, b = 1)
-  res <- vis_run(configuration, user = user, run_options = NULL)
+  res <- vis_run(configuration, user = user, run_options = run_options)
   y2 <- list(x = FALSE, y = TRUE)
   series <- vis_plot_series(res, NULL, y2)
 
@@ -120,10 +124,11 @@ test_that("locked series", {
   data <- odin_data_source(d, "file.csv", "t")
   link <- link_result(list(a = "x", c = "y"))
   configuration <- common_model_data_configuration(model, data, link)
+  run_options <- control_run_options_validate(NULL)
   user1 <- list(a = 2, b = 1)
   user2 <- list(a = 1, b = 1)
-  res1 <- vis_run(configuration, user = user1, run_options = NULL)
-  res2 <- vis_run(configuration, user = user2, run_options = NULL)
+  res1 <- vis_run(configuration, user = user1, run_options = run_options)
+  res2 <- vis_run(configuration, user = user2, run_options = run_options)
   y2_model <- list(x = FALSE, y = TRUE)
   y2 <- odin_y2(y2_model, configuration$data$name_vars, configuration$link$map)
 
