@@ -7,7 +7,7 @@ mod_vis_compare_ui <- function(id) {
         run = ns("run"),
         reset = ns("reset"),
         auto_run = NULL,
-        control = shiny::tagList(
+        controls = shiny::tagList(
           mod_parameters_ui(ns("parameters")),
           mod_control_run_ui(ns("control_run"))),
         status = shiny::tagList(

@@ -8,7 +8,7 @@ mod_fit_ui <- function(id) {
                                   shiny::icon("play"), class = "btn-blue"),
         reset = ns("reset"),
         auto_run = NULL,
-        control = shiny::tagList(
+        controls = shiny::tagList(
           shiny::uiOutput(ns("control_target")),
           mod_parameters_ui(ns("parameters")),
           mod_lock_ui(ns("lock"))),
