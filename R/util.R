@@ -67,10 +67,6 @@ write_csv <- function(data, filename) {
 }
 
 
-callback_shiny_progress <- function(i, n) {
-  shiny::incProgress(1, detail = sprintf("%d / %d", i, n))
-}
-
 odin_footer <- function() {
   shiny::addResourcePath('images', system.file('images', package='odin.ui'))
   shiny::tags$footer(class="odin-footer",
@@ -82,28 +78,6 @@ odin_footer <- function() {
 
 odin_css <- function() {
   shiny::includeCSS(odin_ui_file("css/styles.css"))
-}
-
-
-yaml_load <- function(string) {
-  ## More restrictive true/false handling.  Only accept if it maps to
-  ## full (true|yes) / (false|no):
-  handlers <- list(
-    "bool#yes" = function(x)
-      if (tolower(x) %in% c("true", "yes")) TRUE else x,
-    "bool#no" = function(x)
-      if (tolower(x) %in% c("false", "no")) FALSE else x)
-  yaml::yaml.load(string, handlers = handlers)
-}
-
-
-yaml_read <- function(filename) {
-  catch_yaml <- function(e) {
-    stop(sprintf("while reading '%s'\n%s", filename, e$message),
-         call. = FALSE)
-  }
-  tryCatch(yaml_load(read_text(filename)),
-           error = catch_yaml)
 }
 
 

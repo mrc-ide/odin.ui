@@ -96,7 +96,7 @@ control_run_ui <- function(configuration, ns) {
   status <- shiny::uiOutput(ns("status"))
 
   tags <- drop_null(list(end, replicates, status))
-  mod_model_control_section("Run options", tags, ns = ns)
+  odin_control_section("Run options", tags, ns = ns)
 }
 
 

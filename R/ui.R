@@ -31,3 +31,24 @@ help_button <- function(id, title = "Help") {
   shiny::actionButton(id, title, class = "btn-warning",
                       icon = shiny::icon("question-circle"))
 }
+
+
+odin_control_section <- function(title, ..., ns, collapsed = FALSE) {
+  id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
+
+  head <- shiny::a(
+    class = "list-group-item",
+    "data-toggle" = "collapse",
+    "href" = paste0("#", id),
+    title,
+    shiny::icon("sort", lib = "font-awesome", class = "pull-right"))
+
+  css_class <- if (collapsed) "" else " in"
+
+  body <- shiny::div(
+    id = id,
+    class = paste0("pt-4 collapse", css_class),
+    ...)
+
+  list(head, body)
+}

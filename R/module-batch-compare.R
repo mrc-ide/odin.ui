@@ -11,7 +11,7 @@ mod_batch_compare_ui <- function(id) {
           mod_parameters_ui(ns("parameters")),
           mod_control_run_ui(ns("control_run")),
           mod_control_focal_ui(ns("control_focal")),
-          mod_control_batch_plot(ns("control_batch_plot"))),
+          mod_control_batch_plot_ui(ns("control_batch_plot"))),
         status = shiny::tagList(
           shiny::uiOutput(ns("status_model1")),
           shiny::uiOutput(ns("status_model2")))),

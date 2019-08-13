@@ -78,7 +78,7 @@ control_focal_ui <- function(configuration, ns, restore = NULL) {
   n <- restore$n %||% MOD_CONTROL_FOCAL_DEFAULT_PCT
   name <- restore$name %||% pars[[1]]
 
-  mod_model_control_section(
+  odin_control_section(
     "Vary parameter",
     simple_select_input(
       "Parameter to vary", ns("name"), pars, selected = name),

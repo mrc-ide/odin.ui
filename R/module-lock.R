@@ -76,7 +76,7 @@ lock_control <- function(render, ns, collapsed = TRUE) {
     return(NULL)
   }
 
-  mod_model_control_section(
+  odin_control_section(
     "Locked parameter set",
     shiny::uiOutput(ns("status")),
     button_row("", ns("set"), "Lock current", shiny::icon("lock"),

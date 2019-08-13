@@ -4,7 +4,6 @@ COPY docker/bin /usr/local/bin/
 ## These are the deps pulled separately for faster builds
 RUN install_packages --repo "https://mrc-ide.github.io/drat" \
   dde \
-  dygraphs \
   odin \
   remotes \
   shinyAce

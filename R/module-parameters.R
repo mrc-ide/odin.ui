@@ -155,7 +155,7 @@ parameters_ui <- function(configuration, ns, restore = NULL) {
   tags <- shiny::tagList(
     controls, shiny::hr(), parameters_io(ns), status)
 
-  mod_model_control_section(configuration$title, tags, ns = ns)
+  odin_control_section(configuration$title, tags, ns = ns)
 }
 
 

@@ -193,7 +193,7 @@ fit_control_target <- function(link, ns, restore = NULL) {
   }
   choices <- set_names(names(link$map), link$label)
   selected <- restore %||% NA
-  mod_model_control_section(
+  odin_control_section(
     "Optimisation",
     horizontal_form_group(
       "Target to fit",
@@ -217,7 +217,7 @@ fit_control_parameters <- function(pars, ns, restore = NULL) {
   }
   value <- restore$value %||% pars$value
   vary <- restore$vary %||% pars$vary
-  mod_model_control_section(
+  odin_control_section(
     "Model parameters",
     Map(f, pars$name, ns(pars$id_value), value, ns(pars$id_vary), vary),
     ns = ns)

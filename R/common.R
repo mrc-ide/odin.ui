@@ -50,14 +50,16 @@ odin_colours <- function(model, data, link) {
 
 
 odin_colours_data <- function(data) {
-  set_names(odin_ui_palettes("brewer_set1")(length(data)), data)
+  pal <- c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#FFFF33",
+           "#A65628", "#F781BF")
+  set_names(pal[seq_along(data)], data)
 }
 
 
-## It'll be hard to get the same colours here without creating
-## dependencies on the link that are unfortunate.
 odin_colours_model <- function(model) {
-  set_names(odin_ui_palettes("odin")(length(model)), model)
+  pal <- grDevices::colorRampPalette(
+    c("#2e5cb8", "#39ac73", "#cccc00", "#ff884d", "#cc0044"))
+  set_names(pal(length(model)), model)
 }
 
 

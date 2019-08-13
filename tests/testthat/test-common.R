@@ -8,7 +8,7 @@ test_that("odin_colours_model", {
 
 test_that("odin_colours_data", {
   expect_equal(odin_colours_data(c("a", "b")),
-               c(a = "#E41A1C", b = "#F781BF"))
+               c(a = "#E41A1C", b = "#377EB8"))
 })
 
 

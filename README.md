@@ -6,35 +6,7 @@
 
 A shiny UI for [`odin`](https://github.com/mrc-ide/odin)
 
-
-## Usage
-
-Create a dynamic `odin` model editor:
-
-```r
-odin.ui::odin_ui_editor_app()
-```
-
-Create an interface for a particular odin model:
-
-```r
-odin.ui::odin_ui_app(model, default_time = 10)
-```
-
-Code and docs side by side
-
-```r
-odin.ui::odin_ui_doc_app(system.file("examples/sir.yml", package = "odin.ui"))
-```
-
-Example for teaching
-
-```r
-odin.ui::odin_ui_explore_app("inst/examples/sis.yml")
-```
-
 ## Docker
-
 
 ```
 docker pull mrcide/odin.ui

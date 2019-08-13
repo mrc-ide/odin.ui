@@ -1,4 +1,4 @@
-mod_control_batch_plot <- function(id) {
+mod_control_batch_plot_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::uiOutput(ns("ui"))
 }
@@ -56,7 +56,7 @@ control_batch_plot_ui <- function(render, ns, restore = NULL) {
              "Value at its min/max" = "extreme",
              "Time at value's min/max" = "textreme")
 
-  mod_model_control_section(
+  odin_control_section(
     "Plot options",
     simple_select_input("Type of plot", ns("type"), types),
     shiny::uiOutput(ns("options")),
