@@ -130,6 +130,10 @@ parameters_ui <- function(configuration, ns, restore = NULL) {
     return(NULL)
   }
 
+  if (!setequal(names(restore$value), pars$id_value)) {
+    restore <- NULL
+  }
+
   value <- restore$value %||% pars$value %||%
     vnapply(pars$default_value, function(x) x %||% NA_real_)
   range <- pars$range

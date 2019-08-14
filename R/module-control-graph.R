@@ -78,6 +78,10 @@ control_graph_ui <- function(configuration, ns, restore = NULL) {
     shiny::span(lab, style = paste0("color:", col)),
     configuration$name, configuration$col)
 
+  if (!setequal(names(restore), configuration$id)) {
+    restore <- NULL
+  }
+
   if (!is.null(restore)) {
     value_y2 <- restore$y2
     value_logscale <- restore$logscale
