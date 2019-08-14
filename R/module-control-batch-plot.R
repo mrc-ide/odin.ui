@@ -22,16 +22,20 @@ mod_control_batch_plot_server <- function(input, output, session, render) {
   })
 
   get_state <- function() {
-    list(type = input$type,
-         slice_time = input$slice_time,
-         extreme_type = input$extreme_type)
+    if (render()) {
+      list(type = input$type,
+           slice_time = input$slice_time,
+           extreme_type = input$extreme_type)
+    }
   }
 
   set_state <- function(state) {
-    output$ui <- shiny::renderUI(
-      control_batch_plot_ui(render(), session$ns, state))
-    output$options <- shiny::renderUI(
-      control_batch_plot_options(state$type, session$ns, state))
+    if (!is.null(state)) {
+      output$ui <- shiny::renderUI(
+        control_batch_plot_ui(TRUE, session$ns, state))
+      output$options <- shiny::renderUI(
+        control_batch_plot_options(state$type, session$ns, state))
+    }
   }
 
   reset <- function() {
@@ -58,7 +62,7 @@ control_batch_plot_ui <- function(render, ns, restore = NULL) {
 
   odin_control_section(
     "Plot options",
-    simple_select_input("Type of plot", ns("type"), types),
+    simple_select_input("Type of plot", ns("type"), types, restore$type),
     shiny::uiOutput(ns("options")),
     ns = ns)
 }
@@ -68,10 +72,13 @@ control_batch_plot_options <- function(type, ns, restore = NULL) {
   switch(
     type,
     slice = simple_numeric_input(
-      "Time to use (default is last)", ns("slice_time"), NA),
+      "Time to use (default is last)", ns("slice_time"),
+      restore$slice_time %||% NA),
     extreme = simple_select_input(
-      "Extreme to use", ns("extreme_type"), c("max", "min")),
+      "Extreme to use", ns("extreme_type"), c("max", "min"),
+      restore$extreme_type),
     textreme = simple_select_input(
-      "Extreme to use", ns("extreme_type"), c("max", "min")),
+      "Extreme to use", ns("extreme_type"), c("max", "min"),
+      restore$extreme_type),
     NULL)
 }
