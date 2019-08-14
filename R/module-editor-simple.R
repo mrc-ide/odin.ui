@@ -162,16 +162,17 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
 
   set_state <- function(state) {
     if (!is.null(state$model)) {
-      rv$model <- common_odin_compile(common_odin_validate(state$model))
+      model <- common_odin_compile(common_odin_validate(state$model))
+      rv$model <- model
     }
     if (!is.null(state$validation)) {
       rv$validation <- common_odin_validate(state$validation)
     }
     shinyAce::updateAceEditor(session, ns("editor"), value = state$editor)
     modules$set_state(state$modules)
-    ## if (!is.null(state$order)) {
-    ##   rv$result <- editor_result(rv$model, state$modules$order)
-    ## }
+    if (!is.null(state$order)) {
+      rv$result <- editor_result(model, state$modules$order)
+    }
   }
 
   ## shiny::outputOptions(output, "validation_info", suspendWhenHidden = FALSE)
@@ -324,8 +325,27 @@ editor_result <- function(model, order) {
   vars$disable <- vars$name %in% order$disable
   vars$include <- vars$show | vars$hide
   model$info$vars <- vars
+  model$order <- order
 
   model$info$pars$range <- I(vector("list", nrow(model$info$pars)))
 
   model
+}
+
+
+editor_save <- function(model) {
+  if (is.null(model)) {
+    return()
+  }
+  model[c("code", "name", "name_short", "order")]
+}
+
+
+editor_restore <- function(x) {
+  if (is.null(x)) {
+    return()
+  }
+  validation <- common_odin_validate(x$code)
+  model <- common_odin_compile(validation, x$name, x$name_short)
+  editor_result(model, x$order)
 }

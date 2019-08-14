@@ -101,14 +101,14 @@ mod_vis_server <- function(input, output, session, data, model, link,
 
   shiny::observeEvent(
     input$run, {
-      rv$result <- with_success(vis_run(
-        rv$configuration, parameters$result(), control_run$result()))
+      rv$result <- vis_result(
+        rv$configuration, parameters$result(), control_run$result())
    })
 
   shiny::observe({
     if (isTRUE(input$auto_run)) {
-      rv$result <- with_success(vis_run(
-        rv$configuration, parameters$result(), control_run$result()))
+      rv$result <- vis_result(
+        rv$configuration, parameters$result(), control_run$result())
     }
   })
 
@@ -125,10 +125,7 @@ mod_vis_server <- function(input, output, session, data, model, link,
   })
 
   get_state <- function() {
-    if (is.null(rv$configuration) || is.null(rv$result)) {
-      return(NULL)
-    }
-    list(user_result = df_to_list(rv$result$value$simulation$user),
+    list(result = rv$result$deps,
          modules = modules$get_state())
   }
 
@@ -136,14 +133,31 @@ mod_vis_server <- function(input, output, session, data, model, link,
     if (is.null(state)) {
       return()
     }
-    rv$configuration <- common_model_data_configuration(
-      model(), data(), link())
+    rv$result <- vis_result_rerun(state$result)
     modules$set_state(state$modules)
-    rv$result <- with_success(vis_run(rv$configuration, state$user_result))
   }
 
   list(get_state = get_state,
        set_state = set_state)
+}
+
+
+vis_result <- function(configuration, user, run_options) {
+  result <- with_success(vis_run(configuration, user, run_options))
+  result$deps <- list(
+    configuration = common_model_data_configuration_save(configuration),
+    user = user,
+    run_options = run_options)
+  result
+}
+
+
+vis_result_rerun <- function(deps) {
+  if (is.null(deps)) {
+    return(NULL)
+  }
+  configuration <- common_model_data_configuration_restore(deps$configuration)
+  vis_result(configuration, deps$user, deps$run_options)
 }
 
 

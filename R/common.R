@@ -105,6 +105,25 @@ common_model_data_configuration <- function(model, data, link,
 }
 
 
+## The only thing that's actually hard to save
+common_model_data_configuration_save <- function(configuration) {
+  if (is.null(configuration)) {
+    return(NULL)
+  }
+  configuration$model <- editor_save(configuration$model)
+  configuration
+}
+
+
+common_model_data_configuration_restore <- function(configuration) {
+  if (is.null(configuration)) {
+    return(NULL)
+  }
+  configuration$model <- editor_restore(configuration$model)
+  configuration
+}
+
+
 add_status <- function(x, status) {
   c(x, list(status = status))
 }
