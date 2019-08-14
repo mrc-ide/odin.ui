@@ -143,11 +143,11 @@ parameters_ui <- function(configuration, ns, restore = NULL) {
           2, shiny::checkboxInput(id_option, "", option)))
     }
     option <- restore$option %||% pars$option
-    controls <- Map(f, pars$name, ns(pars$id_value), value, range,
+    controls <- Map2(f, pars$name, ns(pars$id_value), value, range,
                     ns(pars$id_option), option)
   } else {
-    controls <- unname(Map(parameter_input,
-                           pars$name, ns(pars$id_value), value, range))
+    controls <- unname(Map2(parameter_input,
+                            pars$name, ns(pars$id_value), value, range))
   }
 
   if ("group" %in% names(pars)) {
@@ -155,7 +155,7 @@ parameters_ui <- function(configuration, ns, restore = NULL) {
     g <- function(label, value) {
       shiny::div(shiny::tags$b(label), value)
     }
-    controls <- unname(Map(g, names(controls), controls))
+    controls <- unname(Map2(g, names(controls), controls))
   }
 
   status <- shiny::uiOutput(ns("status"))

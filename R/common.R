@@ -233,7 +233,7 @@ submodules <- function(...) {
     },
     set_state = function(state) {
       nms <- names_if(has_state)
-      Map(function(n, m, s) {
+      Map2(function(n, m, s) {
         m$set_state(s)
       }, nms, modules[nms], state[nms])
     })

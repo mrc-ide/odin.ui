@@ -132,6 +132,6 @@ batch_compare_plot_series <- function(result, y2_model, options) {
     batch_plot_series(x, NULL, y2_model, options)
   }
 
-  series <- Map(f, result$configuration$configuration, result$simulation)
+  series <- Map2(f, result$configuration$configuration, result$simulation)
   plotly_combine_series(series, result$configuration$names)
 }

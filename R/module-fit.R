@@ -219,7 +219,7 @@ fit_control_parameters <- function(pars, ns, restore = NULL) {
   vary <- restore$vary %||% pars$vary
   odin_control_section(
     "Model parameters",
-    Map(f, pars$name, ns(pars$id_value), value, ns(pars$id_vary), vary),
+    Map2(f, pars$name, ns(pars$id_value), value, ns(pars$id_vary), vary),
     ns = ns)
 }
 

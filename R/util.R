@@ -253,3 +253,10 @@ seq_log <- function(from, to, ...) {
   }
   exp(seq(log(from), log(to), ...))
 }
+
+
+Map2 <- function(...) {
+  withCallingHandlers(
+    Map(...),
+    warning = function(e) stop(e))
+}

@@ -97,7 +97,7 @@ link_ui <- function(configuration, prev, ns, restore = NULL) {
                           options = if (is.na(selected)) opts)
   }
   shiny::tagList(
-    Map(input, ns(vars$id), vars$data, selected),
+    Map2(input, ns(vars$id), vars$data, selected),
     shiny::actionButton(ns("clear"), "Clear", shiny::icon("times"),
                         class = "btn-danger"))
 }

@@ -74,7 +74,7 @@ control_graph_ui <- function(configuration, ns, restore = NULL) {
     return(NULL)
   }
 
-  labels <- Map(function(lab, col)
+  labels <- Map2(function(lab, col)
     shiny::span(lab, style = paste0("color:", col)),
     configuration$name, configuration$col)
 
@@ -90,7 +90,7 @@ control_graph_ui <- function(configuration, ns, restore = NULL) {
     class = "form-group",
     raw_checkbox_input(ns("logscale"), "Log scale y axis", value_logscale),
     shiny::tags$label("Plot on second y axis"),
-    Map(raw_checkbox_input, ns(configuration$id), labels, value_y2))
+    Map2(raw_checkbox_input, ns(configuration$id), labels, value_y2))
 
   id <- ns("hide")
   title <- "Graph settings"

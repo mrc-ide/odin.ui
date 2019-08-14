@@ -145,6 +145,6 @@ compare_vis_plot_series <- function(result, y2_model) {
     x <- list(configuration = cfg, simulation = simulation)
     vis_plot_series(x, NULL, y2_model)
   }
-  series <- Map(f, result$configuration$configuration, result$simulation)
+  series <- Map2(f, result$configuration$configuration, result$simulation)
   plotly_combine_series(series, result$configuration$names)
 }

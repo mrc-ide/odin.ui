@@ -34,7 +34,7 @@ raw_select_input <- function (inputId, choices, selected = NULL, size = NULL) {
   ## (i.e., a valuless attribute) which we can get with a value of NA,
   ## and can be dropped with a value of NULL (found via
   ## https://shiny.rstudio.com/articles/tag-glossary.html)
-  options <- Map(function(label, value)
+  options <- Map2(function(label, value)
     shiny::tags$option(
       value = value, selected = if (value == selected) NA else NULL,
       label),

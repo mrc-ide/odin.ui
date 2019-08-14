@@ -49,5 +49,5 @@ compare_download_names <- function(res, model_names) {
   download_names(
     display = sprintf("%s (%s)", unlist(display), model_names$long[i]),
     filename = sprintf("%s-%s", unlist(filename), model_names$short[i]),
-    data = Map(c, i, unlist(data)))
+    data = Map2(c, i, unlist(data)))
 }
