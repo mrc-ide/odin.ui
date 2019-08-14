@@ -23,12 +23,21 @@ mod_control_graph_server <- function(input, output, session, cfg) {
   })
 
   get_state <- function() {
-    c(list(logscale = input$logscale),
-      get_inputs(input, rv$configuration$id))
+    if (is.null(rv$configuration)) {
+      return(NULL)
+    }
+    list(configuration = rv$configuration,
+         result = list(logscale = input$logscale,
+                       y2 = get_inputs(input, rv$configuration$id)))
   }
 
   set_state <- function(state) {
-    set_inputs(session, names(state), state, shiny::updateCheckboxInput)
+    if (!is.null(state)) {
+      rv$configuration <- state$configuration
+      output$ui <- shiny::renderUI({
+        control_graph_ui(rv$configuration, session$ns, state$result)
+      })
+    }
   }
 
   reset <- function() {
@@ -71,7 +80,7 @@ control_graph_ui <- function(configuration, ns, restore = NULL) {
 
   if (!is.null(restore)) {
     value_y2 <- restore$y2
-    value_logscale <- restore$logscale_y
+    value_logscale <- restore$logscale
   } else {
     value_y2 <- FALSE
     value_logscale <- FALSE
