@@ -79,17 +79,25 @@ mod_parameters_server <- function(input, output, session, pars,
   }
 
   get_state <- function() {
-    pars <- rv$configuration$pars
-    ret <- list(value = get_inputs(input, pars$id_value, pars$id_value))
-    if (with_option) {
-      ret$option <- get_inputs(input, pars$id_option, pars$id_option)
+    if (is.null(rv$configuration)) {
+      return(NULL)
     }
-    ret
+    pars <- rv$configuration$pars
+    value <- get_inputs(input, pars$id_value, pars$id_value)
+    if (rv$configuration$with_option) {
+      option <- get_inputs(input, pars$id_option, pars$id_option)
+    } else {
+      option <- NULL
+    }
+    list(configuration = rv$configuration,
+         result = list(value = value, option = option))
   }
 
   set_state <- function(state) {
-    output$ui <- shiny::renderUI(
-      parameters_ui(rv$configuration, session$ns, state))
+    if (!is.null(state$configuration)) {
+      output$ui <- shiny::renderUI(
+        parameters_ui(state$configuration, session$ns, state$result))
+    }
   }
 
   list(
