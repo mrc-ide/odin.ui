@@ -89,8 +89,8 @@ mod_batch_server <- function(input, output, session, model, data, link,
 
   shiny::observeEvent(
     input$run, {
-      rv$result <- with_success(batch_run(
-        rv$configuration, control_focal$result(), control_run$result()))
+      rv$result <- batch_result(
+        rv$configuration, control_focal$result(), control_run$result())
     })
 
   shiny::observeEvent(
@@ -107,24 +107,39 @@ mod_batch_server <- function(input, output, session, model, data, link,
   })
 
   get_state <- function() {
-    if (is.null(rv$configuration) || is.null(rv$result)) {
-      return(NULL)
-    }
-    list(modules = modules$get_state())
+    list(result = rv$result$deps,
+         modules = modules$get_state())
   }
 
   set_state <- function(state) {
-    if (is.null(state)) {
-      return()
+    if (!is.null(state)) {
+      rv$result <- batch_result_rerun(state$result)
+      rv$configuration <- rv$result$value$configuration
+      modules$set_state(state$modules)
     }
-    rv$configuration <- common_model_data_configuration(
-      model(), data(), link())
-    modules$set_state(state$modules)
-    rv$result <- with_success(batch_run(rv$configuration, state$focal))
   }
 
   list(get_state = get_state,
        set_state = set_state)
+}
+
+
+batch_result <- function(configuration, user, run_options) {
+  result <- with_success(batch_run(configuration, user, run_options))
+  result$deps <- list(
+    configuration = common_model_data_configuration_save(configuration),
+    user = user,
+    run_options = run_options)
+  result
+}
+
+
+batch_result_rerun <- function(deps) {
+  if (is.null(deps)) {
+    return(NULL)
+  }
+  configuration <- common_model_data_configuration_restore(deps$configuration)
+  batch_result(configuration, deps$user, deps$run_options)
 }
 
 
@@ -197,7 +212,7 @@ batch_run <- function(configuration, focal, run_options) {
 
 batch_plot_series <- function(result, locked, y2_model, options) {
   fn <- switch(
-    options$type,
+    options$type %||% "trace",
     trace = batch_plot_series_trace,
     slice = batch_plot_series_slice,
     extreme = batch_plot_series_extreme,
@@ -380,7 +395,7 @@ batch_status <- function(result) {
 
 batch_xlab <- function(type, focal) {
   switch(
-    type,
+    type %||% "trace",
     trace = "Time",
     slice = focal$name,
     extreme = focal$name,

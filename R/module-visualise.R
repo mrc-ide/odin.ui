@@ -131,11 +131,11 @@ mod_vis_server <- function(input, output, session, data, model, link,
   }
 
   set_state <- function(state) {
-    if (is.null(state)) {
-      return()
+    if (!is.null(state)) {
+      rv$result <- vis_result_rerun(state$result)
+      rv$configuration <- rv$result$value$configuration
+      modules$set_state(state$modules)
     }
-    rv$result <- vis_result_rerun(state$result)
-    modules$set_state(state$modules)
   }
 
   list(get_state = get_state,
