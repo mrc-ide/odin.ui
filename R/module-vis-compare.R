@@ -40,7 +40,8 @@ mod_vis_compare_server <- function(input, output, session, model1, model2,
     mod_control_graph_server, "control_graph",
     shiny::reactive(rv$configuration))
   control_run <- shiny::callModule(
-    mod_control_run_server, "control_run", model2, run_options)
+    mod_control_run_server, "control_run",
+    reactive_successful(model2), run_options)
   download <- shiny::callModule(
     mod_download_server, "download", shiny::reactive(rv$result$value),
     "compare")

@@ -58,7 +58,8 @@ mod_vis_server <- function(input, output, session, data, model, link,
     mod_control_graph_server, "control_graph",
     shiny::reactive(rv$configuration))
   control_run <- shiny::callModule(
-    mod_control_run_server, "control_run", model, run_options)
+    mod_control_run_server, "control_run",
+    reactive_successful(model), run_options)
   code <- shiny::callModule(
     mod_model_code_server, "code", model)
 

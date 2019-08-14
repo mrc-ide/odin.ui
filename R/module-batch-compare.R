@@ -42,7 +42,8 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
     mod_control_graph_server, "control_graph",
     shiny::reactive(rv$configuration))
   control_run <- shiny::callModule(
-    mod_control_run_server, "control_run", model2, run_options)
+    mod_control_run_server, "control_run",
+    reactive_successful(model2), run_options)
   control_focal <- shiny::callModule(
     mod_control_focal_server, "control_focal",
     shiny::reactive(rv$configuration$pars),

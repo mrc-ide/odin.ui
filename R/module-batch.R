@@ -41,8 +41,8 @@ mod_batch_server <- function(input, output, session, model, data, link,
     mod_control_graph_server, "control_graph",
     shiny::reactive(rv$configuration))
   control_run <- shiny::callModule(
-    mod_control_run_server, "control_run", model, run_options,
-    warn_show = FALSE)
+    mod_control_run_server, "control_run",
+    reactive_successful(model), run_options, warn_show = FALSE)
   control_focal <- shiny::callModule(
     mod_control_focal_server, "control_focal",
     shiny::reactive(rv$configuration$pars),

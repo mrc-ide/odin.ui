@@ -5,13 +5,13 @@ mod_control_run_ui <- function(id) {
 
 
 ## This will need some work for a *pair* of models?
-mod_control_run_server <- function(input, output, session, model, options,
+mod_control_run_server <- function(input, output, session, render, options,
                                    warn_show = TRUE) {
   rv <- shiny::reactiveValues()
   options <- control_run_options_validate(options)
 
   shiny::observe({
-    rv$configuration <- control_run_configuration(model(), options)
+    rv$configuration <- control_run_configuration(render(), options)
   })
 
   output$ui <- shiny::renderUI({
@@ -28,11 +28,19 @@ mod_control_run_server <- function(input, output, session, model, options,
   })
 
   get_state <- function() {
+    if (is.null(rv$configuration)) {
+      return(NULL)
+    }
     get_inputs(input, rv$configuration$inputs)
   }
 
   set_state <- function(state) {
-    set_inputs(session, names(state), state)
+    if (!is.null(state)) {
+      rv$configuration <- control_run_configuration(TRUE, options)
+      output$ui <- shiny::renderUI({
+        control_run_ui(rv$configuration, session$ns, state)
+      })
+    }
   }
 
   reset <- function() {
@@ -48,9 +56,8 @@ mod_control_run_server <- function(input, output, session, model, options,
 }
 
 
-## TODO: this needs to cope better with *lists* of models
-control_run_configuration <- function(model, options) {
-  if (!isTRUE(model$success)) {
+control_run_configuration <- function(render, options) {
+  if (!isTRUE(render)) {
     return(NULL)
   }
 
@@ -76,7 +83,7 @@ control_run_control <- function(default_end_time = NA,
 }
 
 
-control_run_ui <- function(configuration, ns) {
+control_run_ui <- function(configuration, ns, restore = NULL) {
   if (is.null(configuration)) {
     return(NULL)
   }
@@ -85,12 +92,14 @@ control_run_ui <- function(configuration, ns) {
 
   end <- replicates <- NULL
   if (options$options$control_end_time) {
-    end <- simple_numeric_input(
-      "End time", ns("end"), options$control$default_end_time)
+    value_end <- restore$end %||% options$control$default_end_time
+    end <- simple_numeric_input("End time", ns("end"), value_end)
   }
   if (options$options$replicates) {
+    value_replicates <- restore$replicates %||%
+      options$control$default_replicates
     replicates <- simple_numeric_input(
-      "Replicates", ns("replicates"), options$control$default_replicates)
+      "Replicates", ns("replicates"), value_replicates)
   }
 
   status <- shiny::uiOutput(ns("status"))
