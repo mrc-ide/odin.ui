@@ -51,13 +51,17 @@ mod_lock_server <- function(input, output, session, render, current,
   })
 
   get_state <- function() {
-    list(locked = rv$locked,
-         hidden = rv$hidden)
+    if (!is.null(rv$locked)) {
+      list(locked = rv$locked$deps,
+           hidden = rv$hidden)
+    }
   }
 
   set_state <- function(state) {
-    rv$locked <- state$locked
-    rv$hidden <- state$hidden
+    if (!is.null(state)) {
+      rv$locked <- vis_result_rerun(state$locked)
+      rv$hidden <- state$hidden
+    }
   }
 
   reset <- function() {
