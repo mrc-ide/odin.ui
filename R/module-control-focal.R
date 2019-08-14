@@ -1,4 +1,5 @@
 MOD_CONTROL_FOCAL_DEFAULT_PCT <- 10
+MOD_CONTROL_MAX_N <- 20
 
 mod_control_focal_ui <- function(id) {
   ns <- shiny::NS(id)
@@ -18,33 +19,40 @@ mod_control_focal_server <- function(input, output, session, pars, user) {
   })
 
   shiny::observe({
-    rv$result <- control_focal_result(
+    rv$result <- with_success(control_focal_result(
       input$name, input$scale, input$type,
-      input$pct, input$from, input$to, input$n, user())
+      input$pct, input$from, input$to, input$n, user()))
   })
 
-  output$status <- shiny::renderText({
-    control_focal_status(rv$focal)
+  output$status <- shiny::renderUI({
+    control_focal_status(rv$result)
   })
 
   output$focal <- shiny::renderUI({
-    result <- shiny::isolate(rv$result)
-    control_focal_ui_focal(input$type, result, session$ns)
+    if (input$type == "Percentage") {
+      pct <- value <- NULL
+    } else {
+      pct <- input$pct
+      value <- user()[[input$name]]
+    }
+    control_focal_ui_focal(input$type, pct, value, session$ns)
   })
 
   get_state <- function() {
-    list(name = input$name,
-         type = input$type,
-         scale = input$scale,
-         pct = input$pct,
-         from = input$from,
-         to = input$to,
-         n = input$n)
+    input_ids <- c("name", "type", "scale", "pct", "from", "to", "n")
+    state <- c(get_inputs(input, input_ids),
+               user = list(user()))
+    list(configuration = rv$configuration,
+         state = state)
   }
 
   set_state <- function(state) {
+    rv$configuration <- state$configuration
     output$ui <- shiny::renderUI(
-      control_focal_ui(rv$configuration, session$ns, state))
+      control_focal_ui(rv$configuration, session$ns, state$state))
+    output$focal <- shiny::renderUI(
+      control_focal_ui_focal(state$state$type, NULL, NULL, session$ns,
+                             state$state))
   }
 
   reset <- function() {
@@ -52,7 +60,7 @@ mod_control_focal_server <- function(input, output, session, pars, user) {
       control_focal_ui(rv$configuration, session$ns))
   }
 
-  list(result = shiny::reactive(rv$result),
+  list(result = shiny::reactive(rv$result$value),
        recompute = function(user) control_focal_recompute(get_state(), user),
        reset = reset,
        get_state = get_state,
@@ -77,37 +85,35 @@ control_focal_ui <- function(configuration, ns, restore = NULL) {
 
   n <- restore$n %||% MOD_CONTROL_FOCAL_DEFAULT_PCT
   name <- restore$name %||% pars[[1]]
+  type <- restore$type %||% NULL
+  scale <- restore$scale %||% NULL
 
   odin_control_section(
     "Vary parameter",
     simple_select_input(
       "Parameter to vary", ns("name"), pars, selected = name),
     simple_select_input(
-      "Scale type", ns("scale"), c("Arithmetic", "Logarithmic")),
+      "Scale type", ns("scale"), c("Arithmetic", "Logarithmic"), scale),
     simple_select_input(
-      "Variation type", ns("type"), c("Percentage", "Range")),
+      "Variation type", ns("type"), c("Percentage", "Range"), type),
     shiny::uiOutput(ns("focal")),
     simple_numeric_input("Number of runs", ns("n"), n),
 
-    shiny::textOutput(ns("status")),
+    shiny::uiOutput(ns("status")),
     ns = ns)
 }
 
 
-control_focal_ui_focal <- function(type, result, ns, restore = NULL) {
+control_focal_ui_focal <- function(type, pct, value, ns, restore = NULL) {
   if (is_missing(type)) {
     return(NULL)
   }
   if (type == "Percentage") {
-    if (is.null(restore)) {
-      pct <- control_focal_range_to_pct(result$value, result$from, result$to)
-    } else {
-      pct <- restore$pct %||% MOD_CONTROL_FOCAL_DEFAULT_PCT
-    }
+    pct <- restore$pct %||% MOD_CONTROL_FOCAL_DEFAULT_PCT
     simple_numeric_input("Variation (%)", ns("pct"), pct)
   } else {
     if (is.null(restore)) {
-      r <- control_focal_pct_to_range(result$value, result$pct)
+      r <- control_focal_pct_to_range(value, pct)
       from <- r$from
       to <- r$to
     } else {
@@ -122,29 +128,67 @@ control_focal_ui_focal <- function(type, result, ns, restore = NULL) {
 
 
 control_focal_result <- function(name, scale, type, pct, from, to, n, user) {
-  if (is_missing(pct) || is_missing(name) || is_missing(n)) {
-    return(NULL)
+  if (is_missing(name)) {
+    stop("Please select a valid parameter")
   }
   value <- user[[name]]
   if (is_missing(value)) {
-    return(NULL)
+    stop(sprintf("Enter a valid value for the parameter %s", name))
   }
+
+  if (is_missing(n)) {
+    stop("Number of runs must be given")
+  } else if (n < 2) {
+    stop("At least 2 runs are needed")
+  } else if (n > MOD_CONTROL_MAX_N) {
+    stop(sprintf("At most %d runs are possible", MOD_CONTROL_MAX_N))
+  }
+
+  if (is_missing(scale)) {
+    stop("Please select a valid value for the scale type")
+  }
+  logarithmic <- scale == "Logarithmic"
+
   if (type == "Percentage") {
+    if (is_missing(pct)) {
+      stop("'Variation %' is missing")
+    }
     r <- control_focal_pct_to_range(value, pct)
     from <- r$from
     to <- r$to
   } else {
+    if (is_missing(from)) {
+      stop("'From' is missing")
+    }
+    if (is_missing(to)) {
+      stop("'To' is missing")
+    }
     pct <- control_focal_range_to_pct(value, from, to)
   }
+
+  if (isTRUE(logarithmic)) {
+    values <- seq_log(from, to, length.out = n)
+  } else {
+    values <- seq(from, to, length.out = n)
+  }
+
   list(base = user, name = name, value = value, n = n, pct = pct,
-       from = from, to = to, logarithmic = scale == "Logarithmic")
+       from = from, to = to, logarithmic = scale == "Logarithmic",
+       values = values)
 }
 
 
-control_focal_status <- function(focal) {
-  if (!is.null(focal)) {
-    sprintf("%s - %s - %s",
-            focal$from, focal$value, focal$to)
+control_focal_status <- function(result) {
+  if (!is.null(result)) {
+    if (isTRUE(result$success)) {
+      values <- format(result$value$values, digits = 4)
+      if (length(values) > 4) {
+        values <- c(values[1:3], "...", values[[length(values)]])
+      }
+      simple_panel("success", paste(values, collapse = ", "), NULL)
+    } else {
+      simple_panel("danger", result$error, NULL)
+    }
   }
 }
 
