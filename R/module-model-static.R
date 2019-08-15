@@ -16,7 +16,6 @@ mod_model_static_ui <- function(id) {
 
   status <- shiny::tagList(
     model_static_info(),
-    mod_variable_order_ui(ns("order")),
     shiny::uiOutput(ns("status")))
 
   shiny::fluidRow(
@@ -27,15 +26,12 @@ mod_model_static_ui <- function(id) {
 
 mod_model_static_server <- function(input, output, session, code,
                                     name = NULL, name_short = NULL,
-                                    parameter_ranges = NULL) {
-  data <- model_static_setup(code, name, name_short,
-                             parameter_ranges = parameter_ranges)
+                                    parameter_ranges = NULL, order = NULL) {
   rv <- shiny::reactiveValues()
 
-  order <- shiny::callModule(
-    mod_variable_order_server, "order", shiny::reactive(data$model$info$vars))
-  modules <- submodules(order = order)
-
+  data <- model_static_setup(code, name, name_short,
+                             parameter_ranges = parameter_ranges)
+  order <- variable_order_result(order = order %||% data$model$info$vars$name)
   output$title <- shiny::renderText(data$model$name)
 
   shiny::observe({
@@ -43,7 +39,7 @@ mod_model_static_server <- function(input, output, session, code,
   })
 
   shiny::observe({
-    rv$result <- editor_result(data$model, order$result())
+    rv$result <- editor_result(data$model, order)
   })
 
   shiny::observe({
@@ -56,17 +52,7 @@ mod_model_static_server <- function(input, output, session, code,
       writeLines(input$editor, con)
     })
 
-  get_state <- function() {
-    list(modules = modules$get_state())
-  }
-
-  set_state <- function(state) {
-    modules$set_state(state$modules)
-  }
-
-  list(result = shiny::reactive(add_status(rv$result, rv$status)),
-       get_state = get_state,
-       set_state = set_state)
+  list(result = shiny::reactive(add_status(rv$result, rv$status)))
 }
 
 

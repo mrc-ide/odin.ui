@@ -17,9 +17,8 @@ mod_variable_order_server <- function(input, output, session, variables) {
 
   shiny::observe({
     if (!is.null(rv$variables)) {
-      result <- list(show = input$show_order,
-                     hide = input$hide_order,
-                     disable = input$disable_order)
+      result <- variable_order_result(
+        input$show_order, input$hide_order, input$disable_order)
       if (sum(lengths(result)) == nrow(rv$variables)) {
         rv$result <- result
       }
@@ -103,5 +102,17 @@ variable_order_ui <- function(variables, ns, prev = NULL) {
 variable_order_status <- function(result) {
   if (!is.null(result) && length(result$show) == 0L) {
     simple_panel("warning", "No variables are shown", NULL)
+  }
+}
+
+
+variable_order_result <- function(show, hide, disable, order = NULL) {
+  if (is.character(order)) {
+    variable_order_result(order, character(0), character(0))
+  } else if (!is.null(order)) {
+    stopifnot(identical(names(order), c("show", "hide", "disable")))
+    order
+  } else {
+    list(show = show, hide = hide, disable = disable)
   }
 }
