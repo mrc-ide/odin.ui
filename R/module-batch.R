@@ -135,11 +135,11 @@ mod_batch_server <- function(input, output, session, model, data, link,
 }
 
 
-batch_result <- function(configuration, user, run_options) {
-  result <- with_success(batch_run(configuration, user, run_options))
+batch_result <- function(configuration, focal, run_options) {
+  result <- with_success(batch_run(configuration, focal, run_options))
   result$deps <- list(
     configuration = common_model_data_configuration_save(configuration),
-    user = user,
+    focal = focal,
     run_options = run_options)
   result
 }
@@ -150,7 +150,7 @@ batch_result_rerun <- function(deps) {
     return(NULL)
   }
   configuration <- common_model_data_configuration_restore(deps$configuration)
-  batch_result(configuration, deps$user, deps$run_options)
+  batch_result(configuration, deps$focal, deps$run_options)
 }
 
 
@@ -421,7 +421,7 @@ batch_logscale_x <- function(type, focal) {
 
 batch_ylab <- function(type, focal) {
   switch(
-    type,
+    type %||% "trace",
     trace = NULL,
     slice = NULL,
     extreme = "Maximum value",

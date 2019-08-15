@@ -67,8 +67,8 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
 
   shiny::observeEvent(
     input$run, {
-      rv$result <- with_success(batch_compare_run(
-        rv$configuration, control_focal$result(), control_run$result()))
+      rv$result <- batch_compare_result(
+        rv$configuration, control_focal$result(), control_run$result())
     })
 
   shiny::observeEvent(
@@ -96,7 +96,40 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
     show_module_status_if_not_ok(model2()$status)
   })
 
-  NULL
+  get_state <- function() {
+    list(result = rv$result$deps,
+         modules = modules$get_state())
+  }
+
+  set_state <- function(state) {
+    if (!is.null(state)) {
+      rv$result <- batch_compare_result_rerun(state$result)
+      rv$configuration <- rv$result$value$configuration
+      modules$set_state(state$modules)
+    }
+  }
+
+  list(get_state = get_state,
+       set_state = set_state)
+}
+
+
+batch_compare_result <- function(configuration, focal, run_options) {
+  result <- with_success(batch_compare_run(configuration, focal, run_options))
+  result$deps <- list(
+    configuration = common_model_data_configuration_save(configuration),
+    focal = focal,
+    run_options = run_options)
+  result
+}
+
+
+batch_compare_result_rerun <- function(deps) {
+  if (is.null(deps)) {
+    return(NULL)
+  }
+  configuration <- compare_configuration_restore(deps$configuration)
+  batch_compare_result(configuration, deps$focal, deps$run_options)
 }
 
 
