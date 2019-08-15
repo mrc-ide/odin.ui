@@ -1,5 +1,6 @@
 MOD_CONTROL_FOCAL_DEFAULT_PCT <- 10
-MOD_CONTROL_MAX_N <- 20
+MOD_CONTROL_FOCAL_DEFAULT_N <- 10
+MOD_CONTROL_FOCAL_MAX_N <- 20
 
 mod_control_focal_ui <- function(id) {
   ns <- shiny::NS(id)
@@ -28,31 +29,20 @@ mod_control_focal_server <- function(input, output, session, pars, user) {
     control_focal_status(rv$result)
   })
 
-  output$focal <- shiny::renderUI({
-    if (input$type == "Percentage") {
-      pct <- value <- NULL
-    } else {
-      pct <- input$pct
-      value <- user()[[input$name]]
-    }
-    control_focal_ui_focal(input$type, pct, value, session$ns)
-  })
+  shiny::outputOptions(output, "ui", suspendWhenHidden = FALSE)
 
   get_state <- function() {
-    input_ids <- c("name", "type", "scale", "pct", "from", "to", "n")
-    state <- c(get_inputs(input, input_ids),
-               user = list(user()))
+    input_ids <- c("name", "scale", "type", "pct", "from", "to", "n")
     list(configuration = rv$configuration,
-         state = state)
+         state = get_inputs(input, input_ids))
   }
 
   set_state <- function(state) {
     rv$configuration <- state$configuration
-    output$ui <- shiny::renderUI(
-      control_focal_ui(rv$configuration, session$ns, state$state))
-    output$focal <- shiny::renderUI(
-      control_focal_ui_focal(state$state$type, NULL, NULL, session$ns,
-                             state$state))
+    shiny::updateSelectInput(session, "name", selected = state$state$name)
+    shiny::updateSelectInput(session, "scale", selected = state$state$scale)
+    shiny::updateSelectInput(session, "type", selected = state$state$type)
+    restore_inputs(session, state$state[c("pct", "from", "to", "n")])
   }
 
   reset <- function() {
@@ -76,17 +66,20 @@ control_focal_configuration <- function(pars) {
 }
 
 
-control_focal_ui <- function(configuration, ns, restore = NULL) {
+control_focal_ui <- function(configuration, ns) {
   pars <- configuration$pars
 
   if (length(pars) == 0) {
     return(NULL)
   }
 
-  n <- restore$n %||% MOD_CONTROL_FOCAL_DEFAULT_PCT
-  name <- restore$name %||% pars[[1]]
-  type <- restore$type %||% NULL
-  scale <- restore$scale %||% NULL
+  n <- MOD_CONTROL_FOCAL_DEFAULT_N
+  name <- pars[[1]]
+  type <- NULL
+  scale <- NULL
+  pct <- MOD_CONTROL_FOCAL_DEFAULT_PCT
+  from <- NA
+  to <- NA
 
   odin_control_section(
     "Vary parameter",
@@ -96,7 +89,9 @@ control_focal_ui <- function(configuration, ns, restore = NULL) {
       "Scale type", ns("scale"), c("Arithmetic", "Logarithmic"), scale),
     simple_select_input(
       "Variation type", ns("type"), c("Percentage", "Range"), type),
-    shiny::uiOutput(ns("focal")),
+    simple_numeric_input("Variation (%)", ns("pct"), pct),
+    simple_numeric_input("From", ns("from"), from),
+    simple_numeric_input("To", ns("to"), to),
     simple_numeric_input("Number of runs", ns("n"), n),
 
     shiny::uiOutput(ns("status")),
@@ -104,22 +99,17 @@ control_focal_ui <- function(configuration, ns, restore = NULL) {
 }
 
 
-control_focal_ui_focal <- function(type, pct, value, ns, restore = NULL) {
+control_focal_ui_focal <- function(type, pct, value, ns) {
   if (is_missing(type)) {
     return(NULL)
   }
   if (type == "Percentage") {
-    pct <- restore$pct %||% MOD_CONTROL_FOCAL_DEFAULT_PCT
+    pct <- MOD_CONTROL_FOCAL_DEFAULT_PCT
     simple_numeric_input("Variation (%)", ns("pct"), pct)
   } else {
-    if (is.null(restore)) {
-      r <- control_focal_pct_to_range(value, pct)
-      from <- r$from
-      to <- r$to
-    } else {
-      from <- restore$from %||% NA
-      to <- restore$to %||% NA
-    }
+    r <- control_focal_pct_to_range(value, pct)
+    from <- r$from
+    to <- r$to
     shiny::tagList(
       simple_numeric_input("From", ns("from"), from),
       simple_numeric_input("To", ns("to"), to))
@@ -140,8 +130,8 @@ control_focal_result <- function(name, scale, type, pct, from, to, n, user) {
     stop("Number of runs must be given")
   } else if (n < 2) {
     stop("At least 2 runs are needed")
-  } else if (n > MOD_CONTROL_MAX_N) {
-    stop(sprintf("At most %d runs are possible", MOD_CONTROL_MAX_N))
+  } else if (n > MOD_CONTROL_FOCAL_MAX_N) {
+    stop(sprintf("At most %d runs are possible", MOD_CONTROL_FOCAL_MAX_N))
   }
 
   if (is_missing(scale)) {
