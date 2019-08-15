@@ -101,8 +101,19 @@ mod_batch_server <- function(input, output, session, model, data, link,
 
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result$value)) {
-      batch_plot(rv$result$value, locked$result()$value,
-                 control_graph$result(), control_plot$result())
+      cfg1 <- rv$result$value$configuration
+      list(cfg1$pars$name, cfg1$vars$name)
+
+      cfg2 <- rv$configuration
+      list(cfg2$pars$name, cfg2$vars$name)
+
+      if (models_compatible(rv$configuration, rv$result$value$configuration)) {
+        batch_plot(rv$result$value, locked$result()$value,
+                   control_graph$result(), control_plot$result())
+      } else {
+        rv$result <- unsuccessful("Model has structurally changed - rerun")
+        NULL
+      }
     }
   })
 
