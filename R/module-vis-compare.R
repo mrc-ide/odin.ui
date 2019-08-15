@@ -61,10 +61,8 @@ mod_vis_compare_server <- function(input, output, session, model1, model2,
 
   shiny::observeEvent(
     input$run, {
-      user <- parameters$result()
-      control <- control_run$result()
-      rv$result <- with_success(
-        compare_vis_run(rv$configuration, user, control))
+      rv$result <- compare_vis_result(
+        rv$configuration, parameters$result(), control_run$result())
     })
 
   shiny::observeEvent(
@@ -92,31 +90,40 @@ mod_vis_compare_server <- function(input, output, session, model1, model2,
   })
 
   get_state <- function() {
-    if (is.null(rv$configuration) || is.null(rv$result)) {
-      return(NULL)
-    }
-    list(user = rv$result$value$inputs$user,
-         options = rv$result$value$inputs$options,
+    list(result = rv$result$deps,
          modules = modules$get_state())
   }
 
   set_state <- function(state) {
-    if (is.null(state)) {
-      return()
-    }
-    rv$configuration <- compare_configuration(
-      model1(), model2(), control_run$result()$options)
-    modules$set_state(state$modules)
-    ## TODO: not sure why this is not working, but we're not getting
-    ## the previous model here correctly.
-    if (!is.null(rv$configuration)) {
-      rv$result <- with_success(compare_vis_run(
-        rv$configuration, state$user, state$options))
+    if (!is.null(state)) {
+      rv$result <- compare_vis_result_rerun(state$result)
+      rv$configuration <- rv$result$value$configuration
+      modules$set_state(state$modules)
     }
   }
 
   list(get_state = get_state,
        set_state = set_state)
+}
+
+
+compare_vis_result <- function(configuration, user, run_options) {
+  result <- with_success(
+    compare_vis_run(configuration, user, run_options))
+  result$deps <- list(
+    configuration = compare_configuration_save(configuration),
+    user = user,
+    run_options = run_options)
+  result
+}
+
+
+compare_vis_result_rerun <- function(deps) {
+  if (is.null(deps)) {
+    return(NULL)
+  }
+  configuration <- compare_configuration_restore(deps$configuration)
+  compare_vis_result(configuration, deps$user, deps$run_options)
 }
 
 

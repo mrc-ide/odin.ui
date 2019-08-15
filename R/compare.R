@@ -38,7 +38,7 @@ compare_configuration <- function(model1, model2, run_options = NULL) {
     filename = c(names$short, "parameters"),
     data = c("model1", "model2", "user"))
 
-  list(data = NULL, model, configuration = cfg, link = NULL,
+  list(data = NULL, configuration = cfg, link = NULL,
        pars = pars, vars = vars, cols = cols, names = names,
        download_names = download_names)
 }
@@ -56,4 +56,26 @@ compare_download_names <- function(res, model_names) {
     display = sprintf("%s (%s)", unlist(display), model_names$long[i]),
     filename = sprintf("%s-%s", unlist(filename), model_names$short[i]),
     data = Map2(c, i, unlist(data)))
+}
+
+
+compare_configuration_save <- function(configuration) {
+  if (is.null(configuration)) {
+    return(NULL)
+  }
+  configuration$configuration <- lapply(
+    configuration$configuration,
+    common_model_data_configuration_save)
+  configuration
+}
+
+
+compare_configuration_restore <- function(configuration) {
+  if (is.null(configuration)) {
+    return(NULL)
+  }
+  configuration$configuration <- lapply(
+    configuration$configuration,
+    common_model_data_configuration_restore)
+  configuration
 }
