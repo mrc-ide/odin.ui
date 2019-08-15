@@ -1,5 +1,5 @@
 compare_union_metadata <- function(a, b, names) {
-  ret <- rbind(a, b[!(b$name %in% a$name), , drop = FALSE])
+  ret <- rbind(b, a[!(a$name %in% b$name), , drop = FALSE])
   rownames(ret) <- NULL
   i <- 4 - (ret$name %in% b$name) - (ret$name %in% a$name) * 2
   lvls <- c("Shared", paste(names$long, "only"))
@@ -21,6 +21,12 @@ compare_configuration <- function(model1, model2, run_options = NULL) {
 
   pars <- compare_union_metadata(model1$info$pars, model2$info$pars, names)
   vars <- compare_union_metadata(model1$info$vars, model2$info$vars, names)
+
+  ## Show/Hide/Disable is based off of model2 so port that back into
+  ## model1 here
+  shd <- c("show", "hide", "disable", "include")
+  cfg[[1]]$vars[shd] <- vars[match(cfg[[1]]$vars$name, vars$name), shd]
+
   cols <- odin_colours(vars$name, NULL, NULL)
 
   for (i in seq_along(cfg)) {

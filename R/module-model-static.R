@@ -31,6 +31,7 @@ mod_model_static_server <- function(input, output, session, code,
 
   data <- model_static_setup(code, name, name_short,
                              parameter_ranges = parameter_ranges)
+  data$model$is_static <- TRUE
   order <- variable_order_result(order = order %||% data$model$info$vars$name)
   output$title <- shiny::renderText(data$model$name)
 
