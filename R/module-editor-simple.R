@@ -139,6 +139,7 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
       rv$result <- NULL
       rv$model <- NULL
       rv$validation <- NULL
+      modules$reset()
     })
 
   help <- help_modal(odin_ui_file("md/editor.md"))
@@ -156,11 +157,11 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
     list(editor = input$editor,
          validation = rv$validation$code,
          model = rv$model$code,
-         ## order = order$result(),
          modules = modules$get_state())
   }
 
   set_state <- function(state) {
+    modules$set_state(state$modules)
     if (!is.null(state$model)) {
       model <- common_odin_compile(common_odin_validate(state$model))
       rv$model <- model
@@ -169,10 +170,6 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
       rv$validation <- common_odin_validate(state$validation)
     }
     shinyAce::updateAceEditor(session, ns("editor"), value = state$editor)
-    modules$set_state(state$modules)
-    if (!is.null(state$order)) {
-      rv$result <- editor_result(model, state$modules$order)
-    }
   }
 
   ## shiny::outputOptions(output, "validation_info", suspendWhenHidden = FALSE)

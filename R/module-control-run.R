@@ -27,6 +27,8 @@ mod_control_run_server <- function(input, output, session, render, options,
     control_run_status(rv$values, warn_show)
   })
 
+  shiny::outputOptions(output, "ui", suspendWhenHidden = FALSE)
+
   get_state <- function() {
     if (is.null(rv$configuration)) {
       return(NULL)
@@ -37,9 +39,7 @@ mod_control_run_server <- function(input, output, session, render, options,
   set_state <- function(state) {
     if (!is.null(state)) {
       rv$configuration <- control_run_configuration(TRUE, options)
-      output$ui <- shiny::renderUI({
-        control_run_ui(rv$configuration, session$ns, state)
-      })
+      restore_inputs(session, state)
     }
   }
 
@@ -83,7 +83,7 @@ control_run_control <- function(default_end_time = NA,
 }
 
 
-control_run_ui <- function(configuration, ns, restore = NULL) {
+control_run_ui <- function(configuration, ns) {
   if (is.null(configuration)) {
     return(NULL)
   }
@@ -92,12 +92,11 @@ control_run_ui <- function(configuration, ns, restore = NULL) {
 
   end <- replicates <- NULL
   if (options$options$control_end_time) {
-    value_end <- restore$end %||% options$control$default_end_time
+    value_end <- options$control$default_end_time
     end <- simple_numeric_input("End time", ns("end"), value_end)
   }
   if (options$options$replicates) {
-    value_replicates <- restore$replicates %||%
-      options$control$default_replicates
+    value_replicates <- options$control$default_replicates
     replicates <- simple_numeric_input(
       "Replicates", ns("replicates"), value_replicates)
   }

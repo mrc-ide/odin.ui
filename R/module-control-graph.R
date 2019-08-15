@@ -22,6 +22,8 @@ mod_control_graph_server <- function(input, output, session, cfg) {
       y2 = get_inputs(input, rv$configuration$id, rv$configuration$name))
   })
 
+  shiny::outputOptions(output, "ui", suspendWhenHidden = FALSE)
+
   get_state <- function() {
     if (is.null(rv$configuration)) {
       return(NULL)
@@ -34,9 +36,8 @@ mod_control_graph_server <- function(input, output, session, cfg) {
   set_state <- function(state) {
     if (!is.null(state)) {
       rv$configuration <- state$configuration
-      output$ui <- shiny::renderUI({
-        control_graph_ui(rv$configuration, session$ns, state$result)
-      })
+      restore_inputs(session, state$result$y2)
+      restore_inputs(session, state$result["logscale"])
     }
   }
 
@@ -69,7 +70,7 @@ control_graph_configuration <- function(configuration) {
 }
 
 
-control_graph_ui <- function(configuration, ns, restore = NULL) {
+control_graph_ui <- function(configuration, ns) {
   if (is.null(configuration)) {
     return(NULL)
   }
@@ -78,17 +79,8 @@ control_graph_ui <- function(configuration, ns, restore = NULL) {
     shiny::span(lab, style = paste0("color:", col)),
     configuration$name, configuration$col)
 
-  if (!setequal(names(restore), configuration$id)) {
-    restore <- NULL
-  }
-
-  if (!is.null(restore)) {
-    value_y2 <- restore$y2
-    value_logscale <- restore$logscale
-  } else {
-    value_y2 <- FALSE
-    value_logscale <- FALSE
-  }
+  value_y2 <- FALSE
+  value_logscale <- FALSE
 
   tags <- shiny::div(
     class = "form-group",

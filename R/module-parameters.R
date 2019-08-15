@@ -60,6 +60,8 @@ mod_parameters_server <- function(input, output, session, pars,
     rv$status
   })
 
+  shiny::outputOptions(output, "ui", suspendWhenHidden = FALSE)
+
   set <- function(values, notify = TRUE) {
     res <- parameters_validate_user(values, rv$configuration$pars)
     if (res$success) {
@@ -95,8 +97,8 @@ mod_parameters_server <- function(input, output, session, pars,
 
   set_state <- function(state) {
     if (!is.null(state$configuration)) {
-      output$ui <- shiny::renderUI(
-        parameters_ui(state$configuration, session$ns, state$result))
+      rv$configuration <- state$configuration
+      restore_inputs(session, state$result$value)
     }
   }
 
@@ -121,7 +123,7 @@ parameters_configuration <- function(pars, with_option, title) {
 }
 
 
-parameters_ui <- function(configuration, ns, restore = NULL) {
+parameters_ui <- function(configuration, ns) {
   if (is.null(configuration)) {
     return(NULL)
   }
@@ -130,11 +132,7 @@ parameters_ui <- function(configuration, ns, restore = NULL) {
     return(NULL)
   }
 
-  if (!setequal(names(restore$value), pars$id_value)) {
-    restore <- NULL
-  }
-
-  value <- restore$value %||% pars$value %||%
+  value <- pars$value %||%
     vnapply(pars$default_value, function(x) x %||% NA_real_)
   range <- pars$range
   if (configuration$with_option) {
@@ -146,7 +144,7 @@ parameters_ui <- function(configuration, ns, restore = NULL) {
         shiny::column(
           2, shiny::checkboxInput(id_option, "", option)))
     }
-    option <- restore$option %||% pars$option
+    option <- pars$option
     controls <- Map2(f, pars$name, ns(pars$id_value), value, range,
                     ns(pars$id_option), option)
   } else {

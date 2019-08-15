@@ -7,13 +7,22 @@ mod_variable_order_ui <- function(id) {
 mod_variable_order_server <- function(input, output, session, variables) {
   rv <- shiny::reactiveValues()
 
+  shiny::observe({
+    rv$variables <- variables()
+  })
+
   output$ui <- shiny::renderUI({
-    variable_order_ui(variables(), session$ns, prev = get_state())
+    variable_order_ui(rv$variables, session$ns, prev = rv$result)
   })
 
   shiny::observe({
-    if (!is.null(variables())) {
-      rv$result <- get_state()
+    if (!is.null(rv$variables)) {
+      result <- list(show = input$show_order,
+                     hide = input$hide_order,
+                     disable = input$disable_order)
+      if (sum(lengths(result)) == nrow(rv$variables)) {
+        rv$result <- result
+      }
     }
   })
 
@@ -24,24 +33,25 @@ mod_variable_order_server <- function(input, output, session, variables) {
   shiny::outputOptions(output, "ui", suspendWhenHidden = FALSE)
 
   get_state <- function() {
-    list(show = input$show_order,
-         hide = input$hide_order,
-         disable = input$disable_order)
+    list(variables = rv$variables,
+         result = list(
+           show = input$show_order,
+           hide = input$hide_order,
+           disable = input$disable_order))
   }
 
   set_state <- function(state) {
-    ## TODO: this is broken - we should be able to pass in the state
-    ## here, but that means that all subsequent updates end up using
-    ## the same state.  At the same time, I am not seeing the 'prev'
-    ## come through *ever* below (see commented out debug).
-    ui <- shiny::isolate(
-      variable_order_ui(variables(), session$ns, restore = state))
-    output$ui <- shiny::renderUI(ui)
+    rv$variables <- state$variables
+    ## TODO: compat
+    if ("show" %in% names(state)) {
+      state$result <- state[c("show", "hide", "disable")]
+    }
+    rv$result <- state$result
   }
 
   reset <- function() {
     output$ui <- shiny::renderUI(
-      variable_order_ui(variables(), session$ns))
+      variable_order_ui(rv$variables, session$ns))
   }
 
   list(result = shiny::reactive(rv$result),
@@ -51,20 +61,14 @@ mod_variable_order_server <- function(input, output, session, variables) {
 }
 
 
-variable_order_ui <- function(variables, ns, prev = NULL, restore = NULL) {
+variable_order_ui <- function(variables, ns, prev = NULL) {
   if (is.null(variables)) {
     return(NULL)
   }
 
-  ## message(sprintf("Drawing order ui prev = %s, restore = %s",
-  ##                 !is.null(prev), !is.null(restore)))
   show <- include <- vars <- variables$name
 
-  if (!is.null(restore)) {
-    show <- restore$show
-    hide <- restore$hide
-    disable <- restore$disable
-  } else if (!is.null(prev)) {
+  if (!is.null(prev)) {
     hide <- intersect(prev$hide, vars)
     disable <- intersect(prev$disable, vars)
     show <- union(intersect(prev$show, vars),

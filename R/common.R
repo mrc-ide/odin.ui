@@ -36,6 +36,18 @@ set_inputs <- function(session, ids, values, fn = shiny::updateNumericInput) {
 }
 
 
+restore_inputs <- function(session, data, fn = NULL) {
+  if (is.null(fn)) {
+    if (all(vlapply(data, is.logical))) {
+      fn <- shiny::updateCheckboxInput
+    } else {
+      fn <- shiny::updateNumericInput
+    }
+  }
+  set_inputs(session, names(data), unname(data), fn)
+}
+
+
 odin_colours <- function(model, data, link) {
   col_model <- odin_colours_model(model)
   col_data <- odin_colours_data(data)
