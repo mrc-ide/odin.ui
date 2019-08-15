@@ -12,8 +12,11 @@ mod_link_ui <- function(id) {
 }
 
 
+## This should not take as much as inputs?  Can we strip it down to
+## just the status element and data$name_vars, model$info$vars, which
+## would invalidate less often
 mod_link_server <- function(input, output, session, data, model,
-                                 link_status_body = NULL) {
+                            link_status_body = NULL) {
   rv <- shiny::reactiveValues()
 
   output$status_data <- shiny::renderUI({
@@ -32,16 +35,21 @@ mod_link_server <- function(input, output, session, data, model,
     rv$configuration <- link_configuration(data(), model())
   })
 
+  shiny::observe({
+    values <- get_inputs(input, rv$configuration$vars$id)
+    if (!values_present(rv$values) || values_present(values)) {
+      rv$values <- values
+    }
+  })
+
   output$link <- shiny::renderUI({
-    ## TODO: get previous first
-    prev <- shiny::isolate(rv$result)
-    link_ui(rv$configuration, prev, session$ns)
+    link_ui(rv$configuration, rv$values, session$ns)
   })
 
   shiny::observe({
-    vars <- rv$configuration$vars
-    map <- get_inputs(input, vars$id, vars$data)
-    rv$result <- link_result(map)
+    if (!is.null(rv$configuration$vars$data)) {
+      rv$result <- link_result(rv$values, rv$configuration$vars$data)
+    }
   })
 
   shiny::observe({
@@ -54,18 +62,22 @@ mod_link_server <- function(input, output, session, data, model,
         link_ui(rv$configuration, NULL, session$ns))
     })
 
+  shiny::outputOptions(output, "link", suspendWhenHidden = FALSE)
+
   get_state <- function() {
-    list(result = rv$result)
+    list(
+      configuration = common_model_data_configuration_save(rv$configuration),
+      values = rv$values,
+      result = rv$result)
   }
 
   set_state <- function(state) {
-    rv$configuration <- link_configuration(data(), model())
-    output$link <- shiny::renderUI(link_ui(
-      rv$configuration, NULL, session$ns, state))
-    rv$result <- state$result
+    rv$configuration <- state$configuration
+    restore_inputs(session, state$values, function(session, id, value) {
+      updateSelectInput(session, id, selected = value)
+    })
+    rv$values <- state$values
   }
-
-  shiny::outputOptions(output, "link", suspendWhenHidden = FALSE)
 
   list(result = shiny::reactive(add_status(rv$result, rv$status)),
        get_state = get_state,
@@ -73,7 +85,7 @@ mod_link_server <- function(input, output, session, data, model,
 }
 
 
-link_ui <- function(configuration, prev, ns, restore = NULL) {
+link_ui <- function(configuration, prev, ns) {
   if (is.null(configuration)) {
     return(NULL)
   }
@@ -83,13 +95,8 @@ link_ui <- function(configuration, prev, ns, restore = NULL) {
   vars <- configuration$vars
 
   selected <- rep(NA, length(vars$id))
-  if (!is.null(restore)) {
-    i <- !vlapply(restore$result$map, is_missing)
-    selected[i] <- list_to_character(restore$result$map[i])
-  } else if (isTRUE(prev$configured)) {
-    i <- !vlapply(prev$map, is_missing)
-    selected[i] <- list_to_character(prev$map[i])
-  }
+  i <- !vlapply(prev, is_missing)
+  selected[i] <- list_to_character(prev[i])
 
   choices <- vars$model
   input <- function(id, name, selected) {
@@ -154,7 +161,8 @@ link_configuration <- function(data, model) {
 ## `link` here must be a named list where names are the *data*
 ## elements, and values are the *model* elements (possibly null or NA,
 ## which will be filtered)
-link_result <- function(map) {
+link_result <- function(values, names) {
+  map <- set_names(values, names)
   map <- map[!vlapply(map, is_missing)]
 
   targets <- list_to_character(map)
@@ -166,4 +174,9 @@ link_result <- function(map) {
     label <- sprintf("%s ~ %s", names(map), list_to_character(map))
     list(map = map, label = label, configured = length(map) > 0L)
   }
+}
+
+
+values_present <- function(x) {
+  length(x) > 0 && !all(vlapply(x, is_missing))
 }
