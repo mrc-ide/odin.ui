@@ -499,7 +499,10 @@ a.text-muted {
 }
 
 /* default button style conveys intent here nicely */
-.editor_include_disabled .btn {
+.editor_include_disable .btn {
+    background-color: #d9534f;
+    border-color: #d43f3a;
+    color: #fff;
 }
 
 
