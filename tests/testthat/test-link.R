@@ -7,19 +7,19 @@ test_that("ui requires a configuration", {
 
 
 test_that("link result with empty inputs", {
-  expect_equal(link_result(NULL),
+  expect_equal(link_result(NULL, NULL),
                list(map = NULL, label = character(0), configured = FALSE))
   empty <- set_names(list(), character())
-  expect_equal(link_result(list(a = NA)),
+  expect_equal(link_result(list(NA), "a"),
                list(map = empty, label = character(0), configured = FALSE))
-  expect_equal(link_result(list(a = NULL, b = NULL)),
+  expect_equal(link_result(list(NULL, NULL), c("a", "b")),
                list(map = empty, label = character(0), configured = FALSE))
 })
 
 
 test_that("link result with nonempty inputs", {
   expect_equal(
-    link_result(list(a = NA, b = "Y", c = "Z")),
+    link_result(list(NA, "Y", "Z"), c("a", "b", "c")),
     list(map = list(b = "Y", c = "Z"),
          label = c("b ~ Y", "c ~ Z"),
          configured = TRUE))
@@ -70,7 +70,7 @@ test_that("status", {
     link_status(NULL, "solution"),
     module_status("danger", "Model/Data link is not configured", "solution"))
 
-  result <- link_result(list(a = NA, b = "Y", c = "Z"))
+  result <- link_result(list(NA, "Y", "Z"), c("a", "b", "c"))
   expect_equal(
     link_status(result, NULL),
     module_status("success", "Model/Data link is configured",

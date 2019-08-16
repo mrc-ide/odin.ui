@@ -49,7 +49,7 @@ test_that("configuration", {
   d <- data.frame(t = 1:10, a = runif(10), b = runif(10), c = runif(10))
   data <- odin_data_source(d, "file.csv", "t")
 
-  link <- link_result(list(a = "x", c = "y"))
+  link <- link_result(list("x", "y"), c("a", "c"))
 
   expect_null(common_model_data_configuration(NULL, NULL, NULL))
   expect_null(common_model_data_configuration(model, NULL, NULL))

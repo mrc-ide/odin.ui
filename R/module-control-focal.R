@@ -139,6 +139,9 @@ control_focal_result <- function(name, scale, type, pct, from, to, n, user) {
   }
   logarithmic <- scale == "Logarithmic"
 
+  if (is_missing(type)) {
+    stop("Please select a valid value for the variation type")
+  }
   if (type == "Percentage") {
     if (is_missing(pct)) {
       stop("'Variation %' is missing")
