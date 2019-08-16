@@ -1,4 +1,4 @@
-odin_basic <- function(initial_code) {
+odin_basic <- function(initial_code = character(0)) {
   shiny::shinyApp(ui = odin_basic_ui(),
                   server = odin_basic_server(initial_code))
 }
