@@ -41,7 +41,7 @@ odin_minimal_server <- function(initial_code) {
 
     modules <- submodules(model = model, vis = vis)
     state <- shiny::callModule(
-      mod_state_server, "state", modules, "prototype")
+      mod_state_server, "state", modules, "minimal")
     status <- shiny::callModule(
       mod_status_server, "status",
       list(edit = model$result))

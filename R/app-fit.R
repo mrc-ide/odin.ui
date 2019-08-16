@@ -1,10 +1,10 @@
-odin_prototype <- function(initial_code) {
-  shiny::shinyApp(ui = odin_prototype_ui(),
-                  server = odin_prototype_server(initial_code))
+odin_fit <- function(initial_code) {
+  shiny::shinyApp(ui = odin_fit_ui(),
+                  server = odin_fit_server(initial_code))
 }
 
 
-odin_prototype_ui <- function() {
+odin_fit_ui <- function() {
   shiny::shinyUI(
     shiny::navbarPage(
       "odin editor",
@@ -43,7 +43,7 @@ odin_prototype_ui <- function() {
 }
 
 
-odin_prototype_server <- function(initial_code) {
+odin_fit_server <- function(initial_code) {
   function(input, output, session) {
     data <- shiny::callModule(
       mod_csv_server, "odin_csv",
@@ -67,7 +67,7 @@ odin_prototype_server <- function(initial_code) {
     modules <- submodules(data = data, model = model, link = link,
                           vis = vis, fit = fit, batch = batch)
     state <- shiny::callModule(
-      mod_state_server, "state", modules, "prototype")
+      mod_state_server, "state", modules, "fit")
     status <- shiny::callModule(
       mod_status_server, "status",
       list(table = data$result, edit = model$result,

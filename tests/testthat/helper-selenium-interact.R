@@ -1,7 +1,7 @@
-launch_prototype <- function() {
+launch_fit <- function() {
   launch_app(function(port) {
     options(error = traceback)
-    app <- odin.ui:::odin_prototype(character(0))
+    app <- odin.ui:::odin_fit(character(0))
     shiny::runApp(app, port = port)
   })
 }

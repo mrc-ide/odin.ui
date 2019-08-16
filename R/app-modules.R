@@ -21,7 +21,7 @@ testing_csv_app <- function() {
       data <- shiny::callModule(mod_csv_server, "odin_csv", NULL)
       modules <- submodules(data = data)
       state <- shiny::callModule(
-        mod_state_server, "state", modules, "prototype")
+        mod_state_server, "state", modules, "csv")
       status <- shiny::callModule(
         mod_status_server, "status", list(table = data$result))
     })

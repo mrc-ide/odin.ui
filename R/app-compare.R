@@ -59,7 +59,7 @@ odin_compare_server <- function() {
     modules <- submodules(model1 = model1, model2 = model2,
                                     vis = vis, batch = batch)
     state <- shiny::callModule(
-      mod_state_server, "state", modules, "prototype")
+      mod_state_server, "state", modules, "minimal")
     status <- shiny::callModule(
       mod_status_server, "status", list(edit = model2$result))
   }

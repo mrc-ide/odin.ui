@@ -6,7 +6,7 @@ test_that("upload data", {
   skip("disabled")
   dr <- selenium_driver()
 
-  app <- launch_prototype()
+  app <- launch_fit()
 
   dr$navigate(app$url)
   on.exit(dr$close())
