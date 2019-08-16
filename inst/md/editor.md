@@ -37,4 +37,4 @@ Select `auto validate` to validate as you type.  This may get annoying and/or sl
 
 ## Further help
 
-A more detailed user guide can be found [here](https://mrc-ide.github.io/infectiousdiseasemodels-2019/guide/).
+A more detailed user guide can be found <a href="https://mrc-ide.github.io/infectiousdiseasemodels-2019/guide/" target="_blank">here</a> (opens in new page).
