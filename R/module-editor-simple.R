@@ -263,6 +263,9 @@ editor_validate_initial_code <- function(initial_code) {
   } else if (!is.character(initial_code)) {
     stop("'initial_code' must be a character vector", call. = FALSE)
   }
+  if (length(initial_code) == 1L && file.exists(initial_code)) {
+    initial_code <- readLines(initial_code)
+  }
   initial_code <- paste(initial_code, collapse = "\n")
   if (nzchar(initial_code) && !grepl("\\n$", initial_code)) {
     initial_code <- paste0(initial_code, "\n")

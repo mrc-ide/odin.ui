@@ -1,6 +1,7 @@
-odin_compare <- function() {
-  shiny::shinyApp(ui = odin_compare_ui(),
-                  server = odin_compare_server())
+odin_compare <- function(path_code_base, initial_code = path_code_base) {
+  shiny::shinyApp(
+    ui = odin_compare_ui(),
+    server = odin_compare_server(path_code_base, initial_code))
 }
 
 
@@ -37,16 +38,13 @@ odin_compare_ui <- function() {
 }
 
 
-odin_compare_server <- function() {
+odin_compare_server <- function(path_code_base, initial_code) {
   function(input, output, session) {
     model1 <- shiny::callModule(
-      mod_model_static_server, "model1",
-      "models/malaria_model.R",
-      "Base")
+      mod_model_static_server, "model1", path_code_base, "Base")
 
     model2 <- shiny::callModule(
-      mod_editor_simple_server, "model2",
-      readLines("models/malaria_model_latency.R"),
+      mod_editor_simple_server, "model2", initial_code,
       "Return to the Editor tab")
     ## TODO: it should be possible to accept data here too (currently
     ## requires data missing and run_options sets control_end_time =
