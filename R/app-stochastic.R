@@ -1,11 +1,10 @@
-
-odin_stochastic <- function(path) {
-  shiny::shinyApp(ui = odin_stochastic_ui(),
+odin_stochastic <- function(path, docs = NULL) {
+  shiny::shinyApp(ui = odin_stochastic_ui(docs),
                   server = odin_stochastic_server(path))
 }
 
 
-odin_stochastic_ui <- function() {
+odin_stochastic_ui <- function(docs = NULL) {
   shiny::shinyUI(
     shiny::tagList(
       odin_css(),
@@ -16,7 +15,7 @@ odin_stochastic_ui <- function() {
         shiny::tabPanel(
           "Code",
           icon = shiny::icon("align-justify"),
-          mod_model_static_ui("model")),
+          mod_model_static_ui("model", docs)),
         shiny::tabPanel(
           "Visualise",
           icon = shiny::icon("search"),

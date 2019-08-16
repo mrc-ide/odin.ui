@@ -1,4 +1,4 @@
-mod_model_static_ui <- function(id) {
+mod_model_static_ui <- function(id, docs = NULL) {
   ns <- shiny::NS(id)
 
   editor <- shiny::tagList(
@@ -14,7 +14,12 @@ mod_model_static_ui <- function(id) {
                  ns("download_button"), "Save", class = "btn-blue")),
     shiny::tags$div(style = "clear:both;"))
 
+  if (!is.null(docs)) {
+    docs <- shiny::withMathJax(shiny::includeMarkdown(docs))
+  }
+
   status <- shiny::tagList(
+    docs,
     model_static_info(),
     shiny::uiOutput(ns("status")))
 
