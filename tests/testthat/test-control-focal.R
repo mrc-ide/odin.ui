@@ -47,6 +47,10 @@ test_that("batch_focal - not read cases", {
   expect_error(
     control_focal_result(name, scale, "Range", pct, 1, to, n, user),
     "'To' is missing")
+  expect_error(
+    control_focal_result(name, scale, "Range", pct, 5, 10, n, user),
+    "The focal value (1) must lie within 'From' (5) and 'To' (10)",
+    fixed = TRUE)
 })
 
 

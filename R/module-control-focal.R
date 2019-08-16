@@ -156,6 +156,11 @@ control_focal_result <- function(name, scale, type, pct, from, to, n, user) {
     if (is_missing(to)) {
       stop("'To' is missing")
     }
+    if (value < from || value > to) {
+      stop(sprintf(
+        "The focal value (%s) must lie within 'From' (%s) and 'To' (%s)",
+        value, from, to))
+    }
     pct <- control_focal_range_to_pct(value, from, to)
   }
 
