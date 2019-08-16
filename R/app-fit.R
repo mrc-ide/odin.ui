@@ -1,4 +1,4 @@
-odin_fit <- function(initial_code) {
+odin_fit <- function(initial_code = character(0)) {
   shiny::shinyApp(ui = odin_fit_ui(),
                   server = odin_fit_server(initial_code))
 }
