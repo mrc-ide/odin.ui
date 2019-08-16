@@ -74,7 +74,7 @@ mod_link_server <- function(input, output, session, data, model,
   set_state <- function(state) {
     rv$configuration <- state$configuration
     restore_inputs(session, state$values, function(session, id, value) {
-      updateSelectInput(session, id, selected = value)
+      shiny::updateSelectInput(session, id, selected = value)
     })
     rv$values <- state$values
   }
