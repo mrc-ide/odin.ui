@@ -50,7 +50,7 @@ mod_vis_ui <- function(id) {
 ##   {result, control inteface} => plot
 mod_vis_server <- function(input, output, session, data, model, link,
                            import = NULL, run_options = NULL,
-                           final_values = FALSE) {
+                           show_table_summary = FALSE) {
   rv <- shiny::reactiveValues()
 
   parameters <- shiny::callModule(
@@ -67,7 +67,7 @@ mod_vis_server <- function(input, output, session, data, model, link,
 
   table <- shiny::callModule(
     mod_table_summary_server, "table", shiny::reactive(rv$result),
-    final_values)
+    show_table_summary)
 
 
   set_result <- function(result) {

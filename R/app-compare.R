@@ -1,8 +1,9 @@
 odin_compare <- function(path_code_base, initial_code = path_code_base,
-                         final_values = FALSE) {
+                         show_table_summary = FALSE) {
   shiny::shinyApp(
     ui = odin_compare_ui(),
-    server = odin_compare_server(path_code_base, initial_code, final_values))
+    server = odin_compare_server(
+      path_code_base, initial_code, show_table_summary))
 }
 
 
@@ -39,7 +40,8 @@ odin_compare_ui <- function() {
 }
 
 
-odin_compare_server <- function(path_code_base, initial_code, final_values) {
+odin_compare_server <- function(path_code_base, initial_code,
+                                show_table_summary) {
   function(input, output, session) {
     model1 <- shiny::callModule(
       mod_model_static_server, "model1", path_code_base, "Base")
@@ -52,7 +54,7 @@ odin_compare_server <- function(path_code_base, initial_code, final_values) {
     ## TRUE)
     vis <- shiny::callModule(
       mod_vis_compare_server, "vis", model1$result, model2$result,
-      final_values = final_values)
+      show_table_summary = show_table_summary)
     batch <- shiny::callModule(
       mod_batch_compare_server, "batch", model1$result, model2$result)
 
