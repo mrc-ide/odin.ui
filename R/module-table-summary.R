@@ -39,22 +39,22 @@ table_summary_ui <- function(result, ns) {
 }
 
 
-## At the moment this is rigged up for the *compare* case, but in
-## general we'll want this to work for the simpler single model too.
-## Not sure how we easily tell the difference.
-table_summary_data <- function(result) {
+table_summary_data <- function(result, digits = 5) {
   if (!isTRUE(result$success) || is.null(result$value)) {
     return(NULL)
   }
 
+  last_row <- function(x) {
+    signif_dp(utils::tail(x, 1, addrownums = FALSE), digits)
+  }
+
   simulation <- result$value$simulation
   if (is.null(names(simulation)) && length(simulation) == 2L) {
-    end <- lapply(result$value$simulation, function(x)
-      utils::tail(x$smooth, 1))
+    end <- lapply(simulation, function(x) last_row(x$smooth))
     d <- as.data.frame(rbind_laxly(end[[1]], end[[2]]))
     cbind(model = result$value$configuration$names$long, d,
           stringsAsFactors = FALSE)
-  } else {
-    stop("Writeme")
+  } else if ("smooth" %in% names(simulation)) {
+    as.data.frame(last_row(simulation$smooth))
   }
 }

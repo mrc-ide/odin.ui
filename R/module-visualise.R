@@ -38,6 +38,7 @@ mod_vis_ui <- function(id) {
           mod_control_graph_ui(ns("control_graph"))),
         shiny::fluidRow(
           shiny::column(4, shiny::uiOutput(ns("status_vis")))),
+        mod_table_summary_ui(ns("table")),
         mod_model_code_ui(ns("code")))))
 }
 
@@ -48,7 +49,8 @@ mod_vis_ui <- function(id) {
 ##   {configuration, control interface} => result
 ##   {result, control inteface} => plot
 mod_vis_server <- function(input, output, session, data, model, link,
-                           import = NULL, run_options = NULL) {
+                           import = NULL, run_options = NULL,
+                           final_values = FALSE) {
   rv <- shiny::reactiveValues()
 
   parameters <- shiny::callModule(
@@ -62,6 +64,11 @@ mod_vis_server <- function(input, output, session, data, model, link,
     reactive_successful(model), run_options)
   code <- shiny::callModule(
     mod_model_code_server, "code", model)
+
+  if (final_values) {
+    table <- shiny::callModule(
+      mod_table_summary_server, "table", shiny::reactive(rv$result))
+  }
 
   set_result <- function(result) {
     parameters$set(result$value$simulation$user)

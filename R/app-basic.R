@@ -1,6 +1,6 @@
-odin_basic <- function(initial_code = character(0)) {
+odin_basic <- function(initial_code = character(0), final_values = FALSE) {
   shiny::shinyApp(ui = odin_basic_ui(),
-                  server = odin_basic_server(initial_code))
+                  server = odin_basic_server(initial_code, final_values))
 }
 
 
@@ -31,7 +31,7 @@ odin_basic_ui <- function() {
 }
 
 
-odin_basic_server <- function(initial_code) {
+odin_basic_server <- function(initial_code, final_values = FALSE) {
   function(input, output, session) {
     model <- shiny::callModule(
       mod_editor_simple_server, "editor", initial_code,
@@ -41,7 +41,7 @@ odin_basic_server <- function(initial_code) {
     run_options <- control_run_options(control_end_time = TRUE)
     vis <- shiny::callModule(
       mod_vis_server, "vis", data, model$result, link,
-      run_options = run_options)
+      run_options = run_options, final_values = final_values)
     batch <- shiny::callModule(
       mod_batch_server, "batch", model$result, data, link,
       run_options = run_options)

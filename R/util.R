@@ -260,3 +260,13 @@ Map2 <- function(...) {
     Map(...),
     warning = function(e) stop(e))
 }
+
+
+## Display up to 'n' significant digits including decimal, or all
+## precision if larger than that...
+signif_dp <- function(x, n) {
+  i <- x > 10^n
+  x[i] <- round(x[i])
+  x[!i] <- signif(x[!i], n)
+  x
+}
