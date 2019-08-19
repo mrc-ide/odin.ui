@@ -63,6 +63,9 @@ mod_parameters_server <- function(input, output, session, pars,
   shiny::outputOptions(output, "ui", suspendWhenHidden = FALSE)
 
   set <- function(values, notify = TRUE) {
+    if (is.data.frame(values)) {
+      values <- df_to_list(values)
+    }
     res <- parameters_validate_user(values, rv$configuration$pars)
     if (res$success) {
       set_inputs(session, res$value$id_value, res$value$value)

@@ -35,7 +35,8 @@ mod_lock_server <- function(input, output, session, render, current,
     input$swap, {
       result <- current()
       ## Only set if the models have the same form:
-      if (models_compatible(rv$locked$configuration, result$configuration)) {
+      if (models_compatible(rv$locked$value$configuration,
+                            result$value$configuration)) {
         set_current(rv$locked)
         if (isTRUE(result$success)) {
           rv$locked <- result
