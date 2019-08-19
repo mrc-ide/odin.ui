@@ -162,6 +162,11 @@ link_configuration <- function(data, model) {
 ## elements, and values are the *model* elements (possibly null or NA,
 ## which will be filtered)
 link_result <- function(values, names) {
+  ## This turns up during the resolution of reactives, which can
+  ## happen in an unfortunate order
+  if (length(values) == 0L) {
+    names <- character(0)
+  }
   map <- set_names(values, names)
   map <- map[!vlapply(map, is_missing)]
 
