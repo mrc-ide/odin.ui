@@ -293,7 +293,7 @@ vis_run_replicate <- function(configuration, user, run_options) {
 
   ## Identify deterministic outputs:
   if (replicates == 1L) {
-    fixed <- rep(TRUE, ncol(result_mean))
+    fixed <- rep(TRUE, ncol(result))
   } else {
     fixed <- apply(apply(result, 2, diff) == 0, 2, all)
   }
