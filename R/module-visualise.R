@@ -65,10 +65,10 @@ mod_vis_server <- function(input, output, session, data, model, link,
   code <- shiny::callModule(
     mod_model_code_server, "code", model)
 
-  if (final_values) {
-    table <- shiny::callModule(
-      mod_table_summary_server, "table", shiny::reactive(rv$result))
-  }
+  table <- shiny::callModule(
+    mod_table_summary_server, "table", shiny::reactive(rv$result),
+    final_values)
+
 
   set_result <- function(result) {
     parameters$set(result$value$simulation$user)

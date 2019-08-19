@@ -4,11 +4,11 @@ mod_table_summary_ui <- function(id) {
 }
 
 
-mod_table_summary_server <- function(input, output, session, result) {
+mod_table_summary_server <- function(input, output, session, result, show) {
   rv <- shiny::reactiveValues()
 
   output$ui <- shiny::renderUI({
-    table_summary_ui(result(), session$ns)
+    table_summary_ui(result(), show, session$ns)
   })
 
   output$table <- shiny::renderDataTable(
@@ -19,8 +19,8 @@ mod_table_summary_server <- function(input, output, session, result) {
 }
 
 
-table_summary_ui <- function(result, ns) {
-  if (isTRUE(result$success)) {
+table_summary_ui <- function(result, show, ns) {
+  if (show && isTRUE(result$success)) {
     target <- ns("container")
     icon <- shiny::icon(sprintf("%s fa-lg", "table"))
     head <- shiny::div(class = "panel-heading", icon,

@@ -29,7 +29,7 @@ mod_vis_compare_ui <- function(id) {
 
 
 mod_vis_compare_server <- function(input, output, session, model1, model2,
-                                   run_options = NULL) {
+                                   run_options = NULL, final_values = FALSE) {
   rv <- shiny::reactiveValues()
   run_options <- control_run_options(control_end_time = TRUE)
 
@@ -46,7 +46,8 @@ mod_vis_compare_server <- function(input, output, session, model1, model2,
     mod_download_server, "download", shiny::reactive(rv$result$value),
     "compare")
   table <- shiny::callModule(
-    mod_table_summary_server, "table", shiny::reactive(rv$result))
+    mod_table_summary_server, "table", shiny::reactive(rv$result),
+    final_values)
 
   modules <- submodules(parameters = parameters,
                         control_graph = control_graph,
