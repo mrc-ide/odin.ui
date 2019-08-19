@@ -1,6 +1,7 @@
 mod_fit_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
+    mod_help_ui(ns("help"), class = "pull-right"),
     shiny::titlePanel("Fit a model"),
     shiny::sidebarLayout(
       odin_sidebar(
@@ -43,6 +44,8 @@ mod_fit_server <- function(input, output, session, data, model, link) {
     shiny::reactive(rv$configuration))
   code <- shiny::callModule(
     mod_model_code_server, "code", model)
+  help <- shiny::callModule(
+    mod_help_server, "help", odin_ui_file("md/help/fit.md"))
 
   set_result <- function(result) {
     parameters$set(result$value$simulation$user)

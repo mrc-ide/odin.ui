@@ -2,6 +2,7 @@ mod_csv_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
     shinyjs::useShinyjs(),
+    mod_help_ui(ns("help"), class = "pull-right"),
     shiny::titlePanel("Upload data"),
     shiny::sidebarLayout(
       shiny::sidebarPanel(
@@ -23,6 +24,8 @@ mod_csv_ui <- function(id) {
 
 mod_csv_server <- function(input, output, session, csv_status_body) {
   rv <- shiny::reactiveValues()
+  help <- shiny::callModule(
+    mod_help_server, "help", odin_ui_file("md/help/csv.md"))
 
   shiny::observe({
     rv$result <- csv_result(rv$imported$value, input$name_time)

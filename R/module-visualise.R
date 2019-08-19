@@ -13,6 +13,7 @@
 mod_vis_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
+    mod_help_ui(ns("help"), class = "pull-right"),
     shiny::titlePanel("Visualise"),
     shiny::sidebarLayout(
       odin_sidebar(
@@ -68,7 +69,8 @@ mod_vis_server <- function(input, output, session, data, model, link,
   table <- shiny::callModule(
     mod_table_summary_server, "table", shiny::reactive(rv$result),
     show_table_summary)
-
+  help <- shiny::callModule(
+    mod_help_server, "help", odin_ui_file("md/help/vis.md"))
 
   set_result <- function(result) {
     parameters$set(result$value$simulation$user)

@@ -21,18 +21,6 @@ odin_sidebar <- function(run, reset, auto_run, controls, status = NULL) {
 }
 
 
-help_modal <- function(path, title = "odin help") {
-  shiny::modalDialog(shiny::includeMarkdown(path), title = title,
-                     size = "l", easyClose = TRUE, fade = FALSE)
-}
-
-
-help_button <- function(id, title = "Help") {
-  shiny::actionButton(id, title, class = "btn-warning",
-                      icon = shiny::icon("question-circle"))
-}
-
-
 odin_control_section <- function(title, ..., ns, collapsed = FALSE) {
   id <- ns(sprintf("hide_%s", gsub(" ", "_", tolower(title))))
 

@@ -1,6 +1,7 @@
 mod_batch_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
+    mod_help_ui(ns("help"), class = "pull-right"),
     shiny::titlePanel("Sensitivity"),
     shiny::sidebarLayout(
       odin_sidebar(
@@ -50,6 +51,8 @@ mod_batch_server <- function(input, output, session, model, data, link,
   control_plot <- shiny::callModule(
     mod_control_batch_plot_server, "control_batch_plot",
     shiny::reactive(!is.null(rv$configuration)))
+  help <- shiny::callModule(
+    mod_help_server, "help", odin_ui_file("md/help/batch.md"))
 
   set_result <- function(result) {
     parameters$set(result$value$simulation$user)

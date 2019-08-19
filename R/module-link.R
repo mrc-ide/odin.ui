@@ -1,6 +1,7 @@
 mod_link_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
+    mod_help_ui(ns("help"), class = "pull-right"),
     shiny::titlePanel("Link"),
     shiny::h3("Data"),
     shiny::uiOutput(ns("status_data")),
@@ -18,6 +19,8 @@ mod_link_ui <- function(id) {
 mod_link_server <- function(input, output, session, data, model,
                             link_status_body = NULL) {
   rv <- shiny::reactiveValues()
+  help <- shiny::callModule(
+    mod_help_server, "help", odin_ui_file("md/help/link.md"))
 
   output$status_data <- shiny::renderUI({
     data()$status$ui

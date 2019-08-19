@@ -2,6 +2,7 @@ mod_state_ui <- function(id) {
   ns <- shiny::NS(id)
 
   shiny::tagList(
+    mod_help_ui(ns("help"), class = "pull-right"),
     shiny::h2("Load"),
     shiny::p(paste(
       "Load a previously saved state from this app.",
@@ -35,6 +36,9 @@ mod_state_ui <- function(id) {
 
 mod_state_server <- function(input, output, session, modules, app_name) {
   rv <- shiny::reactiveValues()
+
+  help <- shiny::callModule(
+    mod_help_server, "help", odin_ui_file("md/help/state.md"))
 
   output$save <- shiny::downloadHandler(
     filename = function() {

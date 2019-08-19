@@ -6,10 +6,8 @@ mod_editor_simple_ui <- function(id) {
   editor <- shiny::tagList(
     odin_css(),
     shiny::includeCSS(path_editor_css),
+    mod_help_ui(ns("help"), class = "pull-right"),
     shiny::titlePanel("Editor"),
-    shiny::div(
-      class = "text-right",
-      help_button(ns("help"))),
 
     shiny::fluidRow(
       shiny::column(6),
@@ -66,6 +64,8 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
 
   order <- shiny::callModule(
     mod_variable_order_server, "order", shiny::reactive(rv$model$info$vars))
+  help <- shiny::callModule(
+    mod_help_server, "help", odin_ui_file("md/help/editor.md"))
   modules <- submodules(order = order)
 
   ## Will only run once:
@@ -141,10 +141,6 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
       rv$validation <- NULL
       modules$reset()
     })
-
-  help <- help_modal(odin_ui_file("md/editor.md"))
-  shiny::observeEvent(
-    input$help, shiny::showModal(help))
 
   output$download <- shiny::downloadHandler(
     filename = "odin.R", # TODO: customisable?
