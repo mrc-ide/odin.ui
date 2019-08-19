@@ -165,10 +165,11 @@ link_result <- function(values, names) {
   ## This turns up during the resolution of reactives, which can
   ## happen in an unfortunate order
   if (length(values) == 0L) {
-    names <- character(0)
+    map <- NULL
+  } else {
+    map <- set_names(values, names)
+    map <- map[!vlapply(map, is_missing)]
   }
-  map <- set_names(values, names)
-  map <- map[!vlapply(map, is_missing)]
 
   targets <- list_to_character(map)
   dup <- unique(targets[duplicated(targets)])
