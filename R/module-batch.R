@@ -102,22 +102,27 @@ mod_batch_server <- function(input, output, session, model, data, link,
       modules$reset()
     })
 
-  output$odin_output <- plotly::renderPlotly({
-    if (!is.null(rv$result$value)) {
-      cfg1 <- rv$result$value$configuration
-      list(cfg1$pars$name, cfg1$vars$name)
+  shiny::observe({
+    previous <- shiny::isolate(rv$previous_series)
+    result <- rv$result$value
+    control <- control_graph$result()
+    options <- control_plot$result()
 
-      cfg2 <- rv$configuration
-      list(cfg2$pars$name, cfg2$vars$name)
+    series <- batch_plot_series(
+      result, locked$result()$value, control$y2, options)
+    res <- plotly_with_redraw(
+      series, previous,
+      logscale_x = batch_logscale_x(options$type, result$focal),
+      logscale_y = control$logscale,
+      xlab = batch_xlab(options$type, result$focal))
 
-      if (models_compatible(rv$configuration, rv$result$value$configuration)) {
-        batch_plot(rv$result$value, locked$result()$value,
-                   control_graph$result(), control_plot$result())
-      } else {
-        rv$result <- unsuccessful("Model has structurally changed - rerun")
-        NULL
-      }
+    if (res$action == "draw") {
+      output$odin_output <- plotly::renderPlotly(res$data)
+    } else if (res$action == "redraw") {
+      plotly::plotlyProxyInvoke(
+        plotly::plotlyProxy("odin_output", session), "restyle", res$data)
     }
+    rv$previous_series <- res$series
   })
 
   get_state <- function() {

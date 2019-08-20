@@ -140,8 +140,10 @@ plot_plotly_series_replicate <- function(x, y, ..., showlegend = TRUE) {
 
 
 plotly_series_compatible <- function(a, b) {
-  length(a) == length(b) &&
-    identical(vcapply(a, "[[", "name"), vcapply(b, "[[", "name"))
+  nm <- function(x) {
+    x$legendgroup %||% x$name
+  }
+  length(a) == length(b) && identical(vcapply(a, nm), vcapply(b, nm))
 }
 
 

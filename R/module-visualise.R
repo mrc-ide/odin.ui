@@ -135,7 +135,6 @@ mod_vis_server <- function(input, output, session, data, model, link,
       vis_plot_series(rv$result$value, locked$result()$value, control$y2),
       previous,
       logscale_y = control$logscale)
-    message(res$action)
     if (res$action == "draw") {
       output$odin_output <- plotly::renderPlotly(res$data)
     } else if (res$action == "redraw") {
