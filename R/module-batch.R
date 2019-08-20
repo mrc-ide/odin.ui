@@ -230,6 +230,10 @@ batch_run <- function(configuration, focal, run_options) {
 
 
 batch_plot_series <- function(result, locked, y2_model, options) {
+  if (length(y2_model) == 0) {
+    message("skipping plot")
+    return(NULL)
+  }
   fn <- switch(
     options$type %||% "trace",
     trace = batch_plot_series_trace,
