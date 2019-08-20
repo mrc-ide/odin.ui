@@ -18,10 +18,11 @@ Choose/tick the parameters that are allowed to vary in the model fitting process
 ### Locked parameter set
 
 `Locked parameter set` will let you compare outputs with different parameter values.
-    - "lock" the current parameter values.
-    - Change a parameter.
-    - Run model again.
-    - Dashed lines are based on the "locked" (or older) parameter values
+
+- "lock" the current parameter values.
+- Change a parameter.
+- Run model again.
+- Dashed lines are based on the "locked" (or older) parameter values
 
 
 ### Code
