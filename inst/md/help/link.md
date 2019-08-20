@@ -21,4 +21,4 @@ E.g in your model you might have a variable `date_onset` which you want to link 
 Once linked, you should see a green tick and the configurations you have selected.
 
 Note that the interface will *not* know if you have correctly linked the right variables to the right data!
-E.g. check that you have not linked `date_onset` in your model to `date_of_symptom_onset` in your dataset.
+E.g. check that you have not linked `date_report` in your model to `date_of_symptom_onset` in your dataset.
