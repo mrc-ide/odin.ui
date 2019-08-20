@@ -73,6 +73,22 @@ mod_vis_compare_server <- function(input, output, session, model1, model2,
       modules$reset()
     })
 
+  shiny::observe({
+    previous <- shiny::isolate(rv$previous_series)
+    control <- control_graph$result()
+    res <- plotly_with_redraw(
+      compare_vis_plot_series(rv$result$value, control$y2),
+      previous,
+      logscale_y = control$logscale)
+    if (res$action == "draw") {
+      output$odin_output <- plotly::renderPlotly(res$data)
+    } else if (res$action == "redraw") {
+      plotly::plotlyProxyInvoke(
+        plotly::plotlyProxy("odin_output", session), "restyle", res$data)
+    }
+    rv$previous_series <- res$series
+  })
+
   output$odin_output <- plotly::renderPlotly({
     if (!is.null(rv$result$value)) {
       compare_vis_plot(rv$result$value, control_graph$result())
@@ -150,6 +166,9 @@ compare_vis_plot <- function(result, control) {
 
 
 compare_vis_plot_series <- function(result, y2_model) {
+  if (is.null(result)) {
+    return(NULL)
+  }
   f <- function(cfg, simulation) {
     x <- list(configuration = cfg, simulation = simulation)
     vis_plot_series(x, NULL, y2_model)
