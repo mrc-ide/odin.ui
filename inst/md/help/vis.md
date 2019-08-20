@@ -12,10 +12,11 @@ If nothing is visualised, remember to specify an `End time` under `Run options`.
 ### Locked parameter set
 
 `Locked parameter set` will let you compare outputs with different parameter values.
-    - "lock" the current parameter values.
-    - Change a parameter.
-    - Run model again.
-    - Dashed lines are based on the "locked" (or older) parameter values
+
+- "lock" the current parameter values.
+- Change a parameter.
+- Run model again.
+- Dashed lines are based on the "locked" (or older) parameter values
 
 ### Code
 
