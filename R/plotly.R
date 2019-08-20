@@ -70,13 +70,12 @@ plot_plotly <- function(series, logscale_y = FALSE, xlab = "Time",
     p <- plotly::layout(p, xaxis = list(type = "log"))
   }
 
-  if (any(vcapply(series, "[[", "yaxis") == "y2")) {
-    opts <- list(overlaying = "y",
-                 side = "right",
-                 showgrid = FALSE,
-                 type = if (logscale_y) "log" else "linear")
-    p <- plotly::layout(p, yaxis2 = opts)
-  }
+  opts <- list(overlaying = "y",
+               side = "right",
+               showgrid = FALSE,
+               type = if (logscale_y) "log" else "linear")
+  p <- plotly::layout(p, yaxis2 = opts)
+
   p
 }
 
@@ -157,7 +156,8 @@ plotly_with_redraw <- function(series, previous, ...) {
   } else if (plotly_series_compatible(series, previous)) {
     action <- "redraw"
     data <- list(x = unname(lapply(series, "[[", "x")),
-                 y = unname(lapply(series, "[[", "y")))
+                 y = unname(lapply(series, "[[", "y")),
+                 yaxis = unname(lapply(series, "[[", "yaxis")))
   } else {
     action <- "draw"
     data <- plot_plotly(series, ...)
