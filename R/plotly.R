@@ -138,22 +138,26 @@ plot_plotly_series_replicate <- function(x, y, ..., showlegend = TRUE) {
 }
 
 
-plotly_series_compatible <- function(a, b) {
+plotly_series_compatible <- function(series, opts, previous) {
   nm <- function(x) {
     x$legendgroup %||% x$name
   }
-  length(a) == length(b) && identical(vcapply(a, nm), vcapply(b, nm))
+  length(series) == length(previous) &&
+    identical(vcapply(series, nm), vcapply(previous, nm)) &&
+    identical(opts, attr(previous, "opts"))
 }
 
 
 plotly_with_redraw <- function(series, previous, ...) {
+  opts <- list(...)
+
   if (length(series) == 0) {
     action <- "draw"
     data <- NULL
   } else if (identical(series, previous)) {
     action <- "pass"
     data <- NULL
-  } else if (plotly_series_compatible(series, previous)) {
+  } else if (plotly_series_compatible(series, opts, previous)) {
     action <- "redraw"
     data <- list(x = unname(lapply(series, "[[", "x")),
                  y = unname(lapply(series, "[[", "y")),
@@ -162,6 +166,11 @@ plotly_with_redraw <- function(series, previous, ...) {
     action <- "draw"
     data <- plot_plotly(series, ...)
   }
+
+  if (length(series) > 0) {
+    attr(series, "opts") <- opts
+  }
+
   list(series = series,
        action = action,
        data = data)
