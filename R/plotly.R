@@ -137,3 +137,30 @@ plot_plotly_series_replicate <- function(x, y, ..., showlegend = TRUE) {
   lapply(seq_len(ncol(y)), function(i)
     plot_plotly_series(x, y[, i], showlegend = showlegend && i == 1, ...))
 }
+
+
+plotly_series_compatible <- function(a, b) {
+  length(a) == length(b) &&
+    identical(vcapply(a, "[[", "name"), vcapply(b, "[[", "name"))
+}
+
+
+plotly_with_redraw <- function(series, previous, ...) {
+  if (length(series) == 0) {
+    action <- "draw"
+    data <- NULL
+  } else if (identical(series, previous)) {
+    action <- "pass"
+    data <- NULL
+  } else if (plotly_series_compatible(series, previous)) {
+    action <- "redraw"
+    data <- list(x = unname(lapply(series, "[[", "x")),
+                 y = unname(lapply(series, "[[", "y")))
+  } else {
+    action <- "draw"
+    data <- plot_plotly(series, ...)
+  }
+  list(series = series,
+       action = action,
+       data = data)
+}

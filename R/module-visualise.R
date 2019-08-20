@@ -128,10 +128,21 @@ mod_vis_server <- function(input, output, session, data, model, link,
       modules$reset()
     })
 
-  output$odin_output <- plotly::renderPlotly({
-    if (!is.null(rv$result$value)) {
-      vis_plot(rv$result$value, locked$result()$value, control_graph$result())
+  shiny::observe({
+    previous <- shiny::isolate(rv$previous_series)
+    control <- control_graph$result()
+    res <- plotly_with_redraw(
+      vis_plot_series(rv$result$value, locked$result()$value, control$y2),
+      previous,
+      logscale_y = control$logscale)
+    message(res$action)
+    if (res$action == "draw") {
+      output$odin_output <- plotly::renderPlotly(res$data)
+    } else if (res$action == "redraw") {
+      plotly::plotlyProxyInvoke(
+        plotly::plotlyProxy("odin_output", session), "restyle", res$data)
     }
+    rv$previous_series <- res$series
   })
 
   get_state <- function() {
