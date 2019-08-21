@@ -323,6 +323,9 @@ vis_run_replicate <- function(configuration, user, run_options) {
 
 
 vis_plot_series <- function(result, locked, y2_model) {
+  if (length(y2_model) == 0) {
+    return(NULL)
+  }
   cfg <- result$configuration
   y2 <- odin_y2(y2_model, cfg$data$name_vars, cfg$link$map)
   if (identical(result$type, "replicate")) {

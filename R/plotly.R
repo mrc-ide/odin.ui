@@ -73,7 +73,7 @@ plot_plotly <- function(series, logscale_y = FALSE, xlab = "Time",
   opts <- list(overlaying = "y",
                side = "right",
                showgrid = FALSE,
-               type = if (logscale_y) "log" else "linear")
+               type = if (isTRUE(logscale_y)) "log" else "linear")
   p <- plotly::layout(p, yaxis2 = opts)
 
   p
