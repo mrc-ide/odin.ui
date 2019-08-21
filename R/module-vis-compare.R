@@ -166,7 +166,7 @@ compare_vis_plot <- function(result, control) {
 
 
 compare_vis_plot_series <- function(result, y2_model) {
-  if (is.null(result)) {
+  if (is.null(result) || length(y2_model) == 0) {
     return(NULL)
   }
   f <- function(cfg, simulation) {
