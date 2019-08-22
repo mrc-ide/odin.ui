@@ -8,8 +8,7 @@ mod_csv_ui <- function(id) {
       shiny::sidebarPanel(
         shiny::includeMarkdown(odin_ui_file("md/csv_instructions.md")),
         shiny::fileInput(ns("filename"), NULL, accept = accept_csv()),
-        shiny::selectInput(ns("name_time"), "Select time variable",
-                           character(0)),
+        shiny::uiOutput(ns("name_time_ui")),
         shiny::uiOutput(ns("summary")),
         shiny::hr(),
         shiny::div(
@@ -28,7 +27,18 @@ mod_csv_server <- function(input, output, session, csv_status_body) {
     mod_help_server, "help", odin_ui_file("md/help/csv.md"))
 
   shiny::observe({
-    rv$result <- csv_result(rv$imported$value, input$name_time)
+    rv$result <- csv_result(rv$imported$value, rv$name_time)
+  })
+
+  output$name_time_ui <- shiny::renderUI(
+    csv_name_time_ui(rv$imported$value, rv$name_time, session$ns))
+
+
+  shiny::observe({
+    name_time <- input$name_time
+    if (is_missing(rv$name_time) || !is_missing(name_time)) {
+      rv$name_time <- name_time
+    }
   })
 
   shiny::observe({
@@ -66,20 +76,21 @@ mod_csv_server <- function(input, output, session, csv_status_body) {
       shinyjs::reset("filename")
       rv$result <- NULL
       rv$imported <- NULL
-      clear_select_input(session, "name_time")
     })
 
+  shiny::outputOptions(output, "name_time_ui", suspendWhenHidden = FALSE)
+
   get_state <- function() {
-    list(imported = rv$imported, result = rv$result,
-         name_time = list(choices = names(rv$result$data),
-                          selected = rv$result$name_time))
+    list(imported = rv$imported,
+         result = rv$result,
+         name_time = rv$name_time)
   }
 
   set_state <- function(state) {
-    ## TODO: can't yet set the filename in the upload widget
     rv$imported <- state$imported
     rv$result <- state$result
-    update_select_input(session, "name_time", state$name_time)
+    shiny::updateSelectInput(session, "name_time", selected = state$name_time)
+    rv$name_time <- state$name_time
   }
 
   list(result = shiny::reactive(add_status(rv$result, rv$status)),
@@ -227,4 +238,17 @@ csv_guess_time <- function(data) {
 
 csv_result <- function(value, name_time) {
   odin_data_source(value$data, value$filename, name_time)
+}
+
+
+csv_name_time_ui <- function(imported, prev, ns) {
+  if (is.null(imported)) {
+    return(NULL)
+  }
+
+  choices <- imported$info$choices
+  selected <- if (!is_missing(prev)) prev else imported$info$selected
+
+  shiny::selectInput(ns("name_time"), "Select time variable",
+                     choices, selected)
 }
