@@ -77,11 +77,26 @@ mod_batch_compare_server <- function(input, output, session, model1, model2,
       modules$reset()
     })
 
-  output$odin_output <- plotly::renderPlotly({
-    if (!is.null(rv$result$value)) {
-      batch_compare_plot(rv$result$value, control_graph$result(),
-                         control_plot$result())
+  shiny::observe({
+    previous <- shiny::isolate(rv$previous_series)
+    result <- rv$result$value
+    control <- control_graph$result()
+    options <- control_plot$result()
+
+    series <- batch_compare_plot_series(result, control$y2, options)
+    res <- plotly_with_redraw(
+      series, previous,
+      logscale_x = batch_logscale_x(options$type, result$focal),
+      logscale_y = control$logscale,
+      xlab = batch_xlab(options$type, result$focal))
+
+    if (res$action == "draw") {
+      output$odin_output <- plotly::renderPlotly(res$data)
+    } else if (res$action == "redraw") {
+      plotly::plotlyProxyInvoke(
+        plotly::plotlyProxy("odin_output", session), "restyle", res$data)
     }
+    rv$previous_series <- res$series
   })
 
   output$status_batch <- shiny::renderUI({
@@ -158,6 +173,9 @@ batch_compare_plot <- function(result, control, options) {
 
 
 batch_compare_plot_series <- function(result, y2_model, options) {
+  if (is.null(result) || is.null(y2_model) || all(vlapply(y2_model, is.null))) {
+    return(NULL)
+  }
   f <- function(cfg, simulation) {
     x <- list(configuration = cfg,
               focal = result$focal,
