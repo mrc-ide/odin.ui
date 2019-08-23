@@ -2,6 +2,7 @@ mod_state_ui <- function(id) {
   ns <- shiny::NS(id)
 
   shiny::tagList(
+    remotesave::mod_cookies_ui(ns("cookies")),
     mod_help_ui(ns("help"), class = "pull-right"),
     shiny::h2("Load"),
     shiny::p(paste(
@@ -30,11 +31,32 @@ mod_state_ui <- function(id) {
                        value = "")),
       shiny::downloadButton(ns("save"), "Download", class = "btn-blue")),
     shiny::hr(),
+    remotesave::mod_remotesave_ui(ns("save")),
+    shiny::hr(),
     odin_ui_version_information())
 }
 
 
 mod_state_server <- function(input, output, session, modules, app_name) {
+  get_state <- function() {
+    state_save(modules, app_name)
+  }
+  set_state <- function(state) {
+    state_load(state, modules, app_name)
+  }
+
+  name_cookie <- "odinuinuser"
+  valid <- 0.1
+
+  cookies <- shiny::callModule(
+    remotesave::mod_cookies_server, "cookies", name_cookie, valid)
+
+  root <- shiny::reactive(sprintf("odin.ui:%s", app_name))
+  user <- shiny::reactive(cookies$value())
+  save <- shiny::callModule(
+    remotesave::mod_remotesave_server, "save",
+    root, user, get_state, set_state)
+
   rv <- shiny::reactiveValues()
 
   help <- shiny::callModule(
@@ -45,14 +67,13 @@ mod_state_server <- function(input, output, session, modules, app_name) {
       state_filename(input$download_filename)
     },
     content = function(con) {
-      saveRDS(state_save(modules, app_name), con)
+      saveRDS(get_state(), con)
     },
     contentType = "application/octet-stream")
 
   shiny::observeEvent(
     input$load, {
-      rv$result <- with_success(
-        state_load(input$load$datapath, modules, app_name))
+      rv$result <- with_success(set_state(readRDS(input$load$datapath)))
     })
 
   output$status <- shiny::renderUI({
@@ -67,8 +88,7 @@ state_save <- function(modules, name) {
 }
 
 
-state_load <- function(path, modules, name) {
-  state <- readRDS(path)
+state_load <- function(state, modules, name) {
   if (!identical(state$name, name)) {
     stop("Incorrect state")
   }

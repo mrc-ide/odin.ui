@@ -3,6 +3,15 @@ sudo: false
 cache: packages
 dist: bionic
 
+addons:
+  apt:
+    packages:
+      - libapparmor-dev
+      - libhiredis-dev
+      - redis-server
+services:
+  - redis-server
+
 services:
   - docker
 before_script:
@@ -12,5 +21,6 @@ r_packages:
   - covr
 r_github_packages:
   - cran/curl@3.3
+  - mrc-ide/remotesave@prototype
 after_success:
   - Rscript -e 'covr::codecov(quiet = FALSE)'
