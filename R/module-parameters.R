@@ -102,6 +102,9 @@ mod_parameters_server <- function(input, output, session, pars,
     if (!is.null(state$configuration)) {
       rv$configuration <- state$configuration
       restore_inputs(session, state$result$value)
+      if (with_option) {
+        restore_inputs(session, state$result$option)
+      }
     }
   }
 

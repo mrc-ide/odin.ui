@@ -89,11 +89,14 @@ mod_fit_server <- function(input, output, session, data, model, link) {
   })
 
   output$control_target <- shiny::renderUI({
-    ## TODO: it would be nice to depend on input$target so that we can
-    ## persist the previous choice but getting that to work without a
-    ## circular dependency is hard and isolate over all this
-    ## expression does not work well.
-    fit_control_target(rv$configuration$link, session$ns)
+    fit_target_ui(rv$configuration$link, rv$name_target, session$ns)
+  })
+
+  shiny::observe({
+    name_target <- input$target
+    if (is_missing(rv$name_target) || !is_missing(name_target)) {
+      rv$name_target <- name_target
+    }
   })
 
   shiny::observeEvent(
@@ -103,7 +106,7 @@ mod_fit_server <- function(input, output, session, data, model, link) {
         message = "model fit in progress",
         detail = "this may take a while",
         value = 0,
-        fit_run(rv$configuration, input$target, user, attr(user, "option")))
+        fit_run(rv$configuration, rv$name_target, user, attr(user, "option")))
       if (rv$fit$success) {
         parameters$set(rv$fit$value$user, notify = FALSE)
       }
@@ -114,7 +117,7 @@ mod_fit_server <- function(input, output, session, data, model, link) {
       rv$fit <- NULL
       modules$reset()
       output$control_target <- shiny::renderUI(
-        fit_control_target(rv$configuration$link, session$ns))
+        fit_target_ui(rv$configuration$link, session$ns))
     })
 
   shiny::observe({
@@ -127,13 +130,13 @@ mod_fit_server <- function(input, output, session, data, model, link) {
   })
 
   shiny::observe({
-    rv$goodness_of_fit <- fit_goodness_of_fit(rv$result, input$target)
+    rv$goodness_of_fit <- fit_goodness_of_fit(rv$result, rv$name_target)
   })
 
   output$odin_output <- plotly::renderPlotly({
-    if (!is.null(rv$result$value) && !is.null(input$target)) {
+    if (!is.null(rv$result$value) && !is.null(rv$name_target)) {
       fit_plot(rv$result$value, locked$result()$value,
-               input$target, control_graph$result())
+               rv$name_target, control_graph$result())
     }
   })
 
@@ -144,12 +147,14 @@ mod_fit_server <- function(input, output, session, data, model, link) {
     }
   })
 
+  shiny::outputOptions(output, "control_target", suspendWhenHidden = FALSE)
+
   get_state <- function() {
     if (is.null(rv$configuration) || is.null(rv$fit)) {
       return(NULL)
     }
     list(fit = rv$fit,
-         control_target = input$target,
+         name_target = rv$name_target,
          modules = modules$get_state())
   }
 
@@ -158,10 +163,10 @@ mod_fit_server <- function(input, output, session, data, model, link) {
       return()
     }
     rv$configuration <- fit_configuration(model(), data(), link())
-    output$control_target <- shiny::renderUI(fit_control_target(
-      rv$configuration$link, session$ns, state$control_target))
     rv$fit <- state$fit
     modules$set_state(state$modules)
+    shiny::updateSelectInput(session, "target", selected = state$name_target)
+    rv$name_target <- state$name_target
   }
 
   list(result = shiny::reactive(add_status(rv$fit$value, rv$status)),
@@ -190,39 +195,18 @@ fit_configuration <- function(model, data, link) {
 ## * compare function (if supported - Anne could use likelihood here)
 ## * tolerance
 ## * algorithm (subplex/etc)
-fit_control_target <- function(link, ns, restore = NULL) {
-  if (is.null(link)) {
+fit_target_ui <- function(link, prev, ns) {
+  if (is.null(link) || length(link$map) == 0) {
     return(NULL)
   }
   choices <- set_names(names(link$map), link$label)
-  selected <- restore %||% NA
+  selected <- selected <- if (!is_missing(prev)) prev else NA
   odin_control_section(
     "Optimisation",
     horizontal_form_group(
       "Target to fit",
       raw_select_input(ns("target"), choices, selected),
       label_width = 4),
-    ns = ns)
-}
-
-
-fit_control_parameters <- function(pars, ns, restore = NULL) {
-  if (is.null(pars)) {
-    return(NULL)
-  }
-  f <- function(name, id_value, value, id_vary, vary) {
-    shiny::fluidRow(
-      shiny::column(
-        10,
-        simple_numeric_input(name, id_value, value)),
-      shiny::column(
-        2, shiny::checkboxInput(id_vary, "", vary)))
-  }
-  value <- restore$value %||% pars$value
-  vary <- restore$vary %||% pars$vary
-  odin_control_section(
-    "Model parameters",
-    Map2(f, pars$name, ns(pars$id_value), value, ns(pars$id_vary), vary),
     ns = ns)
 }
 
