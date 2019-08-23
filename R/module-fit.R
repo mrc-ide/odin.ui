@@ -211,27 +211,6 @@ fit_target_ui <- function(link, prev, ns) {
 }
 
 
-fit_control_parameters <- function(pars, ns, restore = NULL) {
-  if (is.null(pars)) {
-    return(NULL)
-  }
-  f <- function(name, id_value, value, id_vary, vary) {
-    shiny::fluidRow(
-      shiny::column(
-        10,
-        simple_numeric_input(name, id_value, value)),
-      shiny::column(
-        2, shiny::checkboxInput(id_vary, "", vary)))
-  }
-  value <- restore$value %||% pars$value
-  vary <- restore$vary %||% pars$vary
-  odin_control_section(
-    "Model parameters",
-    Map2(f, pars$name, ns(pars$id_value), value, ns(pars$id_vary), vary),
-    ns = ns)
-}
-
-
 fit_run <- function(configuration, target, user, vary, method = "subplex") {
   data_t <- configuration$data$data[[configuration$data$name_time]]
   data_y <- configuration$data$data[[target]]

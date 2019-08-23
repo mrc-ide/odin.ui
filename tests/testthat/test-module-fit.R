@@ -25,8 +25,3 @@ test_that("fit configuration", {
 test_that("fit control parameters: unconfigured", {
   expect_null(fit_control_target(NULL))
 })
-
-
-test_that("fit control parameters: unconfigured", {
-  expect_null(fit_control_parameters(NULL))
-})
