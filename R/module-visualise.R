@@ -323,7 +323,7 @@ vis_run_replicate <- function(configuration, user, run_options) {
 
 
 vis_plot_series <- function(result, locked, y2_model) {
-  if (length(y2_model) == 0) {
+  if (length(y2_model) == 0 || all(vlapply(y2_model, is.null))) {
     return(NULL)
   }
   cfg <- result$configuration
