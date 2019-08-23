@@ -45,13 +45,14 @@ mod_state_server <- function(input, output, session, modules, app_name) {
     state_load(state, modules, app_name)
   }
 
-  name_cookie <- "odinuinuser"
-  valid <- 0.1
+  name_cookie <- Sys.getenv("ODIN_UI_USER", "odinuiuser")
+  root_prefix <- Sys.getenv("ODIN_UI_ROOT", "odin.ui")
+  valid <- 30
 
   cookies <- shiny::callModule(
     remotesave::mod_cookies_server, "cookies", name_cookie, valid)
-
-  root <- shiny::reactive(sprintf("odin.ui:%s", app_name))
+  root <- shiny::reactive(sprintf(
+    "%s:%s:%s", root_prefix, session$clientData$url_pathname, app_name))
   user <- shiny::reactive(cookies$value())
   save <- shiny::callModule(
     remotesave::mod_remotesave_server, "save",
