@@ -305,7 +305,10 @@ vis_run_replicate <- function(configuration, user, run_options) {
   if (replicates == 1L) {
     fixed <- rep(TRUE, ncol(result))
   } else {
-    fixed <- apply(apply(result, 2, diff) == 0, 2, all)
+    f <- function(i, y) {
+      all(diff(apply(y[, i, ], 1, range)) == 0)
+    }
+    fixed <- vlapply(seq_len(ncol(result)), f, result)
   }
   if (any(fixed)) {
     result <- result[, !fixed, , drop = FALSE]
@@ -323,7 +326,7 @@ vis_run_replicate <- function(configuration, user, run_options) {
 
 
 vis_plot_series <- function(result, locked, y2_model) {
-  if (length(y2_model) == 0) {
+  if (length(y2_model) == 0 || all(vlapply(y2_model, is.null))) {
     return(NULL)
   }
   cfg <- result$configuration

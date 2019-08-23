@@ -89,9 +89,13 @@ control_focal_ui <- function(configuration, ns) {
       "Scale type", ns("scale"), c("Arithmetic", "Logarithmic"), scale),
     simple_select_input(
       "Variation type", ns("type"), c("Percentage", "Range"), type),
-    simple_numeric_input("Variation (%)", ns("pct"), pct),
-    simple_numeric_input("From", ns("from"), from),
-    simple_numeric_input("To", ns("to"), to),
+    shiny::conditionalPanel(
+      "input.type === 'Percentage'", ns = ns,
+      simple_numeric_input("Variation (%)", ns("pct"), pct)),
+    shiny::conditionalPanel(
+      "input.type === 'Range'", ns = ns,
+      simple_numeric_input("From", ns("from"), from),
+      simple_numeric_input("To", ns("to"), to)),
     simple_numeric_input("Number of runs", ns("n"), n),
 
     shiny::uiOutput(ns("status")),

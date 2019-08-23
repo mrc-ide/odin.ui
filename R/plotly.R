@@ -26,6 +26,7 @@ plotly_combine_series <- function(series, names) {
 ##' @importFrom plotly plot_ly
 plot_plotly <- function(series, logscale_y = FALSE, xlab = "Time",
                         ylab = NULL, logscale_x = FALSE) {
+  series <- series[!vlapply(series, is.null)]
   if (length(series) == 0L) {
     return(NULL)
   }
@@ -85,6 +86,9 @@ plot_plotly_series <- function(x, y, name, col, points = FALSE, y2 = FALSE,
                                width = NULL, dash = "solid",
                                symbol = "circle", show = TRUE) {
   i <- is.na(x) | is.na(y)
+  if (all(i)) {
+    return(NULL)
+  }
   if (any(i)) {
     x <- x[!i]
     y <- y[!i]
