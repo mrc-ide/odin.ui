@@ -31,6 +31,7 @@ mod_state_ui <- function(id) {
                        value = "")),
       shiny::downloadButton(ns("save"), "Download", class = "btn-blue")),
     shiny::hr(),
+    shiny::h2("Remote"),
     remotesave::mod_remotesave_ui(ns("save")),
     shiny::hr(),
     odin_ui_version_information())
