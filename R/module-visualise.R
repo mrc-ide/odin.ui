@@ -226,9 +226,10 @@ vis_run_single <- function(configuration, user, run_options) {
 
   model <- configuration$model
   if (model$info$features$has_user) {
-    mod <- model$model(user = user, unused_user_action = "ignore")
+    mod <- model$model(user = user, unused_user_action = "ignore",
+                       use_dde = TRUE)
   } else {
-    mod <- model$model()
+    mod <- model$model(use_dde = TRUE)
   }
 
   if (model$info$features$discrete) {
