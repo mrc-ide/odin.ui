@@ -12,6 +12,7 @@ mod_fit_ui <- function(id) {
         controls = shiny::tagList(
           shiny::uiOutput(ns("control_target")),
           mod_parameters_ui(ns("parameters")),
+          mod_control_run_ui(ns("control_run")),
           mod_lock_ui(ns("lock"))),
         status = shiny::tagList(
           shiny::uiOutput(ns("status_data")),
@@ -42,6 +43,9 @@ mod_fit_server <- function(input, output, session, data, model, link) {
   control_graph <- shiny::callModule(
     mod_control_graph_server, "control_graph",
     shiny::reactive(rv$configuration))
+  control_run <- shiny::callModule(
+    mod_control_run_server, "control_run",
+    reactive_successful(model), NULL)
   code <- shiny::callModule(
     mod_model_code_server, "code", model)
   help <- shiny::callModule(
@@ -62,6 +66,7 @@ mod_fit_server <- function(input, output, session, data, model, link) {
 
   modules <- submodules(parameters = parameters,
                         control_graph = control_graph,
+                        control_run = control_run,
                         locked = locked, download = download)
 
   output$status_data <- shiny::renderUI({
@@ -126,7 +131,7 @@ mod_fit_server <- function(input, output, session, data, model, link) {
 
   shiny::observe({
     rv$result <- with_success(vis_run(
-      rv$configuration, parameters$result(), control_run_default()))
+      rv$configuration, parameters$result(), control_run$result()))
   })
 
   shiny::observe({
