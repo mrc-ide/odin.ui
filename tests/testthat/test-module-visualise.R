@@ -18,6 +18,7 @@ test_that("run model, with missing zero time", {
   link <- link_result(list("x", "y"), c("a", "c"))
   configuration <- common_model_data_configuration(model, data, link)
   run_options <- control_run_options_validate(NULL)
+  run_options$values <- list(nout = 500)
 
   user <- list(a = 2, b = 1)
   res <- vis_run(configuration, user = user, run_options = run_options)
@@ -76,6 +77,7 @@ test_that("plot", {
   link <- link_result(list("x", "y"), c("a", "c"))
   configuration <- common_model_data_configuration(model, data, link)
   run_options <- control_run_options_validate(NULL)
+  run_options$values <- list(nout = 500)
   user <- list(a = 2, b = 1)
   res <- vis_run(configuration, user = user, run_options = run_options)
   y2 <- list(x = FALSE, y = TRUE)
@@ -125,6 +127,7 @@ test_that("locked series", {
   link <- link_result(list("x", "y"), c("a", "c"))
   configuration <- common_model_data_configuration(model, data, link)
   run_options <- control_run_options_validate(NULL)
+  run_options$values <- list(nout = 500)
   user1 <- list(a = 2, b = 1)
   user2 <- list(a = 1, b = 1)
   res1 <- vis_run(configuration, user = user1, run_options = run_options)
