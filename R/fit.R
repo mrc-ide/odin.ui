@@ -82,7 +82,7 @@ odin_fit_model <- function(data_t, data_y, model, name_model_y, user, vary,
 odin_fit_objective <- function(data_t, data_y, model, name_model_y,
                                user, vary, compare) {
   compare <- match.fun(compare)
-  mod <- model(user = as.list(user))
+  mod <- model(user = as.list(user), use_dde = TRUE)
   t_after_zero <- data_t[[1]] > 0
 
   if (t_after_zero) {

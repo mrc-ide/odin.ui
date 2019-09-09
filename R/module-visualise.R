@@ -226,15 +226,23 @@ vis_run_single <- function(configuration, user, run_options) {
 
   model <- configuration$model
   if (model$info$features$has_user) {
-    mod <- model$model(user = user, unused_user_action = "ignore")
+    mod <- model$model(user = user, unused_user_action = "ignore",
+                       use_dde = TRUE)
   } else {
-    mod <- model$model()
+    mod <- model$model(use_dde = TRUE)
   }
 
   if (model$info$features$discrete) {
     stop("Discrete time models are not supported")
   }
-  t_smooth <- seq(t_start, t_end, length.out = 501)
+  nout <- run_options$values$nout
+  if (nout < 1) {
+    stop("At least one output point is required")
+  }
+  ## NOTE: The +1 here is so that this is interpreted as the number of
+  ## *steps* not number of points, as we get nicer intervals generally
+  ## this way.
+  t_smooth <- seq(t_start, t_end, length.out = nout + 1)
   result_smooth <- mod$run(c(if (t_smooth[[1]] > 0) 0, t_smooth))
   i <- setdiff(colnames(result_smooth), vars$name[!vars$include])
   result_smooth <- result_smooth[, i, drop = FALSE]
@@ -293,7 +301,10 @@ vis_run_replicate <- function(configuration, user, run_options) {
   }
 
   dt <- if (run_options$options$scale_time) mod$contents()$dt else 1
-  nsteps <- 500
+  nsteps <- run_options$values$nout
+  if (nsteps < 1) {
+    stop("At least one output point is required")
+  }
   steps <- discrete_times(t_end, nsteps, dt)
   t <- steps * dt
 

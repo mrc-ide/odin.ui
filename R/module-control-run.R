@@ -63,23 +63,10 @@ control_run_configuration <- function(render, options) {
 
   inputs <- drop_null(list(
     control_end_time = if (options$options$control_end_time) "end",
+    control_nout = "nout",
     use_relicates = if (options$options$replicates) "replicates"))
-  if (length(inputs) == 0L) {
-    return(NULL)
-  }
 
   list(options = options, inputs = inputs)
-}
-
-
-control_run_control <- function(default_end_time = NA,
-                                default_replicates = 10,
-                                max_replicates_show = 20,
-                                max_replicates_run = 1000) {
-  list(default_end_time = default_end_time,
-       default_replicates = default_replicates,
-       max_replicates_show = max_replicates_show,
-       max_replicates_run = max_replicates_run)
 }
 
 
@@ -95,6 +82,8 @@ control_run_ui <- function(configuration, ns) {
     value_end <- options$control$default_end_time
     end <- simple_numeric_input("End time", ns("end"), value_end)
   }
+  nout <- simple_numeric_input("Number of output points", ns("nout"),
+                               options$control$default_nout)
   if (options$options$replicates) {
     value_replicates <- options$control$default_replicates
     replicates <- simple_numeric_input(
@@ -103,7 +92,7 @@ control_run_ui <- function(configuration, ns) {
 
   status <- shiny::uiOutput(ns("status"))
 
-  tags <- drop_null(list(end, replicates, status))
+  tags <- drop_null(list(end, nout, replicates, status))
   odin_control_section("Run options", tags, ns = ns)
 }
 
@@ -138,6 +127,7 @@ control_run_options <- function(control_end_time = FALSE,
                                 replicates = FALSE,
                                 scale_time = FALSE,
                                 default_end_time = NA,
+                                default_nout = 500,
                                 default_replicates = NA,
                                 max_replicates_show = 20,
                                 max_replicates_run = 1000) {
@@ -145,6 +135,7 @@ control_run_options <- function(control_end_time = FALSE,
                              replicates = replicates,
                              scale_time = scale_time),
               control = list(default_end_time = default_end_time,
+                             default_nout = default_nout,
                              default_replicates = default_replicates,
                              max_replicates_show = max_replicates_show,
                              max_replicates_run = max_replicates_run))

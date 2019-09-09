@@ -37,3 +37,7 @@ Underneath the plot window there is a `Download` option.
 
 1. Modelled: downloads the modelled outputs e.g. the value of S, I, R over time.
 2. Parameters: downloads your current parameter values.
+
+## Run options
+
+You can control the resolution at which the data is plotted (and downloadable) by changing the number of output points. This does not affect how the equations are solved, just the output. Be aware that very large numbers will result in large downloads and somewhat slower plotting.
