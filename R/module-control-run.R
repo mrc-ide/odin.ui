@@ -128,6 +128,7 @@ control_run_result <- function(options, values) {
       values$no_show <- replicates > options$control$max_replicates_show
     }
   }
+  values$nout <- 501
   list(options = options$options,
        control = options$control,
        values = values)

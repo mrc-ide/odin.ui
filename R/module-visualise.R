@@ -234,7 +234,7 @@ vis_run_single <- function(configuration, user, run_options) {
   if (model$info$features$discrete) {
     stop("Discrete time models are not supported")
   }
-  t_smooth <- seq(t_start, t_end, length.out = 501)
+  t_smooth <- seq(t_start, t_end, length.out = run_options$values$nout)
   result_smooth <- mod$run(c(if (t_smooth[[1]] > 0) 0, t_smooth))
   i <- setdiff(colnames(result_smooth), vars$name[!vars$include])
   result_smooth <- result_smooth[, i, drop = FALSE]
