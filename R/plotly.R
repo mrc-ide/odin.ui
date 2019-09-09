@@ -165,7 +165,8 @@ plotly_with_redraw <- function(series, previous, ...) {
     action <- "redraw"
     data <- list(x = unname(lapply(series, "[[", "x")),
                  y = unname(lapply(series, "[[", "y")),
-                 yaxis = unname(lapply(series, "[[", "yaxis")))
+                 yaxis = unname(lapply(series, "[[", "yaxis")),
+                 name = unname(lapply(series, "[[", "name")))
   } else {
     action <- "draw"
     data <- plot_plotly(series, ...)
