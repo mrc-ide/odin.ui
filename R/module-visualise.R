@@ -300,7 +300,10 @@ vis_run_replicate <- function(configuration, user, run_options) {
   }
 
   dt <- if (run_options$options$scale_time) mod$contents()$dt else 1
-  nsteps <- 500
+  nsteps <- run_options$values$nout
+  if (nsteps < 1) {
+    stop("At least one output point is required")
+  }
   steps <- discrete_times(t_end, nsteps, dt)
   t <- steps * dt
 
