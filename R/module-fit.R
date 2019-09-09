@@ -122,7 +122,7 @@ mod_fit_server <- function(input, output, session, data, model, link) {
       rv$fit <- NULL
       modules$reset()
       output$control_target <- shiny::renderUI(
-        fit_target_ui(rv$configuration$link, session$ns))
+        fit_target_ui(rv$configuration$link, NULL, session$ns))
     })
 
   shiny::observe({
