@@ -234,7 +234,14 @@ vis_run_single <- function(configuration, user, run_options) {
   if (model$info$features$discrete) {
     stop("Discrete time models are not supported")
   }
-  t_smooth <- seq(t_start, t_end, length.out = run_options$values$nout)
+  nout <- run_options$values$nout
+  if (nout < 1) {
+    stop("At least one output point is required")
+  }
+  ## NOTE: The +1 here is so that this is interpreted as the number of
+  ## *steps* not number of points, as we get nicer intervals generally
+  ## this way.
+  t_smooth <- seq(t_start, t_end, length.out = nout + 1)
   result_smooth <- mod$run(c(if (t_smooth[[1]] > 0) 0, t_smooth))
   i <- setdiff(colnames(result_smooth), vars$name[!vars$include])
   result_smooth <- result_smooth[, i, drop = FALSE]
