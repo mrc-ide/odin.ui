@@ -70,7 +70,7 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
 
   ## Will only run once:
   shiny::observe({
-    shinyAce::updateAceEditor(session, ns("editor"), value = initial_code)
+    shinyAce::updateAceEditor(session, "editor", value = initial_code)
   })
 
   output$validation_info <- shiny::renderUI({
@@ -90,7 +90,7 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
   })
 
   shiny::observe({
-    shinyAce::updateAceEditor(session, ns("editor"),
+    shinyAce::updateAceEditor(session, "editor",
                               border = editor_border(rv$validation))
   })
 
@@ -98,7 +98,7 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
     input$uploaded_file, {
       if (!is.null(input$uploaded_file)) {
         code <- editor_read_code(input$uploaded_file$datapath)
-        shinyAce::updateAceEditor(session, ns("editor"), value = code)
+        shinyAce::updateAceEditor(session, "editor", value = code)
         rv$validation <- common_odin_validate(code)
       }
     })
@@ -134,7 +134,7 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
 
   shiny::observeEvent(
     input$reset_button, {
-      shinyAce::updateAceEditor(session, ns("editor"), value = initial_code)
+      shinyAce::updateAceEditor(session, "editor", value = initial_code)
       output$include <- NULL
       rv$result <- NULL
       rv$model <- NULL
@@ -165,7 +165,7 @@ mod_editor_simple_server <- function(input, output, session, initial_code,
     if (!is.null(state$validation)) {
       rv$validation <- common_odin_validate(state$validation)
     }
-    shinyAce::updateAceEditor(session, ns("editor"), value = state$editor)
+    shinyAce::updateAceEditor(session, "editor", value = state$editor)
   }
 
   ## shiny::outputOptions(output, "validation_info", suspendWhenHidden = FALSE)

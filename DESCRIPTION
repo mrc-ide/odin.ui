@@ -1,5 +1,5 @@
 Package: odin.ui
-Version: 0.3.2
+Version: 0.3.3
 Title: Shiny User Interface for 'odin'
 Description: A user interface for 'odin', using Shiny.
 Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
@@ -18,7 +18,7 @@ Imports:
     odin (>= 0.2.0),
     remotesave,
     shiny (>= 1.0.4),
-    shinyAce,
+    shinyAce (>= 0.4.1),
     shinycssloaders,
     shinyjqui,
     shinyjs,
