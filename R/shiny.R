@@ -12,11 +12,3 @@ clear_select_input <- function(session, id) {
 reactive_successful <- function(x) {
   shiny::reactive(isTRUE(x()$success))
 }
-
-
-update_ace_editor <- function(session, id, ...) {
-  if (env$ace_needs_ns) {
-    id <- session$ns(id)
-  }
-  shinyAce::updateAceEditor(session, id, ...)
-}

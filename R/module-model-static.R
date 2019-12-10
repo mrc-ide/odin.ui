@@ -41,7 +41,7 @@ mod_model_static_server <- function(input, output, session, code,
   output$title <- shiny::renderText(data$model$name)
 
   shiny::observe({
-    update_ace_editor(session, "editor", data$model$code)
+    shinyAce::updateAceEditor(session, "editor", data$model$code)
   })
 
   shiny::observe({
