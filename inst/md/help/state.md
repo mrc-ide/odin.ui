@@ -4,7 +4,7 @@
 
 *Remember to save your work regularly.*
 The server will disconnect you if you are inactive for too long.
-Pressing the back button on your browser will also cause you to lose your work.
+Pressing the back button on your browser, or refreshing the page, will also cause you to lose your work.
 
 ### Load
 
